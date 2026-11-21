@@ -1,0 +1,71 @@
+---
+title: Data Foundation avec un agent IA connecté via MCP
+description: Demandez à un agent IA connecté via MCP de lire où en est un projet Data Foundation, d'expliquer un chiffre de ses états financiers, de rédiger le commentaire de fin de mois et de répondre à ses questions, ou faites de même via l'API REST.
+sidebar:
+  label: Data Foundation pour les agents
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/data-foundation.mdx
+---
+
+Une fois que vous avez [connecté un agent IA à votre espace de travail via le Model Context Protocol (MCP)](../getting-started/), il peut travailler avec un projet [Data Foundation](/fr/guides/projects/data-foundation/) au moyen de deux outils que vous utilisez peut-être déjà : `project_describe` lit où en est le projet et explique ses chiffres, et `project_upsert` répond à ses questions. Le chat Weave AI de PlaidCloud lit le même état : consultez [Chat Weave AI : Data Foundation](/fr/guides/ai-assistant/weave-tab/#data-foundation).
+
+## Lire où en est un projet
+
+`project_describe(project_id=..., include=['foundation'])` ajoute une entrée `foundation` au projet. Pour un projet sans Data Foundation, `foundation` vaut `null`.
+
+| Champ | Contenu |
+|---|---|
+| `run_state`, `warned` | Si une exécution est en cours, et si le dernier chargement s'est terminé par un avertissement. |
+| `systems` | Chaque système que le projet lit ou a nommé, avec son `state` (`waiting_for_access`, `connected`, `loading`, `loaded` ou `failed`), sa façon de se connecter et la date de son dernier chargement. La demande à envoyer pour l'accès d'un système en attente se trouve dans `access_request`, et `GET /systems/access-request` en fournit une pour chaque système. |
+| `questions` | Le nombre de questions qui attendent une réponse, et jusqu'à 50 d'entre elles, chacune avec son `id` et la réponse suggérée (`suggested`). |
+| `upkeep` | Ce que le projet attend de quelqu'un maintenant, chaque élément sous forme de phrase avec une `action` : questions en attente, systèmes en attente d'accès, en échec ou en retard, garanties en rouge, et mois clôturés qu'un système a modifiés. Il liste aussi, sans action, les nouveaux codes que le dernier chargement a traités sans rien demander. |
+| `starter_questions` | Des questions à poser sur le projet, une fois qu'un mois a été chargé. |
+| `differences` | Lorsque **Rapproché avec chaque système** ou **Le groupe est cohérent** est en rouge : jusqu'aux 10 derniers éléments de chacune, avec les comptes et les documents en cause, ce qui résout chaque élément et qui s'en charge. |
+| `group` | La devise de reporting du groupe et le mois où commence son exercice fiscal. |
+| `access_request` | Pour chaque système que nomme le projet, la demande à envoyer à son administrateur pour l'accès avec lequel il lit. |
+
+`questions` vaut `null` pour un appelant disposant d'un accès en lecture seule au projet, et `upkeep` omet alors les questions. Tant que l'installation du projet est en cours de construction, `foundation` ne contient que la progression de l'installation (`install`), le lien du projet, `installing` et un `run_state` valant `running` ; interrogée avec un `progress_id`, la réponse se limite à `{project_id, install}` jusqu'à ce que `install.state` vaille `done` (consultez [Créer un projet à partir d'un modèle](#créer-un-projet-à-partir-dun-modèle)).
+
+## Expliquer un chiffre
+
+Ajoutez `explain` au même appel pour expliquer une ligne des états financiers :
+
+- `explain={'line': 'revenue', 'period': '2026-06'}` renvoie `explained` : le montant de la ligne, et les lignes, entités et comptes qui la composent, chaque liste par ordre décroissant et totalisant la ligne, avec les 10 plus gros documents du grand livre qui la sous-tendent. Chaque partie ligne, entité ou compte a une `address`, le lien qui explique cette seule partie ; la partie des éliminations, ainsi que les parties *Other lines (n)*, *Other entities (n)*, *Other accounts (n)* et *Rounding*, n'en ont pas.
+- Ajoutez `'span': 'ytd'` pour l'exercice fiscal jusqu'à ce mois ; une ligne de bilan, comme `total_assets`, l'ignore et lit le mois. Affinez avec `entity`, `account`, `source_system` et les autres sélections des états financiers.
+- Ajoutez `'against': '2026-05'` pour savoir pourquoi la ligne a varié depuis ce mois : chaque partie a alors son `amount`, son `before` et son `change`, la plus forte variation en premier.
+- `explain={'commentary': '2026-06'}` renvoie `commentary`, un brouillon de commentaire de fin de mois : chiffre d'affaires, marge brute, EBITDA et résultat net du mois et de l'exercice fiscal jusqu'à ce mois, par rapport au budget et au même mois de l'année précédente. Indiquez `null` comme mois pour le plus récent. Il s'agit toujours d'un brouillon, à vérifier avant utilisation.
+
+La `line` est une clé de ligne des états financiers, comme `revenue`, `gross_margin`, `ebitda`, `operating_profit`, `net_income` ou `total_assets`. Une ligne que les états financiers ne contiennent pas, un mois qui n'est pas écrit au format `YYYY-MM`, ou une clé que `explain` n'accepte pas est refusé avec un message qui le nomme. Chaque chiffre respecte l'accès aux lignes de l'appelant.
+
+## Répondre aux questions
+
+`project_upsert(project_id=..., spec={}, answers=[{'id': ..., 'value': ...}])` répond aux questions d'un projet, à l'aide de l'`id` issu de `questions`. Ajoutez `accept_all_suggested=True` pour accepter chaque réponse suggérée que vous ne donnez pas vous-même. Les réponses nécessitent un accès en modification au projet, s'appliquent au prochain **Charger** ou **Appliquer les modifications**, et sont enregistrées dans l'historique du projet.
+
+L'ensemble du lot est vérifié d'abord : si une réponse n'est pas valide, rien n'est écrit. `dry_run=True` compte les réponses que vous donnez dans `answers`, et indique si chaque réponse suggérée serait également acceptée, sans les vérifier ni les écrire. Les réponses ne s'adressent qu'à un projet existant : avec elles, `spec` doit être vide et `template` omis.
+
+## Créer un projet à partir d'un modèle
+
+`project_upsert(spec={'name': ...}, template=...)` installe en arrière-plan un modèle Data Foundation comme nouveau projet privé. Il utilise le `memo` et le `lakehouse_id` de `spec` lorsque vous les fournissez. Interrogez `project_describe(include=['foundation'], progress_id=...)` avec le `progress_id` qu'il renvoie. Tant que `install.state` ne vaut pas `done`, la réponse se limite à `{project_id, install}` ; une fois que le projet nomme ses systèmes, `foundation.access_request` contient la demande destinée à l'administrateur de chacun.
+
+## Via l'API REST
+
+Le même projet est disponible via l'API REST sous `/rest/v1/analyze/foundation/{project_id}`. La lecture nécessite le rôle `analyze.project.read`, et la modification `analyze.project.write`. `GET /questions` nécessite aussi un accès en modification au projet, et refuse un appelant disposant d'un accès en lecture seule.
+
+| Point de terminaison | Rôle |
+|---|---|
+| `GET /systems` | Les systèmes que le projet lit ou a nommés, chacun avec son état. |
+| `POST /systems` | Nomme des systèmes (`{"systems": [{"type": ..., "connection_id": ...}]}`). Un système doté d'une connexion qui se connecte avec des identifiants ou via un agent sur site est rattaché et chargé immédiatement. Un système qui se connecte par consentement et n'a pas de connexion en reçoit une, et sa ligne porte une `authorize_url` où quelqu'un approuve l'accès dans l'écran de connexion propre au système, de sorte qu'aucun mot de passe n'est envoyé à PlaidCloud. |
+| `POST /systems/attach` | Après cette approbation, rattache et charge chaque système par consentement qui vient d'être approuvé. Un système qui ne peut pas encore être rattaché reste en attente, et sa ligne en indique la raison. |
+| `DELETE /systems/{key}` | Retire un système : supprime un système encore en attente, en supprimant la connexion créée pour lui, ou détache un système rattaché. |
+| `GET /systems/access-request` | Une seule demande pour l'accès dont a besoin chaque système du projet. |
+| `POST /load` | Lance **Charger**, ou **Appliquer les modifications** avec le paramètre de requête `pull=false`. Avec `{"system": ...}`, une clé issue de `GET /systems`, seul ce système est lu ; le modèle est néanmoins mis à jour sur les lignes de tous les systèmes. |
+| `GET /questions` | Les questions qui attendent une réponse, regroupées, chacune avec la réponse suggérée et les éléments qui la justifient. |
+| `POST /questions/answers` | Donne des réponses (`{"answers": [{"id": ..., "value": ...}]}`), ou accepte toutes les réponses suggérées (`"accept_all_suggested": true`). |
+| `GET /summary` | La page **Résumé** : où en est le projet, les cinq garanties, la fraîcheur de chaque système, les mois clôturés et les questions de départ. |
+| `POST /close` | Clôture toutes les entités, ou celles nommées, jusqu'à un mois (`{"through": "2026-06", "entities": []}`). |
+| `POST /close/accept-change` | Reprend ce qu'un système contient désormais pour un mois clôturé qu'il a modifié (`{"system": ..., "entity": ..., "period": ...}`). |
+| `GET /history` | Qui a répondu, rapproché, clôturé, retraité ou modifié quoi, du plus récent au plus ancien, 200 entrées par page ; transmettez `next_cursor` comme `cursor` pour la page suivante. `GET /history.xlsx` télécharge l'ensemble. |
+| `GET /reports` | Les tableaux de bord du projet, chacun avec son lien. |
+| `GET /explain` | Ce qui compose une ligne des états financiers, avec `line`, `period` et les sélections ci-dessus comme paramètres de requête. `GET /explain.xlsx` télécharge chaque document du grand livre qui la sous-tend. Dans un projet Enterprise Profitability, `cogs`, `opex` et `operating_margin` sont expliqués par les couches du modèle pour une entité. |
+
+Nommer un système avec une connexion nécessite l'accès à cette connexion, et faire créer une connexion pour lui, ou le rattacher après approbation, nécessite le rôle `analyze.connection.write`. Répondre aux questions, nommer ou retirer des systèmes et clôturer un mois nécessitent un accès en modification au projet ; clôturer un mois, ou accepter une modification d'un mois clôturé, nécessite un Gestionnaire ou un Architecte du projet. Charger, retirer un système, clôturer un mois ou accepter une modification pendant qu'une exécution verrouille le projet est refusé avec `409` et `run_locked`.

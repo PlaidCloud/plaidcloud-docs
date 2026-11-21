@@ -14,7 +14,10 @@ A maioria das equipes começa com um projeto por área de análise: um projeto p
 
 - [Gerenciar projetos](/pt-br/guides/projects/managing-projects/) — crie, configure e organize projetos no seu espaço de trabalho
 - [Data Foundation: o Common Finance Model](/pt-br/guides/projects/data-foundation/) — traga dados de ERP de vários sistemas e instâncias de ERP, por meio das conexões diretas, para um único Common Finance Model que relatórios, métricas e assistentes de IA leem
-- [Primeiros passos com o Data Foundation](/pt-br/guides/projects/data-foundation-getting-started/) — a lista de verificação de configuração, de um projeto novo até um modelo carregado, verificado e entregue
+- [Primeiros passos com o Data Foundation](/pt-br/guides/projects/data-foundation-getting-started/) — as etapas, de um projeto novo até um modelo carregado, verificado e entregue
+- [Comprovação e fechamento mensal do Data Foundation](/pt-br/guides/projects/data-foundation-proof/) — as cinco garantias por trás de cada carga, o quão atualizado está cada sistema, o fechamento de um mês e as notificações que avisam que um projeto precisa de atenção
+- [Painéis, métricas e caminhos de análise do Data Foundation](/pt-br/guides/projects/data-foundation-dashboards/) — os dezessete painéis que todo projeto do Data Foundation recebe, quem os vê e as métricas e os caminhos de análise com que o Weave responde
+- [Data Foundation com um agente de IA conectado por MCP](/pt-br/integrations/ai-coding-agents/data-foundation/) — peça a um agente de IA, ou à API REST, que leia a situação de um projeto, explique um valor das demonstrações dele, redija o comentário do fechamento mensal e responda às perguntas dele
 - [Cost to Serve](/pt-br/guides/projects/cost-to-serve/) — distribua a despesa operacional aos clientes por atividade e veja a margem após o custo de atendê-los
 - [Operational Transfer Pricing](/pt-br/guides/projects/operational-transfer-pricing/) — teste o nível de lucro de cada entidade em relação às faixas da sua política e veja o ajuste
 - [Página inicial do projeto](/pt-br/guides/projects/project-home/) — veja um projeto de relance e gerencie suas variáveis, agendamentos, acesso, padrões de dados e aplicativos

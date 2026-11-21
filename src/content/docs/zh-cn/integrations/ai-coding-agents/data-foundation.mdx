@@ -1,0 +1,71 @@
+---
+title: 通过 MCP 连接的 AI 代理使用 Data Foundation
+description: 让通过 MCP 连接的 AI 代理读取 Data Foundation 项目的当前状态、解释其报表中的某个数字、起草月末评述并回答项目的问题，或通过 REST API 完成同样的操作。
+sidebar:
+  label: 面向代理的 Data Foundation
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/data-foundation.mdx
+---
+
+[通过 Model Context Protocol（MCP）将 AI 代理连接到工作区](../getting-started/)后，代理即可通过两个您可能已经在用的工具处理 [Data Foundation](/zh-cn/guides/projects/data-foundation/) 项目：`project_describe` 读取项目的当前状态并解释其数字，`project_upsert` 回答项目的问题。PlaidCloud 中的 Weave AI 聊天读取的是同一状态：请参阅 [Weave AI 聊天：Data Foundation](/zh-cn/guides/ai-assistant/weave-tab/#data-foundation)。
+
+## 读取项目的当前状态
+
+`project_describe(project_id=..., include=['foundation'])` 会为项目添加一个 `foundation` 条目。对于未使用 Data Foundation 的项目，`foundation` 为 `null`。
+
+| 字段 | 内容 |
+|---|---|
+| `run_state`、`warned` | 是否有运行正在进行，以及上次加载是否以警告结束。 |
+| `systems` | 项目读取或已指定的每个系统，包括其 `state`（`waiting_for_access`、`connected`、`loading`、`loaded` 或 `failed`）、登录方式以及上次加载时间。等待访问权限的系统需要发送的访问请求位于 `access_request` 中，`GET /systems/access-request` 则为每个系统各提供一份请求。 |
+| `questions` | 等待回答的问题数量，以及其中最多 50 个问题，每个问题都带有 `id` 和 `suggested` 建议答案。 |
+| `upkeep` | 项目当前需要有人处理的事项，每项都是一句话并附带一个 `action`：等待回答的问题、等待访问权限、失败或逾期的系统、红色的保证项，以及某个系统已更改的已结账月份。它还会列出上次加载未经询问即已处理的新代码，这些代码不附带操作。 |
+| `starter_questions` | 某个月份加载完成后，可以就该项目提出的问题。 |
+| `differences` | 当**与各系统一致**或**集团合计相符**为红色时：各自最多列出最近的 10 个事项，包括造成差异的科目和单据、清除每个事项的方法以及由谁处理。 |
+| `group` | 集团的报告货币及其财年的起始月份。 |
+| `access_request` | 对于项目指定的每个系统，需要发送给其管理员、用于申请读取所需访问权限的请求。 |
+
+对于只具有项目只读访问权限的调用方，`questions` 为 `null`，`upkeep` 也会省略这些问题。项目安装仍在构建期间，`foundation` 只包含安装进度（`install`）、项目链接、`installing` 以及值为 `running` 的 `run_state`；使用 `progress_id` 轮询时，在 `install.state` 变为 `done` 之前，返回结果只有 `{project_id, install}`（请参阅[从模板创建项目](#从模板创建项目)）。
+
+## 解释某个数字
+
+在同一调用中添加 `explain`，即可解释报表中的某一行：
+
+- `explain={'line': 'revenue', 'period': '2026-06'}` 返回 `explained`：该行的金额，以及构成该行的行、实体和科目，每个列表都按从大到小排列且合计等于该行，并附带其背后最大的 10 张总账单据。每个行、实体或科目部分都有一个 `address`，即单独解释该部分的链接；抵销部分以及 *Other lines (n)*、*Other entities (n)*、*Other accounts (n)* 和 *Rounding* 部分没有该链接。
+- 添加 `'span': 'ytd'` 可查看截至该月的本财年数据；资产负债表行（例如 `total_assets`）会忽略它并读取该月。可用 `entity`、`account`、`source_system` 以及报表的其他选择条件缩小范围。
+- 添加 `'against': '2026-05'` 可查看该行自该月以来变动的原因：此时每个部分都有其 `amount`、`before` 和 `change`，按变动从大到小排列。
+- `explain={'commentary': '2026-06'}` 返回 `commentary`，即一份月末评述草稿：该月及截至该月的本财年的收入、毛利、EBITDA 和净利润，并与预算及上年同月进行比较。将月份设为 `null` 即可使用最近的月份。它始终是草稿，使用前请先核对。
+
+`line` 是报表的行键，例如 `revenue`、`gross_margin`、`ebitda`、`operating_profit`、`net_income` 或 `total_assets`。报表中不存在的行、未按 `YYYY-MM` 格式书写的月份，或 `explain` 不接受的键都会被拒绝，并显示指明该项的消息。所有数字都遵循调用方的行访问权限。
+
+## 回答问题
+
+`project_upsert(project_id=..., spec={}, answers=[{'id': ..., 'value': ...}])` 使用 `questions` 中的 `id` 回答项目的问题。添加 `accept_all_suggested=True` 可接受所有您未自行回答的建议答案。回答需要项目的编辑权限，会在下一次**加载**或**应用更改**时生效，并记录在项目历史中。
+
+系统会先检查整批回答：只要有一个回答无效，就不会写入任何内容。`dry_run=True` 会统计您在 `answers` 中给出的回答数量，并说明每个建议的回答是否也会被接受，但不检查也不写入。回答只能提交给已有项目：提交回答时，`spec` 必须为空，且不得提供 `template`。
+
+## 从模板创建项目
+
+`project_upsert(spec={'name': ...}, template=...)` 会在后台将 Data Foundation 模板安装为一个新的私有项目。如果在 `spec` 中提供了 `memo` 和 `lakehouse_id`，安装时会使用它们。使用返回的 `progress_id` 轮询 `project_describe(include=['foundation'], progress_id=...)`。在 `install.state` 变为 `done` 之前，返回结果只有 `{project_id, install}`；项目指定其系统后，`foundation.access_request` 会包含发送给每个系统管理员的请求。
+
+## 通过 REST API
+
+同一项目也可通过 REST API 在 `/rest/v1/analyze/foundation/{project_id}` 下访问。读取需要 `analyze.project.read` 角色，更改需要 `analyze.project.write` 角色。`GET /questions` 还需要项目的编辑权限，并会拒绝只具有只读访问权限的调用方。
+
+| 端点 | 作用 |
+|---|---|
+| `GET /systems` | 项目读取或已指定的系统，每个系统都附带其状态。 |
+| `POST /systems` | 指定系统（`{"systems": [{"type": ..., "connection_id": ...}]}`）。如果为系统提供的连接使用凭据或通过本地代理登录，该系统会立即被附加并加载。对于通过授权同意登录且没有连接的系统，系统会为其创建一个连接，其行中带有 `authorize_url`，由相关人员在该系统自己的登录界面中批准访问，因此不会向 PlaidCloud 发送任何密码。 |
+| `POST /systems/attach` | 批准后，附加并加载刚刚获得批准的每个授权同意系统。暂时无法附加的系统会继续等待，其行会说明原因。 |
+| `DELETE /systems/{key}` | 移除一个系统：移除仍在等待的系统并删除为其创建的连接，或分离已附加的系统。 |
+| `GET /systems/access-request` | 一份涵盖项目每个系统所需访问权限的请求。 |
+| `POST /load` | 启动**加载**，或使用查询参数 `pull=false` 启动**应用更改**。使用 `{"system": ...}`（`GET /systems` 中的一个键）时，只读取该系统；模型仍会基于所有系统的行更新到最新。 |
+| `GET /questions` | 等待回答的问题，按组列出，每个问题都附带建议答案及其依据。 |
+| `POST /questions/answers` | 提交回答（`{"answers": [{"id": ..., "value": ...}]}`），或接受所有建议答案（`"accept_all_suggested": true`）。 |
+| `GET /summary` | **摘要**页面：项目的当前状态、五项保证、每个系统的数据新鲜度、已结账的月份以及入门问题。 |
+| `POST /close` | 将所有实体或指定的实体结账至某个月份（`{"through": "2026-06", "entities": []}`）。 |
+| `POST /close/accept-change` | 对于某个系统已更改的已结账月份，采用该系统当前持有的数据（`{"system": ..., "entity": ..., "period": ...}`）。 |
+| `GET /history` | 谁回答、匹配、结账、重述或更改了什么，按时间从新到旧排列，每页 200 条；将 `next_cursor` 作为 `cursor` 传入即可获取下一页。`GET /history.xlsx` 会下载全部记录。 |
+| `GET /reports` | 项目的仪表板，每个都附带其链接。 |
+| `GET /explain` | 报表中某一行的构成，以 `line`、`period` 和上述选择条件作为查询参数。`GET /explain.xlsx` 会下载其背后的所有总账单据。在 Enterprise Profitability 项目中，`cogs`、`opex` 和 `operating_margin` 按模型针对单个实体的各层进行解释。 |
+
+使用连接指定系统需要该连接的访问权限；为系统创建连接或在批准后附加系统需要 `analyze.connection.write` 角色。回答问题、指定或移除系统以及结账月份需要项目的编辑权限；结账月份或接受对已结账月份的更改需要项目的管理者或架构师身份。当有运行占用项目时，加载、移除系统、结账月份或接受更改都会被拒绝，并返回 `409` 和 `run_locked`。

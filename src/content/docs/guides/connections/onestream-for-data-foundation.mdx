@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Connect PlaidCloud to **OneStream** so Data Foundation can read your consolidated results and reconcile its management group profit and loss to them. OneStream is supported through its connector: PlaidCloud signs in with OAuth 2.0 client credentials and reads a data adapter that your OneStream administrator builds. It only reads. If you name a Data Management sequence, PlaidCloud runs that sequence first to refresh what the adapter reads, and runs nothing else.
+Connect PlaidCloud to **OneStream** so Data Foundation can read your consolidated results and reconcile its management group profit and loss to them. OneStream is supported through its connector: PlaidCloud signs in with OAuth 2.0 client credentials and reads a data adapter that your OneStream administrator builds. It only reads.
 
 OneStream is a source of results to reconcile to, not of ledger lines: its rows land as the `Consolidated` scenario of the model's budget table, version `OneStream`. See [Reconcile to Your Consolidation System](/guides/projects/data-foundation/#reconcile-to-your-consolidation-system).
 
@@ -17,9 +17,9 @@ The adapter's columns are a contract you and your OneStream administrator agree.
 
 ## What Your OneStream Administrator Sets Up
 
-The **Foundation** tab writes an access request for you to send. It asks for the following.
+The project's **Systems** page writes an access request for you to send; see [Connect Your ERP](/guides/projects/data-foundation/#connect-your-erp). It asks for the following.
 
-1. A client for PlaidCloud in OneStream's identity service that uses the **client credentials** grant, with a service user who can run the adapter and, if you want PlaidCloud to refresh results first, the Data Management sequence.
+1. A client for PlaidCloud in OneStream's identity service that uses the **client credentials** grant, with a service user who can only run the adapters below: no Data Management, load or consolidation rights. PlaidCloud runs no Data Management sequence, so keep the results the adapters read refreshed on your own schedule.
 
 2. In the application and workspace you report on, a data adapter named **Foundation_Results** that returns one table of the consolidated results with exactly these columns:
 
@@ -28,13 +28,19 @@ The **Foundation** tab writes an access request for you to send. It asks for the
    | `entity` | The consolidation member: an entity, an elimination member or the group total. |
    | `account` | The account code. Base accounts only. |
    | `time` | The month, as `YYYY-MM`. |
-   | `scenario` | The scenario. |
+   | `scenario` | `Actual` for the consolidated results. `Budget` or `Forecast` for a plan, read as the plan. |
    | `view` | `YTD` or `Periodic`. PlaidCloud reads only the rows of the view you choose. |
    | `amount` | A number, in the sign and scale your reports show. |
    | `currency` | The currency the amount is stated in: your group's reporting currency. |
-   | `flow`, `ud1`, `ud2`, `ud3`, `ud4` | Flow and user-defined dimensions. Base members only. |
+   | `flow` | The flow member. Base members only. |
+   | `ud1` to `ud5` | The department, product, site, sales rep and project members, `None` where the row has none. Base members only. |
+   | `version` | A plan's version. Leave it `None` or blank for `Actual`. |
+   | `version_as_of` | The month, as `YYYY-MM`, a plan's version was made as of. Leave it `None` or blank for `Actual`. |
+   | `quantity` | The units a plan's row is planned for, per month whatever the view. Leave it `None` or blank for `Actual`. |
 
    Serve base members of the account, flow and user-defined dimensions. A parent member's row would count its children twice. The adapter reads the consolidation member from the substitution variable `Member` and the view from `View`.
+
+   If your plan holds headcount or units produced, also create an adapter named **Foundation_Drivers** with the columns `entity`, `time`, `scenario`, `driver` (for example `headcount` or `units_produced`), `value`, `unit` (`FTE`, `EA` and so on), `ud1` (department), `ud2` (product), `ud3` (site), `version` and `version_as_of`. It reads `Member` the same way and is optional: without it, or without access to it, no planned drivers load and the readiness checks say so.
 
 3. The members to read: the entities, the elimination members and the group total.
 
@@ -60,21 +66,21 @@ The **Foundation** tab writes an access request for you to send. It asks for the
 
 </Steps>
 
-You can also create the connection on the **Foundation** tab when you add the source: choose **Create a new connection** and fill in **API host URL**, **Client ID**, **Client secret**, **Token URL**, **Application** and **Workspace**, which mean the same as the fields above.
+You can also create the connection when you add the system on the **Systems** page: choose **New connection** under **Connection**, and the same connection editor opens.
 
 ## Add It to a Data Foundation Project
 
-On the **Foundation** tab, add the connection as a source, as you would any other (see [Connect Your ERP](/guides/projects/data-foundation/#connect-your-erp)), OneStream lists no members to tick, so the form asks for the consolidation member to read: enter it under **Name**. Then, under **System settings**, describe the adapter's amounts. The settings show by these names:
+On the project's **Systems** page, add OneStream with its connection, as you would any other system (see [Connect Your ERP](/guides/projects/data-foundation/#connect-your-erp)). OneStream lists no members to tick, so under **Options**, **Companies**, enter the consolidation members to read, separated by commas: at least one. Then, under **System settings**, describe the adapter's amounts:
 
 | Setting | What it means |
 |---|---|
-| `view` | `ytd` (the default) when the adapter's amounts are year to date, or `periodic`. Year-to-date rows land as periodic amounts. |
-| `sign` | `natural` (the default): each account in its own sign, as OneStream reports it. `debit_positive`: debits positive. |
-| `scale` | The multiplier to whole currency units: `1000` when OneStream serves thousands. Defaults to `1`. |
-| `fy_start_month` | The month your fiscal year starts, from `1` to `12`, for converting year to date to periodic. Defaults to `1`. |
-| `application`, `workspace` | Override the connection's. Leave blank to use the connection's. |
-| `table` | The table name within the adapter's data set. Defaults to `Results`. |
-| `sequence` | A Data Management sequence run before the read to refresh what the adapter reads. |
+| **View member** | `ytd` (the default) when the adapter's amounts are year to date, or `periodic`. Year-to-date rows land as periodic amounts. |
+| **Sign convention** | `natural` (the default): each account in its own sign, as OneStream reports it. `debit_positive`: debits positive. |
+| **Amount scale** | The multiplier to whole currency units: `1000` when OneStream serves thousands. Defaults to `1`. |
+| **First month of the fiscal year** | The month your fiscal year starts, from `1` to `12`, for converting year to date to periodic. Defaults to `1`. |
+| **Application**, **Workspace** | Override the connection's. Leave blank to use the connection's. |
+| **Adapter results table** | The table name within the adapter's data set. Defaults to `Results`. |
+| **Substitution variables** | The substitution variables set for the adapter, one per line as `name = value`, for example `Time = 2026M1`. |
 
 Map the OneStream members to your entities with a code-map file that applies to this source. See [Entity Crosswalk](/guides/projects/data-foundation/#entity-crosswalk). The source reads no history window: the adapter's own substitution variables bound it.
 

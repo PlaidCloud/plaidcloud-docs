@@ -30,12 +30,13 @@ Una definición de métrica es una receta, no un resultado almacenado. Se vuelve
 | **Descripción** (`memo` en la API) | Qué significa el número y cuándo usarlo, para el asistente y para las personas. Hasta 1000 caracteres. | *Ingresos después de devoluciones y descuentos. Úsela para todas las preguntas sobre ingresos.* |
 | **Tabla de origen** | La tabla de la que provienen las filas. | `sales_fact` |
 | **Combinaciones** | Tablas de búsqueda combinadas con la tabla de origen mediante columnas coincidentes. Cada tabla de búsqueda debe tener una sola fila por cada clave (por ejemplo, una fila por código de región); de lo contrario, las filas con las que coincide se cuentan dos veces. | `region_lookup`, que hace coincidir `region_code` en el origen con `code` en la búsqueda |
-| **Medida** | Cómo se suman las filas: `sum`, `count`, `count_distinct`, `min`, `max` o `avg` de una columna, o `weighted_avg` de una columna ponderada por una segunda columna (`weight`): la suma del valor por el peso sobre las filas en las que ambos están establecidos, dividida entre la suma de esos pesos; vacío si los pesos suman cero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
+| **Medida** | Cómo se suman las filas: `sum`, `count`, `count_distinct`, `min`, `max`, `avg` o `median` de una columna, o `weighted_avg` de una columna ponderada por una segunda columna (`weight`): la suma del valor por el peso sobre las filas en las que ambos están establecidos, dividida entre la suma de esos pesos; vacío si los pesos suman cero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
 | **Filtros** | Qué filas cuentan siempre. Cada filtro es una columna, un operador (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) y sus valores. | `status` `eq` *Posted* |
 | **Columnas de desglose** (`grain` en la API) | Las columnas por las que una persona puede agrupar y filtrar cuando pregunta. Los filtros son fijos; las columnas de desglose las elige quien pregunta. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Escenario** (opcional) | La columna que separa las filas reales de las filas de presupuesto, y el valor de cada una. La métrica son sus filas reales; las filas de presupuesto se leen solo para una [varianza](#comparar-clasificar-y-repartir). | `scenario`, real *Actual*, presupuesto *Budget* |
 | **Dimensiones** (opcional, `dimensions` en la API) | Una columna de desglose vinculada a una dimensión, de modo que las palabras de una pregunta se comparan con los miembros y alias de esa dimensión y se convierten en los valores de la columna: consulte [Preguntar sobre una métrica](#preguntar-sobre-una-métrica). La dimensión debe existir en el proyecto. | `region_lookup.region` vinculada a la dimensión *Region* |
-| **Columnas de tiempo** (opcional, `time` en la API) | Una columna de fecha, o una columna de año fiscal y una columna de período, para que una pregunta pueda solicitar un período fiscal y [compararlo a lo largo del tiempo](#comparar-a-lo-largo-del-tiempo). | `fiscal_year` y `fiscal_period` |
+| **Columnas de tiempo** (opcional, `time` en la API) | Una columna de fecha, o una columna de año fiscal y una columna de período, para que una pregunta pueda solicitar un período fiscal y [compararlo a lo largo del tiempo](#comparar-a-lo-largo-del-tiempo). También indican si la métrica es un [saldo](#saldos) al final de cada período. | `fiscal_year` y `fiscal_period` |
+| **Anterior** (opcional, `prior` en la API) | Una medida y unos filtros que lee una [comparación de tiempo](#el-año-anterior-leído-de-otra-manera), en lugar de los de la propia métrica, para un período de un año fiscal anterior. | La métrica lee este año con los tipos de cambio del año pasado; `prior` lee el año pasado tal como se informó |
 
 Una columna de una tabla de búsqueda se escribe como `<table>.<column>`; el asistente las escribe por usted. Cada tabla y cada columna de una definición deben existir en el proyecto; una definición que nombre alguna que no exista se rechaza al guardarla. Una métrica con escenario no puede filtrar por la columna del escenario ni ofrecerla como columna de desglose: el escenario decide qué filas se leen, por lo que un filtro como `scenario` `eq` *Actual* pertenece al escenario, no a los filtros.
 
@@ -101,6 +102,7 @@ Una **métrica derivada** es aritmética sobre métricas que ya existen: *Net Re
 | Operación | Qué calcula | Entradas |
 |---|---|---|
 | `ratio` | la primera entrada dividida entre la segunda | dos métricas |
+| `ratio_abs` | la primera entrada dividida entre el tamaño de la segunda, de modo que una participación en un total negativo se lee como una participación en uno positivo | dos métricas |
 | `add` | la primera entrada más la segunda | dos métricas |
 | `subtract` | la primera entrada menos la segunda | dos métricas |
 | `scale` | la entrada multiplicada por un `factor` fijo | una métrica y un número |
@@ -198,6 +200,16 @@ Una pregunta nombra entonces el **período** al que se refiere: un año fiscal, 
 Un total acumulado es para métricas `sum` y `count`. Un promedio, un recuento distinto, un mínimo o un máximo no se suman a lo largo del tiempo y se rechazan. Un período sin filas no tiene fila en un total acumulado, y el total continúa más allá de él.
 
 Las columnas de tiempo no se pueden filtrar ni agrupar en una pregunta que nombra un período, compara a lo largo del tiempo o solicita un total acumulado: esas columnas deciden qué filas se leen y cómo se ubican. Una pregunta que no hace nada de esto sí puede filtrar y agrupar por ellas como por cualquier columna de desglose. También se rechaza un período posterior al fin del año (el período 13 en un calendario de 12 períodos), un trimestre en un calendario sin trimestres, una comparación de tiempo o un total acumulado en una métrica derivada, y una pregunta que no nombra el tipo de período que necesita su comparación. A una métrica derivada se le puede pedir un período cuando todas sus entradas tienen columnas de tiempo en el mismo calendario fiscal, y entonces tampoco se pueden filtrar ni agrupar por ellas. Una comparación de tiempo es la única comparación de la pregunta, por lo que no se puede combinar con una varianza frente al presupuesto, aunque una participación y una clasificación sí se aplican a la diferencia.
+
+### Saldos
+
+Algunas cifras son un saldo al final de cada período, como el efectivo o las cuentas por cobrar pendientes, y no un importe que se suma a lo largo del período. Establezca `balance` en `true` en las columnas de tiempo de una métrica así. Un trimestre, un año o un intervalo **hasta la fecha** lee entonces su último período, nunca la suma de sus períodos. Establezca `period_label` en la columna de desglose que nombra cada período, como una columna de mes que contiene `2026-06`, y una pregunta desglosada por esa columna lee el final de cada período.
+
+Una pregunta sobre un saldo que no nombra ningún período, y que no desglosa la métrica ni la filtra por su columna de período (la columna de fecha, en el caso de una fecha) ni por su `period_label`, se rechaza con *this metric is a balance at each period end: name the period to read it at*. Cada entrada de saldo de una métrica derivada se comprueba de la misma manera.
+
+### El año anterior, leído de otra manera
+
+El `prior` de una definición contiene una medida y unos filtros que una comparación de tiempo lee, en lugar de los de la propia métrica, para su período anterior cuando ese período cae en un año fiscal anterior. Así, la métrica puede leer este año con los tipos de cambio del año pasado, mientras que `prior` lee el año pasado tal como se informó, de modo que la comparación muestra la variación sin el movimiento de los tipos. Una comparación dentro de un mismo año fiscal, como el tercer trimestre frente al segundo, lee la medida y los filtros propios de la métrica para ambos períodos.
 
 ## Retirar una métrica
 

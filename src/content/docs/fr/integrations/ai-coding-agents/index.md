@@ -18,6 +18,7 @@ Les pages de cette section décrivent ce que le serveur expose, comment s’auth
 - **[Chemins d'analyse](./analysis-paths/)** : donnez à vos tables clés des noms parlants et une valeur par défaut, afin de pouvoir simplement demander « pourquoi cela a-t-il augmenté le trimestre dernier ? »
 - **[Créer des tableaux de bord](./build-dashboards/)** : demandez des graphiques et des tableaux de bord sur vos tables et vues publiées, via la même connexion PlaidCloud.
 - **[Définitions de métriques](./metric-definitions/)** : convenez une fois de la manière dont un chiffre métier est calculé, afin que chaque réponse qui l’utilise soit calculée de la même façon.
+- **[Data Foundation](./data-foundation/)** : lisez où en est un projet Data Foundation, expliquez un chiffre de ses états financiers, rédigez le commentaire de fin de mois et répondez à ses questions.
 
 ## Connecter votre assistant
 

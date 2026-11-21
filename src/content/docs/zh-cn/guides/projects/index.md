@@ -14,7 +14,10 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 - [管理项目](/zh-cn/guides/projects/managing-projects/) — 在工作区中创建、配置和组织项目
 - [Data Foundation：Common Finance Model](/zh-cn/guides/projects/data-foundation/) — 通过直接连接，将来自多个 ERP 系统和实例的 ERP 数据汇入一个 Common Finance Model，供报表、指标和 AI 代理统一读取
-- [Data Foundation 入门](/zh-cn/guides/projects/data-foundation-getting-started/) — 从新建项目到加载、检查并交付模型的设置清单
+- [Data Foundation 入门](/zh-cn/guides/projects/data-foundation-getting-started/) — 从新建项目到加载、检查并交付模型的各个步骤
+- [Data Foundation 验证与月末结账](/zh-cn/guides/projects/data-foundation-proof/) — 每次加载背后的五项保证、各系统数据的新鲜程度、如何结账一个月，以及提示项目需要关注的通知
+- [Data Foundation 仪表板、指标和分析路径](/zh-cn/guides/projects/data-foundation-dashboards/) — 每个 Data Foundation 项目都会获得的十七个仪表板、谁能看到它们，以及 Weave 用来回答问题的指标和分析路径
+- [通过 MCP 连接的 AI 代理使用 Data Foundation](/zh-cn/integrations/ai-coding-agents/data-foundation/) — 让 AI 代理或 REST API 读取项目的当前状态、解释报表中的某个数字、起草月末评述并回答相关问题
 - [Cost to Serve](/zh-cn/guides/projects/cost-to-serve/) — 按作业将运营费用分摊给客户，并查看扣除服务成本后的利润
 - [Operational Transfer Pricing](/zh-cn/guides/projects/operational-transfer-pricing/) — 对照政策区间检验各实体的利润水平，并查看补差结果
 - [数据模型与项目元素](/zh-cn/guides/projects/data-model/) — 将表共享的列一次性描述，并查看哪些表共享它

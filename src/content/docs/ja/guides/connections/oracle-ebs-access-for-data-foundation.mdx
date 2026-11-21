@@ -14,7 +14,7 @@ PlaidCloud はデータを読み取るだけです。パスワードをメール
 
 ## アクセス依頼を送信する
 
-プロジェクトの **Foundation** タブで、**Oracle E-Business Suite接続**の下にある**新しい接続を作成**を選択します。フォームに依頼内容の全文と、**How to set up PlaidLink** リンクが表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックして、件名「Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink)」でメールプログラムに開きます。
+**ホーム**の **Data Foundation** にあるプロジェクトの**システム**ページで、**システムを追加**の**システム**でお使いのシステムを選択し、**まだアクセス権がありませんか?** ボタンをクリックします。システムはアクセス待ちになり、プロジェクトのシステムを対象とする 1 件の依頼が表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックして、件名「PlaidCloud へのアクセス」でメールプログラムに開きます。
 
 ## EBS 管理者が設定する内容
 
@@ -22,19 +22,28 @@ PlaidCloud はデータを読み取るだけです。パスワードをメール
 
 1. EBS データベースにアクセスできるサーバーに **PlaidLink をインストール**し、PlaidCloud に登録します。
 
-2. PlaidLink の APPS スキーマユーザー（または APPS オブジェクトへのシノニムを持つ読み取り専用スキーマユーザー）に、次のオブジェクトへの **SELECT を付与**します。
+2. PlaidLink 用の**読み取り専用データベースユーザーを作成**します。APPS など、データを変更できるスキーマユーザーは決して使用しないでください。このユーザーに次の権限を付与し、それぞれに APPS オブジェクトと同じ名前のシノニムを作成します。表に別の記載がない限り、権限は SELECT です。
 
    | 領域 | オブジェクト |
    |---|---|
-   | 総勘定元帳 | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | セッション（必須） | `FND_GLOBAL` と `MO_GLOBAL` に対する EXECUTE、`FND_RESPONSIBILITY_VL`、および `FND_USER`（または `USER_ID`、`USER_NAME`、`EMPLOYEE_ID`、`DESCRIPTION` のみを保持する同名のビュー）。これらがないと、すべての読み取りが失敗します |
+   | 総勘定元帳 | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES`。`GL_BALANCES` には、最新の期間だけでなくすべての期間が保持されている必要があります。これは、元帳と比較される月末残高です |
    | フレックスフィールド | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
    | 売上（省略可） | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+   | 仕訳の承認者（省略可） | `GL_JE_BATCHES` |
+   | エンティティの国（省略可） | `XLE_REGISTRATIONS`, `HZ_LOCATIONS` |
+   | 売掛金、買掛金、銀行残高、仕入先請求書（省略可） | `AR_PAYMENT_SCHEDULES_ALL`, `AR_CASH_RECEIPTS_ALL`, `AR_RECEIVABLE_APPLICATIONS_ALL`, `AR_ADJUSTMENTS_ALL`, `AR_RECEIPT_METHODS`, `RA_TERMS_TL`, `CE_BANK_ACCOUNTS`, `AP_INVOICES_ALL`, `AP_INVOICE_LINES_ALL`, `AP_INVOICE_DISTRIBUTIONS_ALL`, `AP_PAYMENT_SCHEDULES_ALL`, `AP_INVOICE_PAYMENTS_ALL`, `AP_CHECKS_ALL`, `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL`, `PO_HEADERS_ALL`, `PO_LINES_ALL`, `MTL_ITEM_CATEGORIES`, `MTL_CATEGORIES_B` |
+   | 購買、在庫、予算、標準原価、固定資産（省略可） | `PO_LINE_LOCATIONS_ALL`, `PO_DISTRIBUTIONS_ALL`, `RCV_TRANSACTIONS`, `ORG_ORGANIZATION_DEFINITIONS`, `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES`, `CST_STANDARD_COSTS`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS`, `FA_ADDITIONS_B`, `FA_ADDITIONS_TL`, `FA_CATEGORIES_B`, `FA_BOOK_CONTROLS`, `FA_BOOKS`, `FA_CATEGORY_BOOKS`, `FA_DISTRIBUTION_HISTORY`, `FA_DEPRN_PERIODS`, `FA_DEPRN_SUMMARY`, `FA_RETIREMENTS`, `FA_TRANSACTION_HEADERS` |
 
-3. レポート対象のすべての元帳と残高セグメント値を参照できる**アプリケーションユーザー**（`FND_USER`）と責任を指定します。
+   在庫は品目取引から読み取られるため、在庫の履歴を得るには品目取引を保持しておく必要があります。予算は、`GL_BALANCES` の予算残高です。
+
+3. 照会専用の責任、つまり参照のみが可能な責任で、レポート対象のすべての元帳と残高セグメント値を参照できるものと、**アプリケーションユーザー**（`FND_USER`）を指定します。
 
 4. **勘定科目表を記述します。** どのセグメントが残高セグメント、自然勘定科目、コストセンター、会社間セグメントにあたるか（それぞれのセグメント修飾子）を伝えます。PlaidCloud は、費用勘定科目またはその上位の親値が売上原価、売上コスト、収益原価と記述されている場合に、その勘定科目を売上原価として分類します。また、そのいずれかに受取利息または支払利息、金融収益または金融費用、外国為替、法人所得税費用、その他の収益および費用が含まれている場合に、その勘定科目を営業外として分類します。親値でこれらに別の用語を使用している場合は、PlaidCloud に伝えてください。
 
-5. **レートタイプを確認します。** 各プライマリ元帳は、元帳の換算オプションで、期間平均と期間末のレートタイプを指定しています。PlaidCloud は、この 2 つのタイプの日次レートで換算します。
+5. **サイトとプロフィットセンターのセグメントを指定します。** 勘定科目表のセグメント（`SEGMENT1`～`SEGMENT30`）でサイトやプロフィットセンターを管理している場合に指定します。EBS には、どちらにも修飾子がありません。PlaidCloud は、各セグメントの値セットの値をサイトとプロフィットセンターの一覧として読み取ります。
+
+6. **レートタイプを確認します。** 各プライマリ元帳は、元帳の換算オプションで、期間平均と期間末のレートタイプを指定しています。PlaidCloud は、この 2 つのタイプの日次レートで換算します。
 
 </Steps>
 
@@ -46,24 +55,24 @@ PlaidCloud はデータを読み取るだけです。パスワードをメール
 
 | 管理者が送る情報 | PlaidCloud での入力先 |
 |---|---|
-| データベースホスト | **Database host** |
-| データベースのポート | **データベースのポート**（変更しない限り 1521） |
+| データベースホスト | **ホストまたはIPアドレス** |
+| データベースのポート | **ポート**（変更しない限り 1521） |
 | サービス名 | **サービス名** |
-| APPS スキーマユーザー | **APPS schema user** |
-| APPS スキーマのパスワード（セキュアな接続フォーム経由） | **APPS schema password**。チームが自分で貼り付けます |
-| `FND_USER` | **Application user (FND_USER)** |
-| 責任キー | **Responsibility key** |
-| PlaidCloud が読み取りを許可される残高セグメント値 | **Balancing segment values** に入力します。ロード前にシステムが一覧表示できないため、**名前**に 1 つの値を入力するか、空白のままにしてプライマリ元帳のすべてのエンティティをロードします |
+| 読み取り専用データベースユーザー | **データベースユーザー（APPSスキーマ）** |
+| そのパスワード（セキュアな接続フォーム経由） | **パスワード**。チームが自分で入力します |
+| `FND_USER` | **アプリケーションユーザー（FND_USER.USER_NAME）** |
+| 責任キー | **職責キー（FND_RESPONSIBILITY.RESPONSIBILITY_KEY）** |
+| PlaidCloud が読み取りを許可される残高セグメント値 | **オプション**の**会社**に入力します。EBS は一覧表示できないため、値をカンマ区切りで入力するか、空のままにしてすべてのプライマリ元帳のすべてのエンティティをロードします |
 
-インスタンスにアクセスする PlaidLink エージェントは、システム設定の `agent` で選択します。
+インスタンスにアクセスする PlaidLink エージェントは、システム設定 **PlaidLink agent** で指定します。サイトとプロフィットセンターのセグメントは、システム設定 **Site segment** と **Profit centre segment** に指定します。
 
 <Aside type="caution">
-パスワードをメールで送らないでください。**APPS schema password** はシークレットです。接続に保存され、再表示されません。
+パスワードをメールで送らないでください。**パスワード**はシークレットです。接続に保存され、再表示されません。
 </Aside>
 
 ## アクセスを確認する
 
-PlaidCloud に戻って値を入力し、**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+PlaidCloud に戻り、システムを追加したら、**システム**ページのそのシステムの行で**接続をテスト**をクリックします。EBS には PlaidLink エージェント経由でアクセスするため、テストでは、エージェントがサインインに使用するすべての情報が接続に指定されていることを確認します。テーブル自体は最初のロード時に読み取られ、エージェントが読み取れないテーブルはその時点で示されます。各データセットが読み取るオブジェクトは次のとおりです。
 
 | データセット | 読み取るオブジェクト |
 |---|---|
@@ -77,8 +86,19 @@ PlaidCloud に戻って値を入力し、**接続をテスト**をクリック�
 | 顧客 | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`（省略可） |
 | 製品 | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B`（省略可） |
 | 売上明細 | `RA_CUSTOMER_TRX` テーブル（省略可） |
+| 月末残高 | `GL_BALANCES`、すべての期間（省略可） |
+| 銀行残高 | `CE_BANK_ACCOUNTS`、および各銀行の現金勘定の月末残高（省略可） |
+| サイト、利益センター | それぞれに指定したセグメントの値（省略可） |
+| 仕入先 | `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL`（省略可） |
+| 未決済項目、支払 | 売掛金、買掛金、銀行のテーブル（省略可） |
+| 仕入先請求書明細 | `AP_INVOICE_LINES_ALL`、および買掛金の伝票（省略可） |
+| 発注書 | `PO_` テーブル、`RCV_TRANSACTIONS`、請求書明細（省略可） |
+| 在庫残高 | `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES`（省略可） |
+| 標準原価 | `CST_STANDARD_COSTS`（省略可） |
+| 予算 | `GL_BALANCES` の予算残高、`GL_BUDGETS`, `GL_BUDGET_VERSIONS`（省略可） |
+| 固定資産、資産の異動 | `FA_` テーブル（省略可） |
 
-データセットが**権限が不足しています**と表示された場合は、管理者にそのオブジェクトへの SELECT の付与を依頼して、もう一度テストしてください。顧客、製品、売上明細は省略可能です。これらを使用しないインスタンスでも、ほかのすべてのデータは読み込まれます。
+ロードでエージェントが読み取れないテーブルが示された場合は、管理者にそのテーブルへの SELECT の付与を依頼して、もう一度ロードしてください。付与していない省略可能なテーブルは、そのテーブル名を示す警告になり、ほかのすべてのデータは読み込まれます。未決済項目、支払、仕入先請求書、発注書、標準原価、在庫、予算、資産、月末残高、銀行残高は、テーブルを読み取れるようになるまで既存の行を保持します。
 
 ## 関連項目
 

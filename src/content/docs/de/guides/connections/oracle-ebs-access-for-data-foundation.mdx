@@ -14,7 +14,7 @@ PlaidCloud liest Daten ausschließlich. Niemand sendet ein Kennwort per E-Mail.
 
 ## Zugriffsanfrage senden
 
-Wählen Sie auf der Registerkarte **Foundation** des Projekts unter **Oracle-E-Business-Suite-Verbindung** die Option **Neue Verbindung erstellen**. Das Formular zeigt die vollständige Anfrage und einen Link **PlaidLink einrichten**. Klicken Sie auf **Anfrage kopieren**, um sie in Ihre eigene Nachricht einzufügen, oder auf **Anfrage per E-Mail senden**, um sie in Ihrem E-Mail-Programm mit dem Betreff „Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink)“ zu öffnen.
+Wählen Sie auf der Seite **Systeme** des Projekts, unter **Data Foundation** in **Startseite**, unter **System hinzufügen** im Feld **System** Ihr System aus und klicken Sie auf **Noch keinen Zugang?**. Das System wartet dann auf den Zugang, und es wird eine Anfrage angezeigt, die alle Systeme des Projekts abdeckt. Klicken Sie auf **Anfrage kopieren**, um sie in Ihre eigene Nachricht einzufügen, oder auf **Anfrage per E-Mail senden**, um sie in Ihrem E-Mail-Programm mit dem Betreff „Zugang zu PlaidCloud“ zu öffnen.
 
 ## Was der EBS-Administrator einrichtet
 
@@ -22,19 +22,28 @@ Wählen Sie auf der Registerkarte **Foundation** des Projekts unter **Oracle-E-B
 
 1. **Installieren Sie PlaidLink** auf einem Server, der die EBS-Datenbank erreichen kann, und registrieren Sie es in PlaidCloud.
 
-2. **Erteilen Sie SELECT** an den APPS-Schema-Benutzer von PlaidLink (oder einen schreibgeschützten Schema-Benutzer mit Synonymen auf die APPS-Objekte) für:
+2. **Erstellen Sie einen schreibgeschützten Datenbankbenutzer** für PlaidLink, nie APPS oder einen anderen Schema-Benutzer, der Daten ändern kann. Erteilen Sie ihm diese Rechte, jeweils mit einem gleichnamigen Synonym auf das APPS-Objekt, und zwar SELECT, sofern die Tabelle nichts anderes angibt:
 
    | Bereich | Objekte |
    |---|---|
-   | Hauptbuch | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | Sitzung (erforderlich) | EXECUTE auf `FND_GLOBAL` und `MO_GLOBAL`; `FND_RESPONSIBILITY_VL`; und `FND_USER` oder eine gleichnamige Ansicht darauf, die nur `USER_ID`, `USER_NAME`, `EMPLOYEE_ID` und `DESCRIPTION` enthält. Ohne sie schlägt jeder Lesevorgang fehl |
+   | Hauptbuch | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES`. `GL_BALANCES` muss jede Periode enthalten, nicht nur die letzte: Es ist der Monatsendsaldo, mit dem das Hauptbuch verglichen wird |
    | Flexfields | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
    | Verkauf (optional) | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+   | Journalgenehmiger (optional) | `GL_JE_BATCHES` |
+   | Land der Entität (optional) | `XLE_REGISTRATIONS`, `HZ_LOCATIONS` |
+   | Forderungen, Verbindlichkeiten, Banksalden und Lieferantenrechnungen (optional) | `AR_PAYMENT_SCHEDULES_ALL`, `AR_CASH_RECEIPTS_ALL`, `AR_RECEIVABLE_APPLICATIONS_ALL`, `AR_ADJUSTMENTS_ALL`, `AR_RECEIPT_METHODS`, `RA_TERMS_TL`, `CE_BANK_ACCOUNTS`, `AP_INVOICES_ALL`, `AP_INVOICE_LINES_ALL`, `AP_INVOICE_DISTRIBUTIONS_ALL`, `AP_PAYMENT_SCHEDULES_ALL`, `AP_INVOICE_PAYMENTS_ALL`, `AP_CHECKS_ALL`, `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL`, `PO_HEADERS_ALL`, `PO_LINES_ALL`, `MTL_ITEM_CATEGORIES`, `MTL_CATEGORIES_B` |
+   | Einkauf, Lagerbestand, Budgets, Standardkosten und Anlagen (optional) | `PO_LINE_LOCATIONS_ALL`, `PO_DISTRIBUTIONS_ALL`, `RCV_TRANSACTIONS`, `ORG_ORGANIZATION_DEFINITIONS`, `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES`, `CST_STANDARD_COSTS`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS`, `FA_ADDITIONS_B`, `FA_ADDITIONS_TL`, `FA_CATEGORIES_B`, `FA_BOOK_CONTROLS`, `FA_BOOKS`, `FA_CATEGORY_BOOKS`, `FA_DISTRIBUTION_HISTORY`, `FA_DEPRN_PERIODS`, `FA_DEPRN_SUMMARY`, `FA_RETIREMENTS`, `FA_TRANSACTION_HEADERS` |
 
-3. **Benennen Sie einen Anwendungsbenutzer** (`FND_USER`) und eine Verantwortlichkeit, die jedes Ledger und jeden Balancing-Segment-Wert sehen kann, über die Sie berichten möchten.
+   Der Lagerbestand wird aus den Materialbewegungen gelesen; für seine Historie müssen diese daher aufbewahrt werden. Budgets sind die Budgetsalden in `GL_BALANCES`.
+
+3. **Benennen Sie einen Anwendungsbenutzer** (`FND_USER`) und eine Abfrageverantwortlichkeit, die nur anzeigen kann und die jedes Ledger und jeden Balancing-Segment-Wert sehen kann, über die Sie berichten möchten.
 
 4. **Beschreiben Sie den Kontenplan.** Geben Sie an, welche Segmente das Balancing-Segment, das natürliche Konto, die Kostenstelle und das Intercompany-Segment sind (ihre Segmentqualifizierer). PlaidCloud typisiert ein Aufwandskonto als Herstellungskosten der verkauften Waren, wenn es selbst oder ein übergeordneter Wert darüber als Cost of Goods Sold, Cost of Sales oder Cost of Revenue beschrieben ist. Ein Konto typisiert es als nicht betrieblich, wenn eine der Beschreibungen Zinserträge oder -aufwendungen, Finanzerträge oder -kosten, Fremdwährung, Ertragsteueraufwand oder sonstige Erträge und Aufwendungen nennt. Teilen Sie PlaidCloud mit, wenn Ihre übergeordneten Werte andere Begriffe dafür verwenden.
 
-5. **Bestätigen Sie die Kurstypen.** Jedes primäre Ledger nennt seine Kurstypen für den Periodendurchschnitt und das Periodenende in den Umrechnungsoptionen des Ledgers. PlaidCloud rechnet mit den Tageskursen dieser beiden Typen um.
+5. **Benennen Sie die Standort- und Profitcenter-Segmente**, wenn Sie Standorte oder Profitcenter in einem Segment des Kontenplans führen (`SEGMENT1` bis `SEGMENT30`). EBS hat für keines davon einen Qualifizierer. PlaidCloud liest die Werte der Wertemenge jedes Segments als Standort- und Profitcenter-Listen.
+
+6. **Bestätigen Sie die Kurstypen.** Jedes primäre Ledger nennt seine Kurstypen für den Periodendurchschnitt und das Periodenende in den Umrechnungsoptionen des Ledgers. PlaidCloud rechnet mit den Tageskursen dieser beiden Typen um.
 
 </Steps>
 
@@ -46,24 +55,24 @@ Die falsche Verantwortlichkeit liefert ohne Fehlermeldung die Zeilen eines ander
 
 | Der Administrator sendet | Eingabe in PlaidCloud als |
 |---|---|
-| Den Datenbank-Host | **Datenbank-Host** |
-| Den Datenbankport | **Datenbankport** (1521, sofern Sie ihn nicht ändern) |
+| Den Datenbank-Host | **Host oder IP-Adresse** |
+| Den Datenbankport | **Port** (1521, sofern Sie ihn nicht ändern) |
 | Den Dienstnamen | **Dienstname** |
-| Den APPS-Schema-Benutzer | **APPS-Schema-Benutzer** |
-| Das APPS-Schema-Kennwort über das sichere Verbindungsformular | **APPS-Schema-Kennwort**, das Ihr Team selbst einfügt |
-| Den `FND_USER` | **Anwendungsbenutzer (FND_USER)** |
-| Den Schlüssel der Verantwortlichkeit | **Schlüssel der Verantwortlichkeit** |
-| Die Balancing-Segment-Werte, die PlaidCloud lesen darf | Unter **Balancing-Segment-Werte**, die das System vor einem Ladevorgang nicht auflisten kann: Geben Sie unter **Name** einen Wert ein oder lassen Sie das Feld leer, um jede Entität des primären Ledgers zu laden |
+| Den schreibgeschützten Datenbankbenutzer | **Datenbankbenutzer (APPS-Schema)** |
+| Sein Kennwort über das sichere Verbindungsformular | **Kennwort**, das Ihr Team selbst eingibt |
+| Den `FND_USER` | **Anwendungsbenutzer (FND_USER.USER_NAME)** |
+| Den Schlüssel der Verantwortlichkeit | **Verantwortlichkeitsschlüssel (FND_RESPONSIBILITY.RESPONSIBILITY_KEY)** |
+| Die Balancing-Segment-Werte, die PlaidCloud lesen darf | Unter **Optionen**, **Gesellschaften**, die EBS nicht auflisten kann: Geben Sie die Werte durch Kommas getrennt ein oder lassen Sie das Feld leer, um jede Entität jedes primären Ledgers zu laden |
 
-Der PlaidLink-Agent, der die Instanz erreicht, wird in den Systemeinstellungen als `agent` ausgewählt.
+Der PlaidLink-Agent, der die Instanz erreicht, wird in der Systemeinstellung **PlaidLink agent** angegeben. Die Standort- und Profitcenter-Segmente kommen in die Systemeinstellungen **Site segment** und **Profit centre segment**.
 
 <Aside type="caution">
-Senden Sie das Kennwort nie per E-Mail. **APPS-Schema-Kennwort** ist ein Geheimnis: Es wird in der Verbindung gespeichert und nie wieder angezeigt.
+Senden Sie das Kennwort nie per E-Mail. **Kennwort** ist ein Geheimnis: Es wird in der Verbindung gespeichert und nie wieder angezeigt.
 </Aside>
 
 ## Zugriff prüfen
 
-Geben Sie in PlaidCloud die Werte ein und klicken Sie auf **Verbindung testen**. Jedes Dataset wird als **Lesbar**, **Fehlende Berechtigung** oder **Fehler** angezeigt:
+Klicken Sie danach in PlaidCloud, sobald das System hinzugefügt ist, in seiner Zeile auf der Seite **Systeme** auf **Verbindung testen**. Da EBS über den PlaidLink-Agent erreicht wird, prüft der Test, ob die Verbindung alles angibt, womit sich der Agent anmeldet. Die Tabellen selbst werden beim ersten Laden gelesen, und eine Tabelle, die der Agent nicht lesen darf, wird dann genannt. Jedes Dataset liest:
 
 | Dataset | Objekte, die es liest |
 |---|---|
@@ -77,8 +86,19 @@ Geben Sie in PlaidCloud die Werte ein und klicken Sie auf **Verbindung testen**.
 | Kunden | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES` (optional) |
 | Produkte | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` (optional) |
 | Verkaufspositionen | Die `RA_CUSTOMER_TRX`-Tabellen (optional) |
+| Monatsendsaldo | `GL_BALANCES`, jede Periode (optional) |
+| Banksalden | `CE_BANK_ACCOUNTS`, mit dem Monatsendsaldo des Kassenkontos jeder Bank (optional) |
+| Standorte, Profitcenter | Die Werte des Segments, das Sie jeweils angeben (optional) |
+| Lieferanten | `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL` (optional) |
+| Offene Posten, Zahlungen | Die Forderungs-, Verbindlichkeits- und Banktabellen (optional) |
+| Lieferantenrechnungspositionen | `AP_INVOICE_LINES_ALL`, mit den Kreditorenbelegen (optional) |
+| Bestellungen | Die `PO_`-Tabellen, `RCV_TRANSACTIONS` und die Rechnungspositionen (optional) |
+| Lagerbestände | `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES` (optional) |
+| Standardkosten | `CST_STANDARD_COSTS` (optional) |
+| Budget | Budgetsalden in `GL_BALANCES`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS` (optional) |
+| Anlagen, Anlagenbewegungen | Die `FA_`-Tabellen (optional) |
 
-Zeigt ein Dataset **Fehlende Berechtigung**, bitten Sie den Administrator, SELECT auf die Objekte zu erteilen, und testen Sie erneut. Kunden, Produkte und Verkaufspositionen sind optional: Eine Instanz, die sie nicht verwendet, lädt trotzdem alles andere.
+Nennt ein Ladevorgang eine Tabelle, die der Agent nicht lesen darf, bitten Sie den Administrator, SELECT darauf zu erteilen, und laden Sie erneut. Eine optionale Tabelle, für die Sie kein Recht erteilen, führt zu einer Warnung, die sie nennt, und alles andere wird geladen. Offene Posten, Zahlungen, Lieferantenrechnungen, Bestellungen, Standardkosten, Lagerbestand, Budgets, Anlagen sowie Monatsend- und Banksalden behalten die Zeilen, die sie bereits hatten, bis die Tabelle gelesen werden kann.
 
 ## Verwandte Themen
 

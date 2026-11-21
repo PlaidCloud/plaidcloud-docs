@@ -1,0 +1,70 @@
+---
+title: Data Foundation With an MCP-Connected AI Agent
+description: Have an AI agent connected over MCP read where a Data Foundation project stands, explain a figure of its statements, draft the month-end commentary and answer its questions, or do the same through the REST API.
+sidebar:
+  label: Data Foundation for Agents
+  order: 11
+---
+
+Once you've [connected an AI agent to your workspace over the Model Context Protocol (MCP)](../getting-started/), it can work with a [Data Foundation](/guides/projects/data-foundation/) project through two tools you may already use: `project_describe` reads where the project stands and explains its figures, and `project_upsert` answers its questions. Weave AI chat in PlaidCloud reads the same status: see [Weave AI Chat: Data Foundation](/guides/ai-assistant/weave-tab/#data-foundation).
+
+## Read Where a Project Stands
+
+`project_describe(project_id=..., include=['foundation'])` adds a `foundation` entry to the project. For a project without Data Foundation, `foundation` is `null`.
+
+| Field | What it holds |
+|---|---|
+| `run_state`, `warned` | Whether a run is in progress, and whether the last load ended with a warning. |
+| `systems` | Each system the project reads or has named, with its `state` (`waiting_for_access`, `connected`, `loading`, `loaded` or `failed`), how it signs in, and when it last loaded. The request to send for a waiting system's access is in `access_request`, and `GET /systems/access-request` gives one for every system. |
+| `questions` | How many questions wait for an answer, and up to 50 of them, each with its `id` and the `suggested` answer. |
+| `upkeep` | What the project needs from someone now, each as a sentence with an `action`: questions waiting, systems waiting for access, failed or overdue, red assurances, and closed months a system has changed. It also lists the new codes the last load handled without asking, with no action. |
+| `starter_questions` | Questions to ask about the project, once a month has loaded. |
+| `differences` | When **In balance with each system** or **The group adds up** is red: up to the 10 latest items of each, with the accounts and documents responsible, what clears each item and who does it. |
+| `group` | The group's reporting currency and the month its fiscal year starts. |
+| `access_request` | For each system the project names, the request to send its administrator for the access it reads with. |
+
+`questions` is `null` for a caller with read-only access to the project, and `upkeep` then leaves the questions out. While the project's install is still building, `foundation` holds only the install's progress (`install`), the project's link, `installing` and a `run_state` of `running`; polled with a `progress_id`, the answer is only `{project_id, install}` until `install.state` is `done` (see [Create a Project From a Template](#create-a-project-from-a-template)).
+
+## Explain a Figure
+
+Add `explain` to the same call to explain a line of the statements:
+
+- `explain={'line': 'revenue', 'period': '2026-06'}` returns `explained`: the line's amount, and the lines, entities and accounts it is made of, each list largest first and adding up to the line, with the 10 largest ledger documents behind it. Each line, entity or account part has an `address`, the link that explains that part alone; the eliminations part, and the *Other lines (n)*, *Other entities (n)*, *Other accounts (n)* and *Rounding* parts, have none.
+- Add `'span': 'ytd'` for the fiscal year to that month; a balance sheet line, such as `total_assets`, ignores it and reads the month. Narrow it with `entity`, `account`, `source_system` and the other selections of the statements.
+- Add `'against': '2026-05'` for why the line moved since that month: each part then has its `amount`, `before` and `change`, largest change first.
+- `explain={'commentary': '2026-06'}` returns `commentary`, a draft month-end commentary: revenue, gross margin, EBITDA and net income for the month and the fiscal year to it, against the budget and the same month a year earlier. Give `null` as the month for the latest one. It is always a draft, to check before use.
+
+The `line` is a line key of the statements, such as `revenue`, `gross_margin`, `ebitda`, `operating_profit`, `net_income` or `total_assets`. A line the statements don't have, a month not written `YYYY-MM`, or a key `explain` doesn't take is refused with a message naming it. Every figure follows the caller's row access.
+
+## Answer the Questions
+
+`project_upsert(project_id=..., spec={}, answers=[{'id': ..., 'value': ...}])` answers a project's questions, using the `id` from `questions`. Add `accept_all_suggested=True` to accept every suggested answer you don't give yourself. Answers need edit access to the project, apply at the next **Load** or **Apply changes**, and are recorded in the project's history.
+
+The whole batch is checked first: if one answer isn't valid, nothing is written. `dry_run=True` counts the answers you give in `answers`, and says whether every suggested one would be accepted too, without checking or writing them. Answers go to an existing project only: with them, `spec` must be empty and `template` left out.
+
+## Create a Project From a Template
+
+`project_upsert(spec={'name': ...}, template=...)` installs a Data Foundation template as a new private project in the background. It uses the `memo` and `lakehouse_id` in `spec` when you give them. Poll `project_describe(include=['foundation'], progress_id=...)` with the `progress_id` it returns. Until `install.state` is `done` the answer is only `{project_id, install}`; once the project names its systems, `foundation.access_request` holds the request for each one's administrator.
+
+## Through the REST API
+
+The same project is available over the REST API under `/rest/v1/analyze/foundation/{project_id}`. Reading needs the `analyze.project.read` role, and changing it `analyze.project.write`. `GET /questions` also needs edit access to the project, and refuses a caller with read-only access.
+
+| Endpoint | What it does |
+|---|---|
+| `GET /systems` | The systems the project reads or has named, each with its state. |
+| `POST /systems` | Names systems (`{"systems": [{"type": ..., "connection_id": ...}]}`). A system given a connection that signs in with credentials or through an on-premise agent is attached and loaded at once. One that signs in by consent and has no connection gets one made, and its row carries an `authorize_url` where someone approves the access in the system's own sign-in, so no password is sent to PlaidCloud. |
+| `POST /systems/attach` | After that approval, attaches and loads each consent system just approved. A system that can't be attached yet stays waiting, and its row says why. |
+| `DELETE /systems/{key}` | Takes a system off: removes one still waiting, deleting a connection made for it, or detaches an attached one. |
+| `GET /systems/access-request` | One request for the access every system of the project needs. |
+| `POST /load` | Starts **Load**, or **Apply changes** with the query parameter `pull=false`. With `{"system": ...}`, a key from `GET /systems`, only that system is read; the model is still brought up to date over every system's rows. |
+| `GET /questions` | The questions waiting for an answer, grouped, each with the suggested answer and the evidence for it. |
+| `POST /questions/answers` | Gives answers (`{"answers": [{"id": ..., "value": ...}]}`), or accepts every suggested one (`"accept_all_suggested": true`). |
+| `GET /summary` | The **Summary** page: where the project stands, the five assurances, how fresh each system is, the months closed, and the starter questions. |
+| `POST /close` | Closes every entity, or those named, through a month (`{"through": "2026-06", "entities": []}`). |
+| `POST /close/accept-change` | Takes what a system now holds for a closed month it changed (`{"system": ..., "entity": ..., "period": ...}`). |
+| `GET /history` | Who answered, matched, closed, restated or changed what, newest first, 200 entries a page; pass `next_cursor` as `cursor` for the next. `GET /history.xlsx` downloads it all. |
+| `GET /reports` | The project's dashboards, each with its link. |
+| `GET /explain` | What makes up a line of the statements, with `line`, `period` and the selections above as query parameters. `GET /explain.xlsx` downloads every ledger document behind it. In an Enterprise Profitability project, `cogs`, `opex` and `operating_margin` are explained by the model's layers for one entity. |
+
+Naming a system with a connection needs access to that connection, and having a connection made for it, or attaching it after approval, needs the `analyze.connection.write` role. Answering questions, naming or removing systems, and closing a month need edit access to the project; closing a month, or accepting a change to a closed one, needs a Manager or Architect of the project. Loading, removing a system, closing a month or accepting a change while a run holds the project is refused with `409` and `run_locked`.

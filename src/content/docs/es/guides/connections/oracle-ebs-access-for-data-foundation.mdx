@@ -14,7 +14,7 @@ PlaidCloud solo lee datos. Nadie envía una contraseña por correo electrónico.
 
 ## Enviar la solicitud de acceso
 
-En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** en **Conexión de Oracle E-Business Suite**. El formulario muestra la solicitud completa y un enlace **How to set up PlaidLink**. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto "Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink)."
+En la página **Sistemas** del proyecto, en **Data Foundation** dentro de **Inicio**, elija su sistema en **Sistema**, en **Agregar un sistema**, y haga clic en **¿Aún no tiene acceso?**. El sistema queda a la espera de acceso y se muestra una única solicitud que abarca los sistemas del proyecto. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto “Acceso para PlaidCloud”.
 
 ## Qué configura el administrador de EBS
 
@@ -22,19 +22,28 @@ En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** 
 
 1. **Instale PlaidLink** en un servidor que pueda llegar a la base de datos de EBS y regístrelo en PlaidCloud.
 
-2. **Conceda SELECT** al usuario del esquema APPS de PlaidLink (o a un usuario de esquema de solo lectura con sinónimos de los objetos de APPS) sobre:
+2. **Cree un usuario de base de datos de solo lectura** para PlaidLink, nunca APPS ni ningún otro usuario de esquema que pueda modificar datos. Concédale estos permisos, cada uno con un sinónimo del mismo nombre que apunte al objeto de APPS, SELECT salvo que la tabla indique otra cosa:
 
    | Área | Objetos |
    |---|---|
-   | General Ledger | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | Sesión (obligatorio) | EXECUTE sobre `FND_GLOBAL` y `MO_GLOBAL`; `FND_RESPONSIBILITY_VL`; y `FND_USER`, o una vista de él con ese nombre que contenga solo `USER_ID`, `USER_NAME`, `EMPLOYEE_ID` y `DESCRIPTION`. Sin ellos, todas las lecturas fallan |
+   | General Ledger | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES`. `GL_BALANCES` debe contener todos los períodos, no solo el más reciente: es el saldo de cierre de mes con el que se compara el libro mayor |
    | Flexfields | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
    | Ventas (opcional) | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+   | Aprobador de asientos (opcional) | `GL_JE_BATCHES` |
+   | País de la entidad (opcional) | `XLE_REGISTRATIONS`, `HZ_LOCATIONS` |
+   | Cuentas por cobrar, cuentas por pagar, saldos bancarios y facturas de proveedores (opcional) | `AR_PAYMENT_SCHEDULES_ALL`, `AR_CASH_RECEIPTS_ALL`, `AR_RECEIVABLE_APPLICATIONS_ALL`, `AR_ADJUSTMENTS_ALL`, `AR_RECEIPT_METHODS`, `RA_TERMS_TL`, `CE_BANK_ACCOUNTS`, `AP_INVOICES_ALL`, `AP_INVOICE_LINES_ALL`, `AP_INVOICE_DISTRIBUTIONS_ALL`, `AP_PAYMENT_SCHEDULES_ALL`, `AP_INVOICE_PAYMENTS_ALL`, `AP_CHECKS_ALL`, `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL`, `PO_HEADERS_ALL`, `PO_LINES_ALL`, `MTL_ITEM_CATEGORIES`, `MTL_CATEGORIES_B` |
+   | Compras, existencias, presupuestos, costos estándar y activos fijos (opcional) | `PO_LINE_LOCATIONS_ALL`, `PO_DISTRIBUTIONS_ALL`, `RCV_TRANSACTIONS`, `ORG_ORGANIZATION_DEFINITIONS`, `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES`, `CST_STANDARD_COSTS`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS`, `FA_ADDITIONS_B`, `FA_ADDITIONS_TL`, `FA_CATEGORIES_B`, `FA_BOOK_CONTROLS`, `FA_BOOKS`, `FA_CATEGORY_BOOKS`, `FA_DISTRIBUTION_HISTORY`, `FA_DEPRN_PERIODS`, `FA_DEPRN_SUMMARY`, `FA_RETIREMENTS`, `FA_TRANSACTION_HEADERS` |
 
-3. **Indique un usuario de aplicación** (`FND_USER`) y una responsabilidad que pueda ver todos los libros y valores del segmento de equilibrio que desee informar.
+   Las existencias se leen a partir de las transacciones de materiales, por lo que su historial requiere que estas se conserven. Los presupuestos son los saldos presupuestarios de `GL_BALANCES`.
+
+3. **Indique un usuario de aplicación** (`FND_USER`) y una responsabilidad de consulta (una que solo permita ver) que pueda ver todos los libros y valores del segmento de equilibrio que desee informar.
 
 4. **Describa el plan de cuentas.** Indique qué segmentos son el segmento de equilibrio, la cuenta natural, el centro de costos y el segmento intercompañía (sus calificadores de segmento). PlaidCloud clasifica una cuenta de gastos como costo de los productos vendidos cuando ella o un valor padre por encima de ella se describe como costo de los productos vendidos, costo de ventas o costo de ingresos. Clasifica una cuenta como no operativa cuando alguno de ellos nombra ingresos o gastos por intereses, ingresos o costos financieros, moneda extranjera, gasto por impuesto sobre la renta, u otros ingresos y gastos. Avise a PlaidCloud si sus valores padre usan otras palabras para esto.
 
-5. **Confirme los tipos de tipo de cambio.** Cada libro principal nombra sus tipos de cambio de promedio del período y de cierre del período en las opciones de conversión del libro. PlaidCloud convierte con los tipos de cambio diarios de esos dos tipos.
+5. **Indique los segmentos de sitio y de centro de beneficio**, si mantiene los sitios o los centros de beneficio en un segmento del plan de cuentas (`SEGMENT1` a `SEGMENT30`). EBS no tiene ningún calificador para ninguno de ellos. PlaidCloud lee los valores del conjunto de valores de cada segmento como las listas de sitios y de centros de beneficio.
+
+6. **Confirme los tipos de tipo de cambio.** Cada libro principal nombra sus tipos de cambio de promedio del período y de cierre del período en las opciones de conversión del libro. PlaidCloud convierte con los tipos de cambio diarios de esos dos tipos.
 
 </Steps>
 
@@ -46,24 +55,24 @@ Una responsabilidad incorrecta devuelve las filas de otro libro sin ningún erro
 
 | El administrador envía | Se introduce en PlaidCloud como |
 |---|---|
-| El host de la base de datos | **Database host** |
-| El puerto de la base de datos | **Puerto de la base de datos** (1521, salvo que lo cambie) |
+| El host de la base de datos | **Host o dirección IP** |
+| El puerto de la base de datos | **Puerto** (1521, salvo que lo cambie) |
 | El nombre del servicio | **Nombre del servicio** |
-| El usuario del esquema APPS | **APPS schema user** |
-| La contraseña del esquema APPS, mediante el formulario de conexión seguro | **APPS schema password**, que su equipo pega por sí mismo |
-| El `FND_USER` | **Application user (FND_USER)** |
-| La clave de responsabilidad | **Responsibility key** |
-| Los valores del segmento de equilibrio que PlaidCloud puede leer | En **Balancing segment values**, que el sistema no puede listar antes de una carga: introduzca un valor en **Nombre**, o déjelo en blanco para cargar todas las entidades del libro principal |
+| El usuario de base de datos de solo lectura | **Usuario de base de datos (esquema APPS)** |
+| Su contraseña, mediante el formulario de conexión seguro | **Contraseña**, que su equipo introduce por sí mismo |
+| El `FND_USER` | **Usuario de la aplicación (FND_USER.USER_NAME)** |
+| La clave de responsabilidad | **Clave de responsabilidad (FND_RESPONSIBILITY.RESPONSIBILITY_KEY)** |
+| Los valores del segmento de equilibrio que PlaidCloud puede leer | En **Opciones**, **Empresas**, que EBS no puede listar: introduzca los valores, separados por comas, o deje el campo vacío para cargar todas las entidades de cada libro principal |
 
-El agente de PlaidLink que llega a la instancia se elige en la configuración del sistema como `agent`.
+El agente de PlaidLink que llega a la instancia se indica en el ajuste del sistema **PlaidLink agent**. Los segmentos de sitio y de centro de beneficio se indican en los ajustes del sistema **Site segment** y **Profit centre segment**.
 
 <Aside type="caution">
-No envíe nunca la contraseña por correo electrónico. **APPS schema password** es un secreto: se almacena en la conexión y no se vuelve a mostrar.
+No envíe nunca la contraseña por correo electrónico. **Contraseña** es un secreto: se almacena en la conexión y no se vuelve a mostrar.
 </Aside>
 
 ## Comprobar el acceso
 
-De vuelta en PlaidCloud, introduzca los valores y haga clic en **Probar conexión**. Cada conjunto de datos se muestra como **Legible**, **Falta un permiso** o **Error**:
+De vuelta en PlaidCloud, una vez agregado el sistema, haga clic en **Probar conexión** en su fila de la página **Sistemas**. Como a EBS se accede mediante el agente de PlaidLink, la prueba comprueba que la conexión indica todo aquello con lo que el agente inicia sesión. Las propias tablas se leen en la primera carga, y es entonces cuando se indica cualquier tabla que el agente no tenga permiso para leer. Cada conjunto de datos lee:
 
 | Conjunto de datos | Objetos que lee |
 |---|---|
@@ -77,8 +86,19 @@ De vuelta en PlaidCloud, introduzca los valores y haga clic en **Probar conexió
 | Clientes | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES` (opcional) |
 | Productos | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` (opcional) |
 | Líneas de ventas | Las tablas `RA_CUSTOMER_TRX` (opcional) |
+| Saldo de cierre de mes | `GL_BALANCES`, todos los períodos (opcional) |
+| Saldos bancarios | `CE_BANK_ACCOUNTS`, con el saldo de cierre de mes de la cuenta de efectivo de cada banco (opcional) |
+| Sitios, Centros de beneficio | Los valores del segmento que indique para cada uno (opcional) |
+| Proveedores | `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL` (opcional) |
+| Partidas abiertas, Pagos | Las tablas de cuentas por cobrar, cuentas por pagar y bancos (opcional) |
+| Líneas de facturas de proveedores | `AP_INVOICE_LINES_ALL`, con los documentos de cuentas por pagar (opcional) |
+| Órdenes de compra | Las tablas `PO_`, `RCV_TRANSACTIONS` y las líneas de facturas (opcional) |
+| Saldos de inventario | `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES` (opcional) |
+| Costos estándar | `CST_STANDARD_COSTS` (opcional) |
+| Presupuesto | Saldos presupuestarios de `GL_BALANCES`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS` (opcional) |
+| Activos fijos, Movimientos de activos | Las tablas `FA_` (opcional) |
 
-Cuando un conjunto de datos muestra **Falta un permiso**, pida al administrador que conceda SELECT sobre los objetos y vuelva a probar. Los clientes, los productos y las líneas de ventas son opcionales: una instancia que no los usa carga igualmente todo lo demás.
+Cuando una carga indica una tabla que el agente no tiene permiso para leer, pida al administrador que conceda SELECT sobre ella y vuelva a cargar. Una tabla opcional que no conceda genera una advertencia que la indica, y todo lo demás se carga. Las partidas abiertas, los pagos, las facturas de proveedores, las órdenes de compra, los costos estándar, el inventario, los presupuestos, los activos y los saldos de cierre de mes y bancarios conservan las filas que ya tenían hasta que se pueda leer la tabla.
 
 ## Relacionado
 

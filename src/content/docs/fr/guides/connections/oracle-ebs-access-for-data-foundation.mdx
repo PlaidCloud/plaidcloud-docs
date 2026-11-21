@@ -14,7 +14,7 @@ PlaidCloud ne fait que lire les données. Personne n'envoie de mot de passe par 
 
 ## Envoyer la demande d'accès
 
-Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexion** sous **Connexion Oracle E-Business Suite**. Le formulaire affiche la demande complète et un lien **How to set up PlaidLink**. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie avec l'objet « Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink) ».
+Dans la page **Systèmes** du projet, sous **Data Foundation** dans **Accueil**, choisissez votre système dans **Système** sous **Ajouter un système**, puis cliquez sur **Vous n’avez pas encore accès ?**. Le système attend l'accès, et une demande unique couvrant les systèmes du projet s'affiche. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie avec l'objet « Accès à PlaidCloud. »
 
 ## Ce que l'administrateur EBS configure
 
@@ -22,19 +22,28 @@ Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexi
 
 1. **Installez PlaidLink** sur un serveur qui peut atteindre la base de données EBS, et enregistrez-le dans PlaidCloud.
 
-2. **Accordez SELECT** à l'utilisateur du schéma APPS de PlaidLink (ou à un utilisateur de schéma en lecture seule disposant de synonymes vers les objets APPS) sur :
+2. **Créez un utilisateur de base de données en lecture seule** pour PlaidLink, jamais APPS ni aucun autre utilisateur de schéma capable de modifier des données. Accordez-lui ces droits, chacun avec un synonyme du même nom vers l'objet APPS, SELECT sauf indication contraire dans le tableau :
 
    | Domaine | Objets |
    |---|---|
-   | Grand livre | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | Session (obligatoire) | EXECUTE sur `FND_GLOBAL` et `MO_GLOBAL` ; `FND_RESPONSIBILITY_VL` ; et `FND_USER`, ou une vue de celui-ci sous ce nom ne contenant que `USER_ID`, `USER_NAME`, `EMPLOYEE_ID` et `DESCRIPTION`. Sans eux, toutes les lectures échouent |
+   | Grand livre | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES`. `GL_BALANCES` doit contenir toutes les périodes, pas seulement la dernière : c'est le solde de fin de mois auquel le grand livre est comparé |
    | Flexfields | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
    | Ventes (facultatif) | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+   | Approbateur des journaux (facultatif) | `GL_JE_BATCHES` |
+   | Pays de l'entité (facultatif) | `XLE_REGISTRATIONS`, `HZ_LOCATIONS` |
+   | Comptes clients, comptes fournisseurs, soldes bancaires et factures fournisseurs (facultatif) | `AR_PAYMENT_SCHEDULES_ALL`, `AR_CASH_RECEIPTS_ALL`, `AR_RECEIVABLE_APPLICATIONS_ALL`, `AR_ADJUSTMENTS_ALL`, `AR_RECEIPT_METHODS`, `RA_TERMS_TL`, `CE_BANK_ACCOUNTS`, `AP_INVOICES_ALL`, `AP_INVOICE_LINES_ALL`, `AP_INVOICE_DISTRIBUTIONS_ALL`, `AP_PAYMENT_SCHEDULES_ALL`, `AP_INVOICE_PAYMENTS_ALL`, `AP_CHECKS_ALL`, `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL`, `PO_HEADERS_ALL`, `PO_LINES_ALL`, `MTL_ITEM_CATEGORIES`, `MTL_CATEGORIES_B` |
+   | Achats, stocks, budgets, coûts standard et immobilisations (facultatif) | `PO_LINE_LOCATIONS_ALL`, `PO_DISTRIBUTIONS_ALL`, `RCV_TRANSACTIONS`, `ORG_ORGANIZATION_DEFINITIONS`, `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES`, `CST_STANDARD_COSTS`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS`, `FA_ADDITIONS_B`, `FA_ADDITIONS_TL`, `FA_CATEGORIES_B`, `FA_BOOK_CONTROLS`, `FA_BOOKS`, `FA_CATEGORY_BOOKS`, `FA_DISTRIBUTION_HISTORY`, `FA_DEPRN_PERIODS`, `FA_DEPRN_SUMMARY`, `FA_RETIREMENTS`, `FA_TRANSACTION_HEADERS` |
 
-3. **Nommez un utilisateur d'application** (`FND_USER`) et une responsabilité qui peut voir tous les registres et toutes les valeurs de segment d'équilibrage que vous voulez inclure dans les rapports.
+   Les stocks sont lus à partir des transactions de matières ; leur historique exige donc que celles-ci soient conservées. Les budgets sont les soldes budgétaires de `GL_BALANCES`.
+
+3. **Nommez un utilisateur d'application** (`FND_USER`) et une responsabilité de consultation, qui ne peut que consulter, capable de voir tous les registres et toutes les valeurs de segment d'équilibrage que vous voulez inclure dans les rapports.
 
 4. **Décrivez le plan comptable.** Indiquez quels segments sont le segment d'équilibrage, le compte naturel, le centre de coûts et le segment intersociétés (leurs qualificatifs de segment). PlaidCloud classe un compte de charges comme coût des marchandises vendues lorsque lui-même ou une valeur parente au-dessus est décrit comme coût des marchandises vendues, coût des ventes ou coût des revenus. Il classe un compte comme hors exploitation lorsque l'un d'eux nomme des produits ou charges d'intérêts, des produits ou coûts financiers, le change, la charge d'impôt sur le revenu, ou d'autres produits et charges. Indiquez-le à PlaidCloud si vos valeurs parentes emploient d'autres termes pour ces notions.
 
-5. **Confirmez les types de taux.** Chaque registre principal nomme ses types de taux moyen de période et de fin de période, dans les options de conversion du registre. PlaidCloud effectue la conversion avec les taux journaliers de ces deux types.
+5. **Nommez les segments de site et de centre de profit**, si vous gérez les sites ou les centres de profit dans un segment du plan comptable (`SEGMENT1` à `SEGMENT30`). EBS n'a de qualificatif pour aucun des deux. PlaidCloud lit les valeurs du jeu de valeurs de chaque segment comme listes des sites et des centres de profit.
+
+6. **Confirmez les types de taux.** Chaque registre principal nomme ses types de taux moyen de période et de fin de période, dans les options de conversion du registre. PlaidCloud effectue la conversion avec les taux journaliers de ces deux types.
 
 </Steps>
 
@@ -46,24 +55,24 @@ Une responsabilité inadaptée renvoie les lignes d'un autre registre sans aucun
 
 | L'administrateur envoie | Saisi dans PlaidCloud comme |
 |---|---|
-| L'hôte de la base de données | **Hôte de la base de données** |
-| Le port de la base de données | **Port de la base de données** (1521 sauf modification) |
+| L'hôte de la base de données | **Hôte ou adresse IP** |
+| Le port de la base de données | **Port** (1521 sauf modification) |
 | Le nom du service | **Nom du service** |
-| L'utilisateur du schéma APPS | **APPS schema user** |
-| Le mot de passe du schéma APPS, via le formulaire de connexion sécurisé | **APPS schema password**, que votre équipe colle elle-même |
-| Le `FND_USER` | **Application user (FND_USER)** |
-| La clé de responsabilité | **Responsibility key** |
-| Les valeurs de segment d'équilibrage que PlaidCloud peut lire | Sous **Balancing segment values**, que le système ne peut pas lister avant un chargement : saisissez une valeur sous **Nom**, ou laissez vide pour charger toutes les entités du registre principal |
+| L'utilisateur de base de données en lecture seule | **Utilisateur de la base de données (schéma APPS)** |
+| Son mot de passe, via le formulaire de connexion sécurisé | **Mot de passe**, que votre équipe saisit elle-même |
+| Le `FND_USER` | **Utilisateur applicatif (FND_USER.USER_NAME)** |
+| La clé de responsabilité | **Clé de responsabilité (FND_RESPONSIBILITY.RESPONSIBILITY_KEY)** |
+| Les valeurs de segment d'équilibrage que PlaidCloud peut lire | Sous **Options**, **Sociétés**, qu'EBS ne peut pas lister : saisissez les valeurs, séparées par des virgules, ou laissez vide pour charger toutes les entités de chaque registre principal |
 
-L'agent PlaidLink qui atteint l'instance se choisit dans les paramètres système sous `agent`.
+L'agent PlaidLink qui atteint l'instance est indiqué dans le paramètre système **PlaidLink agent**. Les segments de site et de centre de profit se renseignent dans les paramètres système **Site segment** et **Profit centre segment**.
 
 <Aside type="caution">
-N'envoyez jamais le mot de passe par e-mail. **APPS schema password** est un secret : il est stocké dans la connexion et jamais affiché de nouveau.
+N'envoyez jamais le mot de passe par e-mail. **Mot de passe** est un secret : il est stocké dans la connexion et jamais affiché de nouveau.
 </Aside>
 
 ## Vérifier l'accès
 
-De retour dans PlaidCloud, saisissez les valeurs et cliquez sur **Tester la connexion**. Chaque jeu de données s'affiche comme **Lisible**, **Autorisation manquante** ou **Erreur** :
+De retour dans PlaidCloud, une fois le système ajouté, cliquez sur **Tester la connexion** sur sa ligne dans la page **Systèmes**. Comme EBS est atteint via l'agent PlaidLink, le test vérifie que la connexion nomme tout ce avec quoi l'agent se connecte. Les tables elles-mêmes sont lues au premier chargement, et une table que l'agent n'est pas autorisé à lire est alors nommée. Chaque jeu de données lit :
 
 | Jeu de données | Objets qu'il lit |
 |---|---|
@@ -77,8 +86,19 @@ De retour dans PlaidCloud, saisissez les valeurs et cliquez sur **Tester la conn
 | Clients | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES` (facultatif) |
 | Produits | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` (facultatif) |
 | Lignes de vente | Les tables `RA_CUSTOMER_TRX` (facultatif) |
+| Solde de fin de mois | `GL_BALANCES`, toutes les périodes (facultatif) |
+| Soldes bancaires | `CE_BANK_ACCOUNTS`, avec le solde de fin de mois du compte de trésorerie de chaque banque (facultatif) |
+| Sites, Centres de profit | Les valeurs du segment que vous nommez pour chacun (facultatif) |
+| Fournisseurs | `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL` (facultatif) |
+| Postes ouverts, Paiements | Les tables des comptes clients, des comptes fournisseurs et des banques (facultatif) |
+| Lignes de factures fournisseurs | `AP_INVOICE_LINES_ALL`, avec les documents fournisseurs (facultatif) |
+| Bons de commande | Les tables `PO_`, `RCV_TRANSACTIONS` et les lignes de facture (facultatif) |
+| Soldes de stock | `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES` (facultatif) |
+| Coûts standard | `CST_STANDARD_COSTS` (facultatif) |
+| Budget | Soldes budgétaires de `GL_BALANCES`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS` (facultatif) |
+| Immobilisations, Mouvements d'immobilisations | Les tables `FA_` (facultatif) |
 
-Lorsqu'un jeu de données affiche **Autorisation manquante**, demandez à l'administrateur d'accorder SELECT sur les objets, puis testez à nouveau. Les clients, les produits et les lignes de vente sont facultatifs : une instance qui ne les utilise pas charge tout le reste.
+Lorsqu'un chargement nomme une table que l'agent n'est pas autorisé à lire, demandez à l'administrateur d'accorder SELECT sur celle-ci, puis relancez le chargement. Une table facultative que vous n'accordez pas donne un avertissement qui la nomme, et tout le reste est chargé. Les postes ouverts, les paiements, les factures fournisseurs, les bons de commande, les coûts standard, les stocks, les budgets, les immobilisations ainsi que les soldes de fin de mois et bancaires conservent les lignes qu'ils avaient déjà jusqu'à ce que la table puisse être lue.
 
 ## Voir aussi
 

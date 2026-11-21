@@ -30,12 +30,13 @@ Uma definição de métrica é uma receita, não um resultado armazenado. Ela é
 | **Descrição** (`memo` na API) | O que o número significa e quando usá-lo, para o assistente e para as pessoas. Até 1.000 caracteres. | *Receita após devoluções e descontos. Use para todas as perguntas sobre receita.* |
 | **Tabela de origem** | A tabela de onde as linhas vêm. | `sales_fact` |
 | **Junções** | Tabelas de consulta unidas à origem por colunas correspondentes. Cada tabela de consulta deve ter apenas uma linha para cada chave (uma linha por código de região, por exemplo), ou as linhas que ela corresponde serão contadas em dobro. | `region_lookup`, correspondendo `region_code` na origem a `code` na tabela de consulta |
-| **Medida** | Como as linhas são somadas: `sum`, `count`, `count_distinct`, `min`, `max` ou `avg` de uma coluna, ou `weighted_avg` de uma coluna ponderada por uma segunda coluna (`weight`): a soma de valor vezes peso sobre as linhas em que ambos estão definidos, dividida pela soma desses pesos; vazio se os pesos somarem zero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
+| **Medida** | Como as linhas são somadas: `sum`, `count`, `count_distinct`, `min`, `max`, `avg` ou `median` de uma coluna, ou `weighted_avg` de uma coluna ponderada por uma segunda coluna (`weight`): a soma de valor vezes peso sobre as linhas em que ambos estão definidos, dividida pela soma desses pesos; vazio se os pesos somarem zero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
 | **Filtros** | Quais linhas sempre contam. Cada filtro é uma coluna, um operador (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) e seus valores. | `status` `eq` *Posted* |
 | **Colunas de detalhamento** (`grain` na API) | As colunas pelas quais uma pessoa pode agrupar e filtrar ao perguntar. Os filtros são fixos; as colunas de detalhamento são escolha de quem pergunta. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Cenário** (opcional) | A coluna que separa as linhas realizadas das linhas de orçamento, e o valor de cada uma. A métrica corresponde às suas linhas realizadas; as linhas de orçamento são lidas apenas para uma [variação](#comparar-classificar-e-calcular-participação). | `scenario`, realizado *Actual*, orçamento *Budget* |
 | **Dimensões** (opcional, `dimensions` na API) | Uma coluna de detalhamento vinculada a uma dimensão, de modo que as palavras de uma pergunta sejam comparadas com os membros e aliases dessa dimensão e convertidas nos valores da coluna: consulte [Perguntar sobre uma métrica](#perguntar-sobre-uma-métrica). A dimensão deve existir no projeto. | `region_lookup.region` vinculada à dimensão *Region* |
-| **Colunas de tempo** (opcional, `time` na API) | Uma coluna de data, ou uma coluna de ano fiscal e uma coluna de período, para que uma pergunta possa pedir um período fiscal e [compará-lo ao longo do tempo](#comparar-ao-longo-do-tempo). | `fiscal_year` e `fiscal_period` |
+| **Colunas de tempo** (opcional, `time` na API) | Uma coluna de data, ou uma coluna de ano fiscal e uma coluna de período, para que uma pergunta possa pedir um período fiscal e [compará-lo ao longo do tempo](#comparar-ao-longo-do-tempo). Elas também indicam se a métrica é um [saldo](#saldos) no fim de cada período. | `fiscal_year` e `fiscal_period` |
+| **Anterior** (opcional, `prior` na API) | Uma medida e filtros que uma [comparação de tempo](#o-ano-anterior-lido-de-outra-forma) lê, no lugar dos da própria métrica, para um período em um ano fiscal anterior. | A métrica lê este ano com as taxas de câmbio do ano passado; `prior` lê o ano passado como foi reportado |
 
 Uma coluna de uma tabela de consulta é escrita como `<table>.<column>`; o assistente as escreve para você. Toda tabela e coluna de uma definição deve existir no projeto; uma definição que nomeia uma que não existe é recusada ao ser salva. Uma métrica com cenário não pode filtrar pela coluna do cenário nem oferecê-la como coluna de detalhamento: o cenário decide quais linhas são lidas, então um filtro como `scenario` `eq` *Actual* pertence ao cenário, não aos filtros.
 
@@ -101,6 +102,7 @@ Uma **métrica derivada** é aritmética sobre métricas que já existem: *Recei
 | Operação | O que ela calcula | Entradas |
 |---|---|---|
 | `ratio` | a primeira entrada dividida pela segunda | duas métricas |
+| `ratio_abs` | a primeira entrada dividida pelo tamanho da segunda, de modo que uma participação em um total negativo é lida como uma participação em um positivo | duas métricas |
 | `add` | a primeira entrada mais a segunda | duas métricas |
 | `subtract` | a primeira entrada menos a segunda | duas métricas |
 | `scale` | a entrada multiplicada por um `factor` fixo | uma métrica e um número |
@@ -198,6 +200,16 @@ Uma pergunta então nomeia o **período** de que trata: um ano fiscal, ou um tri
 Um total acumulado serve para métricas `sum` e `count`. Uma média, uma contagem distinta, um mínimo ou um máximo não se somam ao longo do tempo e são recusados. Um período sem linhas não tem linha em um total acumulado, e o total continua além dele.
 
 As colunas de tempo não podem ser filtradas nem agrupadas em uma pergunta que nomeia um período, compara ao longo do tempo ou pede um total acumulado: elas decidem quais linhas são lidas e como são posicionadas. Uma pergunta que não faz nada disso ainda pode filtrar e agrupar por elas como por qualquer coluna de detalhamento. Também são recusados: um período além do fim do ano (período 13 em um calendário de 12 períodos), um trimestre em um calendário sem trimestres, uma comparação de tempo ou um total acumulado em uma métrica derivada, e uma pergunta que não nomeia o tipo de período de que sua comparação precisa. Uma métrica derivada pode ser consultada para um período quando todas as suas entradas têm colunas de tempo no mesmo calendário fiscal, e então nenhuma delas pode ser filtrada ou agrupada também. Uma comparação de tempo é a única comparação da pergunta, então não pode ser combinada com uma variação em relação ao orçamento, embora uma participação e uma classificação ainda se apliquem à diferença.
+
+### Saldos
+
+Alguns valores são um saldo no fim de cada período, como o caixa ou as contas a receber em aberto, e não um montante que se soma ao longo do período. Defina `balance` como `true` nas colunas de tempo de uma métrica desse tipo. Um trimestre, um ano ou um intervalo **acumulado até a data** passa então a ler seu último período, nunca a soma dos seus períodos. Defina `period_label` como a coluna de detalhamento que nomeia cada período, como uma coluna de mês que contém `2026-06`, e uma pergunta detalhada por essa coluna lê o fim de cada período.
+
+Uma pergunta sobre um saldo que não nomeia nenhum período, e que nem detalha a métrica nem a filtra pela sua coluna de período (a coluna de data, no caso de uma data) ou pelo seu `period_label`, é recusada com *this metric is a balance at each period end: name the period to read it at*. Cada entrada de saldo de uma métrica derivada é verificada da mesma forma.
+
+### O ano anterior, lido de outra forma
+
+O `prior` de uma definição contém uma medida e filtros que uma comparação de tempo lê, no lugar dos da própria métrica, para o período anterior quando esse período cai em um ano fiscal anterior. A métrica pode então ler este ano com as taxas de câmbio do ano passado, enquanto `prior` lê o ano passado como foi reportado, de modo que a comparação mostra a variação sem o efeito das taxas. Uma comparação dentro de um mesmo ano fiscal, como o terceiro trimestre contra o segundo, lê a medida e os filtros da própria métrica para os dois períodos.
 
 ## Desativar uma métrica
 

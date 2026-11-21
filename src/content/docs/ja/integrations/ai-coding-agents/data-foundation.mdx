@@ -1,0 +1,71 @@
+---
+title: MCP 接続の AI エージェントで Data Foundation を使う
+description: MCP で接続した AI エージェントに、Data Foundation プロジェクトの現状の読み取り、財務諸表の数値の説明、月末のコメントの下書き、プロジェクトからの質問への回答を任せます。同じことを REST API でも行えます。
+sidebar:
+  label: エージェント向けの Data Foundation
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/data-foundation.mdx
+---
+
+[Model Context Protocol（MCP）で AI エージェントをワークスペースに接続](../getting-started/)すると、エージェントは、すでに使用しているかもしれない 2 つのツールを通じて [Data Foundation](/ja/guides/projects/data-foundation/) プロジェクトを扱えます。`project_describe` はプロジェクトの現状を読み取って数値を説明し、`project_upsert` はプロジェクトからの質問に回答します。PlaidCloud の Weave AI チャットも同じステータスを読み取ります。詳しくは、[Weave AI チャット：Data Foundation](/ja/guides/ai-assistant/weave-tab/#data-foundation) を参照してください。
+
+## プロジェクトの現状を読み取る
+
+`project_describe(project_id=..., include=['foundation'])` は、プロジェクトに `foundation` エントリーを追加します。Data Foundation を使用していないプロジェクトでは、`foundation` は `null` です。
+
+| フィールド | 内容 |
+|---|---|
+| `run_state`、`warned` | 実行が進行中かどうか、および前回のロードが警告で終了したかどうか。 |
+| `systems` | プロジェクトが読み取る、または指定した各システムと、その `state`（`waiting_for_access`、`connected`、`loading`、`loaded`、`failed`）、サインイン方法、最終ロード日時。アクセス待ちのシステムについて送信するアクセス要求は `access_request` にあり、`GET /systems/access-request` はすべてのシステムについて 1 つの要求を返します。 |
+| `questions` | 回答待ちの質問の数と、最大 50 件の質問。各質問には `id` と `suggested`（提案された回答）が含まれます。 |
+| `upkeep` | プロジェクトが現在誰かに求めている対応。それぞれ `action` 付きの文で示されます。回答待ちの質問、アクセス待ちのシステム、失敗または期限切れのシステム、赤色の保証、システムが変更した締め済みの月が含まれます。また、前回のロードが確認なしで処理した新しいコードも、action なしで一覧表示されます。 |
+| `starter_questions` | 月のデータがロードされた後に、プロジェクトについて尋ねるとよい質問。 |
+| `differences` | **各システムと一致** または **グループの合計が一致** が赤色の場合：それぞれ最新の最大 10 項目と、その原因となっている勘定科目と伝票、各項目を解消する方法、およびその担当者。 |
+| `group` | グループの報告通貨と、会計年度の開始月。 |
+| `access_request` | プロジェクトが指定した各システムについて、読み取りに使用するアクセスをシステム管理者に依頼するための要求文。 |
+
+プロジェクトへの読み取り専用アクセスしか持たない呼び出し元の場合、`questions` は `null` になり、`upkeep` からも質問は除外されます。プロジェクトのインストールがまだ構築中の間は、`foundation` にはインストールの進行状況（`install`）、プロジェクトのリンク、`installing`、および `running` の `run_state` だけが含まれます。`progress_id` を指定してポーリングすると、`install.state` が `done` になるまで、回答は `{project_id, install}` だけになります（[テンプレートからプロジェクトを作成する](#テンプレートからプロジェクトを作成する)を参照）。
+
+## 数値を説明する
+
+同じ呼び出しに `explain` を追加すると、財務諸表の行を説明できます。
+
+- `explain={'line': 'revenue', 'period': '2026-06'}` は `explained` を返します。行の金額と、その行を構成する行、エンティティ、勘定科目が含まれます。各一覧は金額の大きい順に並び、合計すると行の金額になります。また、その行の背後にある上位 10 件の元帳伝票も含まれます。行、エンティティ、勘定科目の各構成要素には `address` があり、その構成要素だけを説明するリンクになっています。消去の構成要素と、*Other lines (n)*、*Other entities (n)*、*Other accounts (n)*、*Rounding* の各構成要素には、address はありません。
+- その月までの会計年度累計には `'span': 'ytd'` を追加します。`total_assets` などの貸借対照表の項目ではこれは無視され、その月が読み取られます。`entity`、`account`、`source_system` など、財務諸表のその他の選択条件で絞り込むこともできます。
+- その月以降に行が変動した理由を知るには、`'against': '2026-05'` を追加します。この場合、各構成要素に `amount`、`before`、`change` が含まれ、変動の大きい順に並びます。
+- `explain={'commentary': '2026-06'}` は `commentary` を返します。これは月末のコメントの下書きで、その月とその月までの会計年度累計について、売上高、売上総利益、EBITDA、当期純利益を予算および前年同月と比較します。最新の月を対象にするには、月として `null` を指定します。これは常に下書きなので、使用する前に確認してください。
+
+`line` は財務諸表の行キーで、`revenue`、`gross_margin`、`ebitda`、`operating_profit`、`net_income`、`total_assets` などがあります。財務諸表にない行、`YYYY-MM` 形式で書かれていない月、`explain` が受け付けないキーは、それを示すメッセージとともに拒否されます。すべての数値は、呼び出し元の行アクセスに従います。
+
+## 質問に回答する
+
+`project_upsert(project_id=..., spec={}, answers=[{'id': ..., 'value': ...}])` は、`questions` の `id` を使用して、プロジェクトの質問に回答します。自分で回答しなかったすべての提案された回答を受け入れるには、`accept_all_suggested=True` を追加します。回答にはプロジェクトの編集アクセスが必要で、次回の **ロード** または **変更を適用** で適用され、プロジェクトの履歴に記録されます。
+
+まずバッチ全体がチェックされます。1 つでも有効でない回答があれば、何も書き込まれません。`dry_run=True` は、チェックや書き込みを行わずに、`answers` で指定した回答の件数を数え、提案されているすべての回答も受け入れられるかどうかを示します。回答できるのは既存のプロジェクトだけです。回答を指定する場合、`spec` は空にし、`template` は省略する必要があります。
+
+## テンプレートからプロジェクトを作成する
+
+`project_upsert(spec={'name': ...}, template=...)` は、Data Foundation テンプレートを新しい非公開プロジェクトとしてバックグラウンドでインストールします。`spec` に `memo` と `lakehouse_id` を指定すると、それらが使用されます。返された `progress_id` を使用して、`project_describe(include=['foundation'], progress_id=...)` をポーリングします。`install.state` が `done` になるまで、回答は `{project_id, install}` だけです。プロジェクトがシステムを指定すると、`foundation.access_request` に、各システムの管理者への要求文が含まれます。
+
+## REST API を使用する
+
+同じプロジェクトは、REST API の `/rest/v1/analyze/foundation/{project_id}` から利用できます。読み取りには `analyze.project.read` ロールが、変更には `analyze.project.write` ロールが必要です。`GET /questions` にはプロジェクトの編集アクセスも必要で、読み取り専用アクセスの呼び出し元は拒否されます。
+
+| エンドポイント | 動作 |
+|---|---|
+| `GET /systems` | プロジェクトが読み取る、または指定したシステムと、それぞれの状態。 |
+| `POST /systems` | システムを指定します（`{"systems": [{"type": ..., "connection_id": ...}]}`）。認証情報またはオンプレミスのエージェントでサインインする接続を指定したシステムは、すぐにアタッチされてロードされます。同意によってサインインし、接続を持たないシステムには接続が作成され、その行には `authorize_url` が含まれます。誰かがそこでシステム自身のサインイン画面からアクセスを承認するため、パスワードが PlaidCloud に送信されることはありません。 |
+| `POST /systems/attach` | その承認の後、承認されたばかりの同意方式の各システムをアタッチしてロードします。まだアタッチできないシステムは待機状態のままとなり、その行に理由が示されます。 |
+| `DELETE /systems/{key}` | システムを外します。待機中のシステムは削除され、そのために作成された接続も削除されます。アタッチ済みのシステムはデタッチされます。 |
+| `GET /systems/access-request` | プロジェクトのすべてのシステムに必要なアクセスをまとめた 1 つの要求文。 |
+| `POST /load` | **ロード** を開始します。クエリパラメーター `pull=false` を指定すると **変更を適用** を開始します。`{"system": ...}`（`GET /systems` のキー）を指定すると、そのシステムだけが読み取られます。モデルは、引き続きすべてのシステムの行で最新の状態に更新されます。 |
+| `GET /questions` | 回答待ちの質問。グループ化され、それぞれに提案された回答とその根拠が含まれます。 |
+| `POST /questions/answers` | 回答を送信するか（`{"answers": [{"id": ..., "value": ...}]}`）、提案されたすべての回答を受け入れます（`"accept_all_suggested": true`）。 |
+| `GET /summary` | **サマリー** ページ：プロジェクトの現状、5 つの保証、各システムのデータの鮮度、締め済みの月、および最初に尋ねるとよい質問。 |
+| `POST /close` | すべてのエンティティ、または指定したエンティティを、指定した月まで締めます（`{"through": "2026-06", "entities": []}`）。 |
+| `POST /close/accept-change` | システムが変更した締め済みの月について、システムが現在保持している内容を取り込みます（`{"system": ..., "entity": ..., "period": ...}`）。 |
+| `GET /history` | 誰が何に回答、照合、締め、修正再表示、変更したかを新しい順に示します。1 ページあたり 200 エントリーです。次のページを取得するには、`next_cursor` を `cursor` として渡します。`GET /history.xlsx` はすべてをダウンロードします。 |
+| `GET /reports` | プロジェクトのダッシュボードと、それぞれのリンク。 |
+| `GET /explain` | 財務諸表の行を構成する内容。`line`、`period`、および前述の選択条件をクエリパラメーターとして指定します。`GET /explain.xlsx` は、その背後にあるすべての元帳伝票をダウンロードします。企業収益性プロジェクトでは、`cogs`、`opex`、`operating_margin` は、1 つのエンティティについてモデルのレイヤーによって説明されます。 |
+
+接続を指定してシステムを指定するには、その接続へのアクセスが必要です。システムのために接続を作成させる場合や、承認後にシステムをアタッチする場合は、`analyze.connection.write` ロールが必要です。質問への回答、システムの指定または削除、月の締めには、プロジェクトの編集アクセスが必要です。月の締め、または締め済みの月への変更の受け入れには、プロジェクトのマネージャーまたはアーキテクトである必要があります。実行がプロジェクトを保持している間に、ロード、システムの削除、月の締め、変更の受け入れを行うと、`409` と `run_locked` で拒否されます。

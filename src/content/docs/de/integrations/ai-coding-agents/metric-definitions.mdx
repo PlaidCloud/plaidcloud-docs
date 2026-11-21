@@ -30,12 +30,13 @@ Eine Kennzahldefinition ist ein Rezept, kein gespeichertes Ergebnis. Sie wird be
 | **Beschreibung** (`memo` in der API) | Was die Zahl bedeutet und wann sie zu verwenden ist, für den Assistenten und für Menschen. Bis zu 1.000 Zeichen. | *Umsatz nach Retouren und Rabatten. Für alle Umsatzfragen verwenden.* |
 | **Quelltabelle** | Die Tabelle, aus der die Zeilen stammen. | `sales_fact` |
 | **Joins** | Nachschlagetabellen, die über übereinstimmende Spalten mit der Quelle verknüpft werden. Jede Nachschlagetabelle darf pro Schlüssel nur eine Zeile enthalten (z. B. eine Zeile pro Regionscode), sonst werden die zugeordneten Zeilen doppelt gezählt. | `region_lookup`, wobei `region_code` in der Quelle mit `code` in der Nachschlagetabelle abgeglichen wird |
-| **Messgröße** | Wie die Zeilen aufsummiert werden: `sum`, `count`, `count_distinct`, `min`, `max` oder `avg` einer Spalte, oder `weighted_avg` einer Spalte, gewichtet mit einer zweiten Spalte (`weight`): die Summe aus Wert mal Gewicht über die Zeilen, in denen beide gesetzt sind, geteilt durch die Summe dieser Gewichte; leer, wenn die Gewichte null ergeben. | `sum` von `net_amount`; `weighted_avg` von `unit_price` nach `units` |
+| **Messgröße** | Wie die Zeilen aufsummiert werden: `sum`, `count`, `count_distinct`, `min`, `max`, `avg` oder `median` einer Spalte, oder `weighted_avg` einer Spalte, gewichtet mit einer zweiten Spalte (`weight`): die Summe aus Wert mal Gewicht über die Zeilen, in denen beide gesetzt sind, geteilt durch die Summe dieser Gewichte; leer, wenn die Gewichte null ergeben. | `sum` von `net_amount`; `weighted_avg` von `unit_price` nach `units` |
 | **Filter** | Welche Zeilen immer zählen. Jeder Filter besteht aus einer Spalte, einem Operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) und seinen Werten. | `status` `eq` *Posted* |
 | **Aufschlüsselungsspalten** (`grain` in der API) | Die Spalten, nach denen eine Person beim Fragen gruppieren und filtern darf. Filter sind fest vorgegeben; Aufschlüsselungsspalten wählt die fragende Person. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Szenario** (optional) | Die Spalte, die Ist-Zeilen von Budgetzeilen trennt, und der jeweilige Wert. Die Kennzahl besteht aus ihren Ist-Zeilen; die Budgetzeilen werden nur für eine [Abweichung](#vergleichen-ordnen-und-anteil) gelesen. | `scenario`, Ist *Actual*, Budget *Budget* |
 | **Dimensionen** (optional, `dimensions` in der API) | Eine an eine Dimension gebundene Aufschlüsselungsspalte, sodass die Wörter einer Frage mit den Mitgliedern und Aliasen dieser Dimension abgeglichen und in die Werte der Spalte umgesetzt werden: siehe [Nach einer Kennzahl fragen](#nach-einer-kennzahl-fragen). Die Dimension muss im Projekt vorhanden sein. | `region_lookup.region`, gebunden an die Dimension *Region* |
-| **Zeitspalten** (optional, `time` in der API) | Eine Datumsspalte oder eine Spalte für das Geschäftsjahr und eine für die Periode, damit eine Frage eine Geschäftsperiode abfragen und [im Zeitverlauf vergleichen](#im-zeitverlauf-vergleichen) kann. | `fiscal_year` und `fiscal_period` |
+| **Zeitspalten** (optional, `time` in der API) | Eine Datumsspalte oder eine Spalte für das Geschäftsjahr und eine für die Periode, damit eine Frage eine Geschäftsperiode abfragen und [im Zeitverlauf vergleichen](#im-zeitverlauf-vergleichen) kann. Sie legen auch fest, ob die Kennzahl ein [Saldo](#salden) zu jedem Periodenende ist. | `fiscal_year` und `fiscal_period` |
+| **Vorjahr** (optional, `prior` in der API) | Eine Messgröße und Filter, die ein [Zeitvergleich](#das-vorjahr-anders-gelesen) für eine Periode in einem früheren Geschäftsjahr anstelle der eigenen der Kennzahl liest. | Die Kennzahl liest dieses Jahr zu den Wechselkursen des Vorjahres; `prior` liest das Vorjahr wie berichtet |
 
 Eine Spalte aus einer Nachschlagetabelle wird als `<table>.<column>` geschrieben; der Assistent schreibt diese für Sie. Jede Tabelle und Spalte in einer Definition muss im Projekt vorhanden sein; eine Definition, die eine nicht vorhandene nennt, wird beim Speichern abgelehnt. Eine Kennzahl mit Szenario kann nicht nach der Szenario-Spalte filtern und sie auch nicht als Aufschlüsselungsspalte anbieten: Das Szenario bestimmt, welche Zeilen gelesen werden, daher gehört ein Filter wie `scenario` `eq` *Actual* in das Szenario und nicht in die Filter.
 
@@ -101,6 +102,7 @@ Eine **abgeleitete Kennzahl** ist Arithmetik über bereits vorhandene Kennzahlen
 | Operation | Was berechnet wird | Eingaben |
 |---|---|---|
 | `ratio` | die erste Eingabe geteilt durch die zweite | zwei Kennzahlen |
+| `ratio_abs` | die erste Eingabe geteilt durch den Betrag der zweiten, sodass ein Anteil an einer negativen Summe wie ein Anteil an einer positiven gelesen wird | zwei Kennzahlen |
 | `add` | die erste Eingabe plus die zweite | zwei Kennzahlen |
 | `subtract` | die erste Eingabe minus die zweite | zwei Kennzahlen |
 | `scale` | die Eingabe multipliziert mit einem festen `factor` | eine Kennzahl und eine Zahl |
@@ -198,6 +200,16 @@ Eine Frage nennt dann die **Periode**, um die es geht: ein Geschäftsjahr oder e
 Eine laufende Summe ist für `sum`- und `count`-Kennzahlen gedacht. Ein Durchschnitt, eine Anzahl eindeutiger Werte, ein Minimum oder ein Maximum lässt sich über die Zeit nicht addieren und wird abgelehnt. Eine Periode ohne Zeilen hat in einer laufenden Summe keine Zeile, und die Summe läuft darüber hinweg weiter.
 
 Die Zeitspalten können in einer Frage, die eine Periode nennt, im Zeitverlauf vergleicht oder eine laufende Summe verlangt, nicht gefiltert oder gruppiert werden: Sie bestimmen, welche Zeilen gelesen und wie sie eingeordnet werden. Eine Frage, die nichts davon tut, kann weiterhin wie bei jeder Aufschlüsselungsspalte danach filtern und gruppieren. Ebenfalls abgelehnt werden: eine Periode nach dem Jahresende (Periode 13 in einem Kalender mit 12 Perioden), ein Quartal in einem Kalender ohne Quartale, ein Zeitvergleich oder eine laufende Summe bei einer abgeleiteten Kennzahl sowie eine Frage, die die Art der Periode nicht nennt, die ihr Vergleich benötigt. Eine abgeleitete Kennzahl kann für eine Periode abgefragt werden, wenn jede ihrer Eingaben Zeitspalten im selben Geschäftskalender hat; dann kann auch nach keiner davon gefiltert oder gruppiert werden. Ein Zeitvergleich ist der eine Vergleich der Frage und lässt sich daher nicht mit einer Abweichung gegenüber Budget kombinieren, wohl aber mit einem Anteil und einer Rangfolge über die Differenz.
+
+### Salden
+
+Manche Zahlen sind ein Saldo zu jedem Periodenende, etwa der Kassenbestand oder offene Forderungen, und kein Betrag, der sich über die Periode aufsummiert. Setzen Sie bei einer solchen Kennzahl `balance` in den Zeitspalten auf `true`. Ein Quartal, ein Jahr oder ein Zeitraum **bis heute** liest dann seine letzte Periode, nie die Summe seiner Perioden. Setzen Sie `period_label` auf die Aufschlüsselungsspalte, die jede Periode benennt, etwa eine Monatsspalte mit `2026-06`, und eine nach dieser Spalte aufgeschlüsselte Frage liest jedes Periodenende.
+
+Eine Frage zu einem Saldo, die keine Periode nennt und die Kennzahl weder nach ihrer Periodenspalte (bei einem Datum der Datumsspalte) oder ihrem `period_label` aufschlüsselt noch danach filtert, wird mit *this metric is a balance at each period end: name the period to read it at* abgelehnt. Jede Saldo-Eingabe einer abgeleiteten Kennzahl wird auf dieselbe Weise geprüft.
+
+### Das Vorjahr, anders gelesen
+
+Das `prior` einer Definition enthält eine Messgröße und Filter, die ein Zeitvergleich anstelle der eigenen der Kennzahl für seine frühere Periode liest, wenn diese Periode in einem früheren Geschäftsjahr liegt. Die Kennzahl kann dann dieses Jahr zu den Wechselkursen des Vorjahres lesen, während `prior` das Vorjahr wie berichtet liest, sodass der Vergleich die Veränderung ohne die Bewegung der Wechselkurse zeigt. Ein Vergleich innerhalb eines Geschäftsjahres, etwa des dritten Quartals mit dem zweiten, liest für beide Perioden die eigene Messgröße und die eigenen Filter der Kennzahl.
 
 ## Kennzahl stilllegen
 

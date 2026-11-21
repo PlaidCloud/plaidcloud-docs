@@ -18,6 +18,7 @@ PlaidCloud 在每个工作区的 `/mcp` 处提供一个精心设计的[模型上
 - **[分析路径](./analysis-paths/)** — 为关键表指定易记的名称和默认值，这样就可以直接问“为什么上季度这个数字上涨了？”
 - **[构建仪表板](./build-dashboards/)** — 通过同一个 PlaidCloud 连接，针对已发布的表和视图请求图表和仪表板。
 - **[指标定义](./metric-definitions/)** — 一次性约定业务数字的计算方式，使用它的每个答案都以相同方式计算。
+- **[Data Foundation](./data-foundation/)** — 读取 Data Foundation 项目的当前状态、解释其报表中的某个数字、起草月末评述并回答项目的问题。
 
 ## 连接您的助手
 

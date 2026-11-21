@@ -30,12 +30,13 @@ Definicja metryki jest przepisem, a nie zapisanym wynikiem. Jest obliczana ponow
 | **Opis** (`memo` w API) | Co oznacza liczba i kiedy jej używać — dla asystenta i dla ludzi. Do 1000 znaków. | *Revenue after returns and discounts. Use for all revenue questions.* |
 | **Tabela źródłowa** | Tabela, z której pochodzą wiersze. | `sales_fact` |
 | **Złączenia** | Tabele wyszukiwania dołączane do źródła według pasujących kolumn. Każda tabela wyszukiwania musi mieć tylko jeden wiersz dla każdego klucza (na przykład jeden wiersz na kod regionu), w przeciwnym razie dopasowane wiersze są liczone podwójnie. | `region_lookup`, dopasowanie `region_code` w źródle do `code` w tabeli wyszukiwania |
-| **Miara** | Jak sumowane są wiersze: `sum`, `count`, `count_distinct`, `min`, `max` lub `avg` z kolumny albo `weighted_avg` z kolumny ważonej drugą kolumną (`weight`): suma iloczynów wartości i wagi dla wierszy, w których obie są ustawione, podzielona przez sumę tych wag; wynik jest pusty, jeśli wagi sumują się do zera. | `sum` z `net_amount`; `weighted_avg` z `unit_price` według `units` |
+| **Miara** | Jak sumowane są wiersze: `sum`, `count`, `count_distinct`, `min`, `max`, `avg` lub `median` z kolumny albo `weighted_avg` z kolumny ważonej drugą kolumną (`weight`): suma iloczynów wartości i wagi dla wierszy, w których obie są ustawione, podzielona przez sumę tych wag; wynik jest pusty, jeśli wagi sumują się do zera. | `sum` z `net_amount`; `weighted_avg` z `unit_price` według `units` |
 | **Filtry** | Które wiersze są zawsze liczone. Każdy filtr to kolumna, operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) i jego wartości. | `status` `eq` *Posted* |
 | **Kolumny podziału** (`grain` w API) | Kolumny, według których osoba pytająca może grupować i filtrować. Filtry są stałe; kolumny podziału wybiera pytający. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Scenariusz** (opcjonalnie) | Kolumna oddzielająca wiersze rzeczywiste od budżetowych oraz wartość każdego z tych rodzajów. Metryką są jej wiersze rzeczywiste; wiersze budżetowe są odczytywane tylko na potrzeby [odchylenia](#porównanie-ranking-i-udział). | `scenario`, rzeczywiste *Actual*, budżet *Budget* |
 | **Wymiary** (opcjonalnie, `dimensions` w API) | Kolumna podziału powiązana z wymiarem, dzięki czemu słowa z pytania są dopasowywane do elementów i aliasów tego wymiaru i zamieniane na wartości kolumny: zobacz [Pytanie o metrykę](#pytanie-o-metrykę). Wymiar musi istnieć w projekcie. | `region_lookup.region` powiązana z wymiarem *Region* |
-| **Kolumny czasu** (opcjonalnie, `time` w API) | Kolumna daty albo kolumna roku obrotowego i kolumna okresu, aby pytanie mogło dotyczyć jednego okresu obrotowego i [porównywać go w czasie](#porównanie-w-czasie). | `fiscal_year` i `fiscal_period` |
+| **Kolumny czasu** (opcjonalnie, `time` w API) | Kolumna daty albo kolumna roku obrotowego i kolumna okresu, aby pytanie mogło dotyczyć jednego okresu obrotowego i [porównywać go w czasie](#porównanie-w-czasie). Określają też, czy metryka jest [saldem](#salda) na koniec każdego okresu. | `fiscal_year` i `fiscal_period` |
+| **Okres poprzedni** (opcjonalnie, `prior` w API) | Miara i filtry, które [porównanie w czasie](#poprzedni-rok-odczytywany-inaczej) odczytuje zamiast własnych metryki dla okresu we wcześniejszym roku obrotowym. | Metryka odczytuje bieżący rok po kursach walutowych z ubiegłego roku; `prior` odczytuje ubiegły rok w wersji raportowanej |
 
 Kolumna z tabeli wyszukiwania jest zapisywana jako `<table>.<column>`; asystent zapisuje je za Ciebie. Każda tabela i kolumna w definicji musi istnieć w projekcie; definicja, która wskazuje nieistniejącą, jest odrzucana przy zapisie. Metryka ze scenariuszem nie może filtrować po kolumnie scenariusza ani udostępniać jej jako kolumny podziału: scenariusz decyduje o tym, które wiersze są odczytywane, więc filtr taki jak `scenario` `eq` *Actual* należy do scenariusza, a nie do filtrów.
 
@@ -101,6 +102,7 @@ Każda wersja zapisuje, kto i kiedy ją zapisał. Edycja metryki zapisuje nową 
 | Operacja | Co oblicza | Dane wejściowe |
 |---|---|---|
 | `ratio` | pierwsze dane wejściowe podzielone przez drugie | dwie metryki |
+| `ratio_abs` | pierwsze dane wejściowe podzielone przez wielkość drugich, dzięki czemu udział w ujemnej sumie odczytuje się jak udział w dodatniej | dwie metryki |
 | `add` | pierwsze dane wejściowe plus drugie | dwie metryki |
 | `subtract` | pierwsze dane wejściowe minus drugie | dwie metryki |
 | `scale` | dane wejściowe pomnożone przez stały `factor` | jedna metryka i liczba |
@@ -198,6 +200,16 @@ Pytanie wskazuje następnie **okres**, którego dotyczy: rok obrotowy albo jeden
 Suma narastająca jest przeznaczona dla metryk `sum` i `count`. Średnia, liczba unikatowych wartości, minimum lub maksimum nie sumują się w czasie i są odrzucane. Okres bez wierszy nie ma wiersza w sumie narastającej, a suma trwa dalej ponad nim.
 
 Kolumn czasu nie można filtrować ani grupować w pytaniu, które wskazuje okres, porównuje w czasie lub żąda sumy narastającej: to one decydują, które wiersze są odczytywane i jak są rozmieszczone. Pytanie, które nie robi żadnej z tych rzeczy, nadal może według nich filtrować i grupować jak według każdej kolumny podziału. Odrzucane są też: okres poza końcem roku (okres 13 w kalendarzu 12-okresowym), kwartał w kalendarzu bez kwartałów, porównanie w czasie lub suma narastająca dla metryki pochodnej oraz pytanie, które nie wskazuje rodzaju okresu potrzebnego do jego porównania. Metrykę pochodną można zapytać o jeden okres, gdy każde z jej danych wejściowych ma kolumny czasu w tym samym kalendarzu obrotowym, i wtedy żadnej z nich nie można filtrować ani grupować. Porównanie w czasie jest jedynym porównaniem w pytaniu, więc nie można go łączyć z odchyleniem od budżetu, choć udział i ranking nadal dotyczą różnicy.
+
+### Salda
+
+Niektóre wartości są saldem na koniec każdego okresu, na przykład środki pieniężne lub otwarte należności, a nie kwotą sumowaną w ciągu okresu. W kolumnach czasu takiej metryki ustaw `balance` na `true`. Kwartał, rok lub zakres **od początku** okresu jest wtedy odczytywany według jego ostatniego okresu, nigdy jako suma jego okresów. Ustaw `period_label` na kolumnę podziału, która nazywa każdy okres, na przykład kolumnę miesięcy zawierającą `2026-06`, a pytanie z podziałem według tej kolumny odczyta każdy koniec okresu.
+
+Pytanie o saldo, które nie wskazuje okresu i nie rozbija metryki ani nie filtruje jej według kolumny okresu (kolumny daty w przypadku daty) lub jej `period_label`, jest odrzucane z komunikatem *ta metryka jest saldem na koniec każdego okresu: wskaż okres, dla którego ma zostać odczytana*. Każde dane wejściowe metryki pochodnej będące saldem są sprawdzane w ten sam sposób.
+
+### Poprzedni rok odczytywany inaczej
+
+`prior` definicji zawiera miarę i filtry, które porównanie w czasie odczytuje zamiast własnych metryki dla jej wcześniejszego okresu, gdy ten okres przypada we wcześniejszym roku obrotowym. Metryka może wtedy odczytywać bieżący rok po kursach walutowych z ubiegłego roku, podczas gdy `prior` odczytuje ubiegły rok w wersji raportowanej, więc porównanie pokazuje zmianę bez wpływu zmian kursów. Porównanie w obrębie jednego roku obrotowego, na przykład trzeciego kwartału z drugim, odczytuje dla obu okresów własną miarę i filtry metryki.
 
 ## Wycofanie metryki
 

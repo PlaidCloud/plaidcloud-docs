@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Conecte PlaidCloud con **OneStream** para que Data Foundation pueda leer sus resultados consolidados y conciliar con ellos las pérdidas y ganancias de gestión del grupo. OneStream es compatible mediante su conector: PlaidCloud inicia sesión con credenciales de cliente de OAuth 2.0 y lee un adaptador de datos que crea su administrador de OneStream. Solo lee. Si usted indica una secuencia de Data Management, PlaidCloud ejecuta primero esa secuencia para actualizar lo que lee el adaptador, y no ejecuta nada más.
+Conecte PlaidCloud con **OneStream** para que Data Foundation pueda leer sus resultados consolidados y conciliar con ellos las pérdidas y ganancias de gestión del grupo. OneStream es compatible mediante su conector: PlaidCloud inicia sesión con credenciales de cliente de OAuth 2.0 y lee un adaptador de datos que crea su administrador de OneStream. Solo lee.
 
 OneStream es un origen de resultados con los que conciliar, no de líneas del libro contable: sus filas se cargan como el escenario `Consolidated` de la tabla de presupuesto del modelo, versión `OneStream`. Consulte [Conciliar con su sistema de consolidación](/es/guides/projects/data-foundation/#conciliar-con-su-sistema-de-consolidación).
 
@@ -18,9 +18,9 @@ Las columnas del adaptador son un contrato que acuerdan usted y su administrador
 
 ## Qué configura su administrador de OneStream
 
-La pestaña **Foundation** redacta una solicitud de acceso para que usted la envíe. Solicita lo siguiente.
+La página **Sistemas** del proyecto redacta una solicitud de acceso para que usted la envíe; consulte [Conectar su ERP](/es/guides/projects/data-foundation/#conectar-su-erp). Solicita lo siguiente.
 
-1. Un cliente para PlaidCloud en el servicio de identidad de OneStream que use la concesión de **credenciales de cliente**, con un usuario de servicio que pueda ejecutar el adaptador y, si desea que PlaidCloud actualice primero los resultados, la secuencia de Data Management.
+1. Un cliente para PlaidCloud en el servicio de identidad de OneStream que use la concesión de **credenciales de cliente**, con un usuario de servicio que solo pueda ejecutar los adaptadores siguientes: sin derechos de Data Management, de carga ni de consolidación. PlaidCloud no ejecuta ninguna secuencia de Data Management, así que mantenga actualizados los resultados que leen los adaptadores con su propia programación.
 
 2. En la aplicación y el espacio de trabajo sobre los que informa, un adaptador de datos llamado **Foundation_Results** que devuelva una tabla con los resultados consolidados con exactamente estas columnas:
 
@@ -29,13 +29,19 @@ La pestaña **Foundation** redacta una solicitud de acceso para que usted la env
    | `entity` | El miembro de consolidación: una entidad, un miembro de eliminación o el total del grupo. |
    | `account` | El código de la cuenta. Solo cuentas base. |
    | `time` | El mes, en el formato `YYYY-MM`. |
-   | `scenario` | El escenario. |
+   | `scenario` | `Actual` para los resultados consolidados. `Budget` o `Forecast` para un plan, que se lee como plan. |
    | `view` | `YTD` o `Periodic`. PlaidCloud lee solo las filas de la vista que usted elija. |
    | `amount` | Un número, con el signo y la escala que muestran sus informes. |
    | `currency` | La moneda en que se expresa el importe: la moneda de informe de su grupo. |
-   | `flow`, `ud1`, `ud2`, `ud3`, `ud4` | Dimensiones de flujo y definidas por el usuario. Solo miembros base. |
+   | `flow` | El miembro de flujo. Solo miembros base. |
+   | `ud1` a `ud5` | Los miembros de departamento, producto, sitio, representante de ventas y proyecto, `None` cuando la fila no tiene ninguno. Solo miembros base. |
+   | `version` | La versión de un plan. Déjela en `None` o en blanco para `Actual`. |
+   | `version_as_of` | El mes, en el formato `YYYY-MM`, a cuya fecha se elaboró la versión de un plan. Déjelo en `None` o en blanco para `Actual`. |
+   | `quantity` | Las unidades para las que se planifica la fila de un plan, por mes sea cual sea la vista. Déjelo en `None` o en blanco para `Actual`. |
 
    Sirva miembros base de las dimensiones de cuenta, flujo y definidas por el usuario. La fila de un miembro padre contaría dos veces a sus hijos. El adaptador lee el miembro de consolidación de la variable de sustitución `Member` y la vista de `View`.
+
+   Si su plan contiene la plantilla de personal o las unidades producidas, cree también un adaptador llamado **Foundation_Drivers** con las columnas `entity`, `time`, `scenario`, `driver` (por ejemplo, `headcount` o `units_produced`), `value`, `unit` (`FTE`, `EA`, etc.), `ud1` (departamento), `ud2` (producto), `ud3` (sitio), `version` y `version_as_of`. Lee `Member` de la misma manera y es opcional: sin él, o sin acceso a él, no se carga ningún inductor planificado y las comprobaciones de preparación lo indican.
 
 3. Los miembros que se leerán: las entidades, los miembros de eliminación y el total del grupo.
 
@@ -61,21 +67,21 @@ La pestaña **Foundation** redacta una solicitud de acceso para que usted la env
 
 </Steps>
 
-También puede crear la conexión en la pestaña **Foundation** al agregar el origen: elija **Crear una conexión nueva** y complete **URL del host de la API**, **ID de cliente**, **Secreto de cliente**, **URL del token**, **Aplicación** y **Espacio de trabajo**, que significan lo mismo que los campos anteriores.
+También puede crear la conexión al agregar el sistema en la página **Sistemas**: elija **Nueva conexión** en **Conexión**, y se abre el mismo editor de conexiones.
 
 ## Agregarla a un proyecto de Data Foundation
 
-En la pestaña **Foundation**, agregue la conexión como origen, como haría con cualquier otra (consulte [Conectar su ERP](/es/guides/projects/data-foundation/#conectar-su-erp)); OneStream no lista miembros que marcar, así que el formulario pide el miembro de consolidación que se leerá: introdúzcalo en **Nombre**. Luego, en **Configuración del sistema**, describa los importes del adaptador. La configuración se muestra con estos nombres:
+En la página **Sistemas** del proyecto, agregue OneStream con su conexión, como haría con cualquier otro sistema (consulte [Conectar su ERP](/es/guides/projects/data-foundation/#conectar-su-erp)). OneStream no lista miembros que marcar, así que en **Opciones**, **Empresas**, introduzca los miembros de consolidación que se leerán, separados por comas: al menos uno. Luego, en **Ajustes del sistema**, describa los importes del adaptador:
 
 | Configuración | Qué significa |
 |---|---|
-| `view` | `ytd` (el valor predeterminado) cuando los importes del adaptador son acumulados del año, o `periodic`. Las filas acumuladas del año se cargan como importes periódicos. |
-| `sign` | `natural` (el valor predeterminado): cada cuenta con su propio signo, tal como lo informa OneStream. `debit_positive`: débitos positivos. |
-| `scale` | El multiplicador a unidades monetarias completas: `1000` cuando OneStream sirve miles. El valor predeterminado es `1`. |
-| `fy_start_month` | El mes en que comienza su ejercicio fiscal, de `1` a `12`, para convertir los acumulados del año en periódicos. El valor predeterminado es `1`. |
-| `application`, `workspace` | Reemplazan los de la conexión. Déjelos en blanco para usar los de la conexión. |
-| `table` | El nombre de la tabla dentro del conjunto de datos del adaptador. El valor predeterminado es `Results`. |
-| `sequence` | Una secuencia de Data Management que se ejecuta antes de la lectura para actualizar lo que lee el adaptador. |
+| **View member** | `ytd` (el valor predeterminado) cuando los importes del adaptador son acumulados del año, o `periodic`. Las filas acumuladas del año se cargan como importes periódicos. |
+| **Sign convention** | `natural` (el valor predeterminado): cada cuenta con su propio signo, tal como lo informa OneStream. `debit_positive`: débitos positivos. |
+| **Amount scale** | El multiplicador a unidades monetarias completas: `1000` cuando OneStream sirve miles. El valor predeterminado es `1`. |
+| **First month of the fiscal year** | El mes en que comienza su ejercicio fiscal, de `1` a `12`, para convertir los acumulados del año en periódicos. El valor predeterminado es `1`. |
+| **Application**, **Workspace** | Reemplazan los de la conexión. Déjelos en blanco para usar los de la conexión. |
+| **Adapter results table** | El nombre de la tabla dentro del conjunto de datos del adaptador. El valor predeterminado es `Results`. |
+| **Substitution variables** | Las variables de sustitución que se establecen para el adaptador, una por línea con el formato `name = value`, por ejemplo, `Time = 2026M1`. |
 
 Asigne los miembros de OneStream a sus entidades con un archivo de mapeo de códigos que se aplique a este origen. Consulte [Equivalencia de entidades](/es/guides/projects/data-foundation/#equivalencia-de-entidades). El origen no lee ninguna ventana de historial: las propias variables de sustitución del adaptador la delimitan.
 

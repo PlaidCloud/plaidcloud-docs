@@ -18,6 +18,7 @@ Die Seiten in diesem Abschnitt behandeln, was der Server bereitstellt, wie Sie s
 - **[Analysepfade](./analysis-paths/)** – geben Sie Ihren wichtigsten Tabellen sprechende Namen und einen Standard, damit Sie einfach fragen können „warum ist das im letzten Quartal gestiegen?“
 - **[Dashboards erstellen](./build-dashboards/)** – bitten Sie über dieselbe PlaidCloud-Verbindung um Diagramme und Dashboards auf Ihren veröffentlichten Tabellen und Ansichten.
 - **[Kennzahldefinitionen](./metric-definitions/)** – legen Sie einmal fest, wie eine Geschäftszahl berechnet wird, damit jede Antwort, die sie verwendet, auf dieselbe Weise berechnet wird.
+- **[Data Foundation](./data-foundation/)** – lesen Sie, wo ein Data-Foundation-Projekt steht, erklären Sie eine Zahl seiner Finanzaufstellungen, entwerfen Sie den Monatsabschlusskommentar und beantworten Sie seine Fragen.
 
 ## Ihren Assistenten verbinden
 
