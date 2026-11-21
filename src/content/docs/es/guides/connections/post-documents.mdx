@@ -67,7 +67,7 @@ Agregue un paso **Contabilizar documentos** a un flujo de trabajo: está en **Si
 
 1. **1 · La tabla**: elija la **Tabla** de documentos, una fila por línea. Una vez construido el primer documento, la sección muestra cuántas líneas y documentos leyó de la tabla.
 2. **2 · Coincidencias de columnas**: lo que el paso reconoció en cada columna de su tabla. Una columna cuyo nombre es un campo de contabilización **Coincide por nombre**; una cuyo nombre es una alternativa conocida **Coincide por un nombre alternativo**. Una columna que el paso no puede reconocer recibe una lista: elija el campo que contiene en **¿Qué es esta columna?**, y aparece como **Lo eligió usted**. Solo se guardan con el paso las columnas para las que usted elige. Dos columnas nunca toman el mismo campo: la primera lo conserva.
-3. **3 · El primer documento, tal como lo recibirá su sistema**: el primer documento de la tabla, dirigido y puesto en el formato de su sistema, con sus líneas. Cuando todavía no se puede construir, la sección dice por qué, con las mismas palabras que un motivo de No contabilizado.
+3. **3 · El primer documento, tal como lo recibirá su sistema**: el primer documento de la tabla, dirigido y puesto en el formato de su sistema, con sus líneas y con cualquier valor fijo que su sistema dé a una columna que la tabla no tiene (consulte [Configuración del sistema](/es/guides/connections/erp-systems/#configuración-del-sistema)). Cuando todavía no se puede construir, la sección dice por qué, con las mismas palabras que un motivo de No contabilizado.
 
 El paso necesita una **Tabla**. Si marca un importe de retención, el importe debe ser un número, y si agrega una línea de redondeo, necesita una cuenta.
 
@@ -119,8 +119,6 @@ Los documentos que comparten un valor de `set` se contabilizan juntos o no se co
 Marque las condiciones que retienen un documento para que una persona lo apruebe:
 
 - **El importe supera**: un importe. Se compara con el importe del documento en la propia moneda del documento.
-- **Se contabilizó desde un archivo**
-- **Es una reversión, un abono o una corrección**
 - **Está marcado como inusual**
 - **Siempre**
 
@@ -205,6 +203,10 @@ Una ejecución con documentos en **Se contabilizaría** ofrece **Contabilizar es
 - Un documento que retiene una regla de retención se vuelve a retener para este envío. La persona que pulsó **Contabilizar estos** y la persona que inició la ejecución no pueden aprobarlo.
 - Solo se envían los documentos que usted puede ver. Un documento cuya copia almacenada ha caducado queda No contabilizado: la página de la ejecución dice “Esto todavía no está disponible.”, y la respuesta REST lleva el mensaje “El documento almacenado ha caducado; vuelva a ejecutar.”
 
+### Comprobar en el sistema
+
+Una ejecución con documentos contabilizados ofrece **Comprobar en el sistema**, o **Verificar en** seguido del nombre del sistema cuando todos están en un mismo sistema. Pregunta a cada sistema si los documentos contabilizados de la ejecución están allí y registra las respuestas: en el [Registro de asientos](/es/guides/connections/posting-register/), un documento que se encuentra allí muestra **En los libros** junto a su **Documento del sistema**, y uno que falta o es diferente pasa a **Requiere atención**. Solo pregunta por los documentos en conexiones sobre las que usted tiene un permiso, en proyectos a los que puede acceder, y requiere `analyze.workflow.write`.
+
 ### Detener una ejecución
 
 Una ejecución En vivo que sigue en curso, con documentos aún sin enviar, ofrece **Detener ejecución**. Los documentos aún sin enviar pasan a No contabilizado, y la página de la ejecución dice “La ejecución se detuvo antes de enviarlo.” Los documentos ya enviados se dejan como están, y la página le indica cuántos se detuvieron y cuántos ya se habían enviado. Mientras una ejecución En vivo está en medio de su envío, antes de que se registre ningún documento, todavía no se puede detener.
@@ -242,26 +244,43 @@ Una referencia se contabiliza una vez. Cuando una ejecución tiene un documento 
 
 En un sistema cuya clave incluye la entidad, la misma referencia de otra entidad es un documento distinto. En cualquier otro sistema se rechaza: “Esta referencia ya se usa en este sistema.”
 
-Un documento que el paso contabilizó antes y que esta vez no produjo se deja como está. Para revertirlo, llame a `POST /rest/v1/analyze/erp/reverse/these` con la ejecución; revierte lo que el paso de la ejecución contabilizó antes y no produjo, o solo las de ellas que usted nombre, como una ejecución nueva. Todavía no hay un botón para esto en la página de la ejecución.
+Un documento que el paso contabilizó antes y que esta vez no produjo se deja como está. Cuando una ejecución En vivo de un paso ha terminado, su página los enumera, por ejemplo “3 documentos contabilizados antes no se produjeron esta vez. Se dejan como están.”, con la referencia y el sistema de cada uno. La lista contiene lo que el paso contabilizó En vivo en los períodos de los documentos de esta ejecución que sigue **Contabilizado**, no abonado por completo, y que usted puede ver. Un documento cuya ejecución ya no se conserva no aparece en la lista; revíertalo desde el [Registro de asientos](/es/guides/connections/posting-register/).
+
+**Revertir estos**, con un recuento como **Revertir estos 3**, los revierte como una ejecución nueva una vez que usted confirma. Una reversión que una segunda persona debe aprobar espera como **Requiere aprobación**, y **Abrir la ejecución de reversión** abre la ejecución nueva. El botón se ofrece a un Arquitecto o Gerente en un proyecto que no está bloqueado, y cuenta solo lo que usted puede revertir ahora: los documentos de un sistema sobre el que tiene un permiso, en los que el proyecto puede contabilizar En vivo. Con más de los 200 que puede llevar una acción, la lista se detiene en 200 y no se ofrece el botón. Mediante la API REST, `POST /rest/v1/analyze/erp/reverse/these` con la ejecución hace lo mismo, o revierte solo los que usted nombre; rechaza una ejecución que sigue en curso o que se simuló.
 
 Para un paso que se vuelve a ejecutar cada período, como uno que contabiliza una asignación, establezca **Cuando un documento contabilizado vuelve modificado** en Corregir una sola vez.
 
 ## Contabilizar desde un archivo
 
-Para un puñado de diarios en una hoja de cálculo, puede contabilizar un archivo sin ningún flujo de trabajo, mediante la API REST o las herramientas MCP. Todavía no hay una página para ello en la aplicación.
+Para un puñado de diarios en una hoja de cálculo, puede contabilizar un archivo sin ningún flujo de trabajo.
+
+En el [Registro de asientos](/es/guides/connections/posting-register/), limite el alcance a un proyecto y elija **Contabilizar desde un archivo…** en el menú **Acciones** de la barra de herramientas de **Asientos**. Está disponible para quienes tienen `erp.register.operate`; si el alcance no incluye un único proyecto, dice “Elija primero un proyecto en el alcance.” El panel **Contabilizar desde un archivo** tiene tres tarjetas:
+
+1. **1 · Elija el sistema y el tipo de documento**: el **Entorno**, el **Sistema** y los tipos de **Documento** que ese sistema admite. **Descargar un archivo de ejemplo** descarga los encabezados de columna correctos para ese sistema y documento, con una fila de ejemplo, como archivo de Excel.
+2. **2 · Suba el archivo**: suelte una hoja de cálculo (`.xlsx` o `.csv`) en **Suelte una hoja de cálculo aquí**. Cualquier archivo más que suelte con ella se conserva con la ejecución como archivos de apoyo, pero todavía no se envía al sistema. La página de la ejecución se abre cuando la ejecución está preparada.
+3. **Ejecuciones de archivos anteriores**: las ejecuciones de archivos anteriores del proyecto, cada una con **Contabilizar de nuevo**.
+
+Mediante la API REST o las herramientas MCP:
 
 1. `GET /erp/file-post/starter`, con un `connection_id`, un `document_type` y un `format` (`xlsx` o `csv`), descarga los encabezados de columna correctos para ese tipo de documento en ese sistema, con una fila de ejemplo. Un tipo de documento que el sistema no admite se rechaza.
 2. `POST /erp/file-post` recibe la hoja de cálculo (`.xlsx` o `.csv`) como `file`, con el `project_id`. Cualquier archivo más enviado como `attachments` se conserva con la ejecución como archivos de apoyo, pero todavía no se envía al sistema. La herramienta MCP `erp_file_post` toma en su lugar un archivo de los documentos de PlaidCloud, por su `account_id` y su `path`.
 3. La ejecución se abre en Simular y no se envía nada. Revísela en su [página de la ejecución](#la-página-de-la-ejecución) y contabilícela con **Contabilizar estos**.
 
 - Cada documento va al sistema en el que contabiliza su entidad, como en cualquier otra ejecución.
-- Un archivo sin columna `doc_number` no prepara nada y responde `ask: one_journal`. Envíelo de nuevo con `one_journal` en true para contabilizar todo el archivo como un solo diario, con el nombre del archivo como referencia, o en false para contabilizar cada fila como un diario propio, numerado a partir del nombre del archivo.
+- Un archivo sin columna `doc_number` no prepara nada y pregunta **¿Tratar este archivo como un solo asiento?** **Sí, un asiento** contabiliza todo el archivo como un solo asiento, con el nombre del archivo como referencia; **No** le pide que agregue una columna `doc_number` y vuelva a elegir el archivo. Mediante la API REST responde `ask: one_journal`: envíelo de nuevo con `one_journal` en true para un solo asiento, o en false para contabilizar cada fila como un diario propio, numerado a partir del nombre del archivo.
 - En un archivo que tiene una columna `doc_number`, las filas sin ella se dejan fuera, con una advertencia. Los encabezados que no son columnas de contabilización se ignoran, y las advertencias los nombran.
 - Un archivo vacío, o sin filas, no prepara nada y lo indica. Lo mismo ocurre con un proyecto cuya contabilización está Desactivada.
 
 ### Contabilizar de nuevo
 
-Contabilizar de nuevo vuelve a contabilizar los documentos de la ejecución de un archivo con una fecha de contabilización nueva y referencias nuevas, para un diario que se repite cada mes: `POST /erp/file-post/{run_id}/again`, o la herramienta MCP `erp_file_post_again`.
+Contabilizar de nuevo vuelve a contabilizar los documentos de la ejecución de un archivo con una fecha de contabilización nueva y referencias nuevas, para un diario que se repite cada mes.
+
+En la aplicación, la página de la ejecución de un archivo ofrece **Contabilizar de nuevo** a un Arquitecto o Gerente en un proyecto que no está bloqueado, mientras se conservan los documentos de la ejecución; **Ejecuciones de archivos anteriores** en **Contabilizar desde un archivo** también lo tiene. Elija la **Fecha de contabilización** y después:
+
+- **Contabilizar de nuevo** da a cada referencia un sufijo, para que la repetición no se rechace por ya contabilizada, y abre la ejecución nueva en Simular.
+- **Repetir cada mes** la pone en una programación: el mismo día del mes que la fecha de contabilización (el 28 como máximo), a las 06:00 UTC, con cada repetición fechada el día en que se ejecuta. Contabiliza En vivo cuando los documentos de este archivo se contabilizaron En vivo, hasta donde lo permita el proyecto.
+
+Mediante la API REST, `POST /erp/file-post/{run_id}/again` lo contabiliza de nuevo, o la herramienta MCP `erp_file_post_again`:
 
 - El `posting_date` es una fecha ISO, o uno de `today`, `first_of_month`, `last_of_month`, `first_of_next_month` y `last_of_prev_month`, o un desplazamiento como `+1m` o `-7d` respecto de la fecha de contabilización propia de cada documento.
 - `references` establecido en `suffix` da a cada referencia un sufijo para el mes nuevo, como `JE-1001-202612`, para que la repetición no se rechace por ya contabilizada; mediante REST puede, en su lugar, asignar cada referencia a su nueva referencia. La herramienta MCP siempre agrega el sufijo.
@@ -274,7 +293,7 @@ Los documentos de una ejecución se conservan 30 días cuando se simulan y 90 de
 
 ### Registrar como ya contabilizado
 
-Para documentos contabilizados en el sistema antes de que se usara PlaidCloud, `POST /erp/record-posted` los registra como Contabilizados sin contactar con el sistema, de modo que una ejecución que los tenga después se niega a volver a contabilizarlos. Envíe la hoja de cálculo como `file`, con el `connection_id` y el `environment_id` del sistema. Necesita las columnas `reference` y `system_document`, y opcionalmente `entity`, `posting_date` y `document_type` (un diario cuando se omite). Todavía no hay página ni herramienta MCP para ello.
+Para documentos contabilizados en el sistema antes de que se usara PlaidCloud, `POST /erp/record-posted` los registra como Contabilizados sin contactar con el sistema, de modo que una ejecución que los tenga después se niega a volver a contabilizarlos. Envíe la hoja de cálculo como `file`, con el `connection_id` y el `environment_id` del sistema. Necesita las columnas `reference` y `system_document`, y opcionalmente `entity`, `posting_date` y `document_type` (un diario cuando se omite). En la aplicación, quienes tienen `erp.register.operate` ven **¿Se contabilizó antes de usar este producto? Registrar como ya contabilizado** en **Contabilizar desde un archivo**: abre **Registrar como ya contabilizado**, donde elige el **Entorno** y el **Sistema**, suelta la hoja de cálculo y elige **Registrar como contabilizado**. No hay herramienta MCP para ello.
 
 - Un documento que PlaidCloud ya tiene como contabilizado, uno que aún espera una respuesta, o una referencia que tiene como un documento de sistema distinto se enumera como no registrado, con el motivo.
 - Un documento Sin confirmar del archivo se resuelve como Contabilizado solo para quien tenga el rol de Aprobador del Registro de asientos; cualquier otra persona lo recibe de vuelta como no registrado.

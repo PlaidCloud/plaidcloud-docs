@@ -33,3 +33,9 @@ Passos de fluxo de trabalho que escrevem tabelas de projeto em destinos externos
 - [Exportação de ficheiro espacial](/pt-pt/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/pt-pt/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/pt-pt/reference/workflow-steps/export/export-hyper/)
+
+## Colunas escritas
+
+A maioria dos passos de exportação escreve todas as colunas da tabela de origem, tal como se encontra quando o passo é executado e pela ordem das colunas da tabela, quando o Data Mapper não indica colunas de destino, ou seja, quando a tabela do lado direito do separador **Colunas** está vazia. Por isso, um passo configurado apenas parcialmente exporta a tabela inteira para o destino em vez de falhar, pelo que deve verificar o Data Mapper antes de executar uma exportação para um destino externo.
+
+Se não houver colunas mapeadas e a tabela de origem não tiver colunas, uma exportação para CSV, JSON, SQL, Excel, PDF, Google Spreadsheet ou Kafka não escreve nada e termina com um aviso. Numa exportação de várias tabelas, como XML, Parquet, ORC, Avro ou Excel Sheets, essa tabela é ignorada com um aviso que a identifica.

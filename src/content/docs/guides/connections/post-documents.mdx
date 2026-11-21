@@ -66,7 +66,7 @@ Add a **Post Documents** step to a workflow: it is under **External Systems** in
 
 1. **1 · The table** — choose the **Table** of documents, one row per line. Once the first document is built, the section shows how many lines and documents it read from the table.
 2. **2 · Column matches** — what the step recognized in each column of your table. A column whose name is a posting field is **Matched by name**; one whose name is a known alternative is **Matched by an alternative name**. A column the step cannot recognize gets a list: pick the field it holds from **What is this column?**, and it shows as **You chose this**. Only the columns you choose for are saved with the step. Two columns never take the same field: the first one keeps it.
-3. **3 · The first document, as its system will receive it** — the table's first document, routed and put in its system's format, with its lines. When it cannot be built yet, the section says why, in the same words as a Not posted reason.
+3. **3 · The first document, as its system will receive it** — the table's first document, routed and put in its system's format, with its lines, and with any fixed value its system gives a column the table lacks (see [System Settings](/guides/connections/erp-systems/#system-settings)). When it cannot be built yet, the section says why, in the same words as a Not posted reason.
 
 The step needs a **Table**. If you tick a hold amount, the amount must be a number, and if you add a rounding line, it needs an account.
 
@@ -118,8 +118,6 @@ Documents that share a `set` value are posted together or not at all:
 Tick the conditions that hold a document for a person to approve:
 
 - **The amount is above** — an amount. It is compared with the document's amount in the document's own currency.
-- **It was posted from a file**
-- **It is a reversal, credit or correction**
 - **It is flagged as unusual**
 - **Always**
 
@@ -204,6 +202,10 @@ A run with documents in **Would post** offers **Post these** with their count, b
 - A document that a hold rule holds is held again for this send. The person who pressed **Post these** and the person who started the run cannot approve it.
 - Only documents you may see are sent. A document whose stored copy has expired is Not posted: the run page reads "This is not available yet.", and the REST answer carries the message "The stored document has expired; run again."
 
+### Check in the System
+
+A run with documents that posted offers **Check in the system**, or **Check in** followed by the system's name when they are all on one system. It asks each system whether the run's posted documents are there and records the answers: in the [Posting Register](/guides/connections/posting-register/), a document found there shows **In the books** beside its **System document**, and one missing or different goes to **Needs attention**. It asks only about documents on connections you hold a grant on, in projects you can reach, and needs `analyze.workflow.write`.
+
 ### Stop a Run
 
 A Live run that is still running, with documents not sent yet, offers **Stop run**. Documents not sent yet become Not posted, and the run page reads "The run was stopped before this was sent." Documents already sent are left as they are, and the page tells you how many were stopped and how many had already been sent. While a Live run is in the middle of its send, before any document is recorded, it cannot be stopped yet.
@@ -241,26 +243,43 @@ A reference is posted once. When a run has a document that is already in the rec
 
 On a system whose key carries the entity, the same reference for another entity is a different document. On any other system it is refused: "This reference is already used on this system."
 
-A document the step posted before that it did not produce this time is left alone. To reverse it, call `POST /rest/v1/analyze/erp/reverse/these` with the run; it reverses what the run's step posted before and did not produce, or only those of them you name, as a new run. There is no button for this on the run page yet.
+A document the step posted before that it did not produce this time is left alone. Once a Live run of a step has ended, its page lists them, such as "3 documents posted before were not produced this time. They are left alone.", with each one's reference and system. The list holds what the step posted Live in the periods of this run's documents that is still **Posted**, not credited in full, and that you may see. A document whose run is no longer kept isn't listed; reverse it from the [Posting Register](/guides/connections/posting-register/).
+
+**Reverse these**, with a count such as **Reverse these 3**, reverses them as a new run once you confirm. A reversal a second person must approve waits as **Needs approval**, and **Open the reversal run** opens the new run. The button is offered to an Architect or Manager on a project that is not locked, and counts only what you can reverse now: documents on a system you hold a grant on, that the project may post to Live. With more than the 200 one action can carry, the list stops at 200 and the button is not offered. Over the REST API, `POST /rest/v1/analyze/erp/reverse/these` with the run does the same, or reverses only those of them you name; it refuses a run that is still running or was simulated.
 
 For a step that re-runs every period, such as one posting an allocation, set **When a posted document comes back changed** to Correct once.
 
 ## Post From a File
 
-For a handful of journals in a spreadsheet, you can post a file with no workflow at all, through the REST API or the MCP tools. There is no page for it in the app yet.
+For a handful of journals in a spreadsheet, you can post a file with no workflow at all.
+
+In the [Posting Register](/guides/connections/posting-register/), narrow the scope to one project, then choose **Post from a file…** in the **Actions** menu of the **Postings** toolbar. It is there for members with `erp.register.operate`; with no single project in the scope, it says "Choose one project in the scope first." The **Post from a file** pane has three cards:
+
+1. **1 · Choose the system and the kind of document** — the **Environment**, the **System**, and the **Document** kinds that system takes. **Download a starter file** downloads the right column headings for that system and document, with an example row, as an Excel file.
+2. **2 · Upload the file** — drop a spreadsheet (`.xlsx` or `.csv`) on **Drop a spreadsheet here**. Any more files dropped with it are kept with the run as supporting files, but are not sent to the system yet. The run page opens once the run is prepared.
+3. **Earlier file runs** — the project's earlier file runs, each with **Post again**.
+
+Over the REST API or the MCP tools:
 
 1. `GET /erp/file-post/starter`, with a `connection_id`, a `document_type` and a `format` (`xlsx` or `csv`), downloads the right column headings for that kind of document on that system, with an example row. A kind of document the system does not take is refused.
 2. `POST /erp/file-post` takes the spreadsheet (`.xlsx` or `.csv`) as `file`, with the `project_id`. Any more files sent as `attachments` are kept with the run as supporting files, but are not sent to the system yet. The MCP tool `erp_file_post` takes a file from PlaidCloud documents instead, by its `account_id` and `path`.
 3. The run opens in Simulate, and nothing is sent. Review it on its [run page](#the-run-page), and post it with **Post these**.
 
 - Each document goes to the system its entity posts to, like any other run.
-- A file with no `doc_number` column prepares nothing and answers `ask: one_journal`. Send it again with `one_journal` set to true to post the whole file as one journal, with the file's name as its reference, or false to post each row as its own journal, numbered after the file's name.
+- A file with no `doc_number` column prepares nothing and asks **Treat this file as one journal?** **Yes, one journal** posts the whole file as one journal, with the file's name as its reference; **No** asks you to add a `doc_number` column and choose the file again. Over the REST API it answers `ask: one_journal`: send it again with `one_journal` set to true for one journal, or false to post each row as its own journal, numbered after the file's name.
 - In a file that has a `doc_number` column, rows without one are left out, with a warning. Headings that are not posting columns are ignored, and the warnings name them.
 - An empty file, or one with no rows, prepares nothing and says so. So does a project whose posting is Off.
 
 ### Post Again
 
-Post again posts a file run's documents again with a new posting date and new references, for a journal that recurs each month: `POST /erp/file-post/{run_id}/again`, or the MCP tool `erp_file_post_again`.
+Post again posts a file run's documents again with a new posting date and new references, for a journal that recurs each month.
+
+In the app, a file run's page offers **Post again** to an Architect or Manager on a project that is not locked, while the run's documents are kept; **Earlier file runs** in **Post from a file** has it too. Choose the **Posting date**, then:
+
+- **Post again** gives each reference a suffix, so the repeat is not refused as already posted, and opens the new run in Simulate.
+- **Repeat every month** puts it on a schedule instead: on the same day of the month as the posting date (the 28th at most), at 06:00 UTC, each repeat dated the day it runs. It posts Live when this file's documents posted Live, as far as the project allows.
+
+Over the REST API, `POST /erp/file-post/{run_id}/again` posts it again, or the MCP tool `erp_file_post_again`:
 
 - The `posting_date` is an ISO date, or one of `today`, `first_of_month`, `last_of_month`, `first_of_next_month` and `last_of_prev_month`, or a shift such as `+1m` or `-7d` from each document's own posting date.
 - `references` set to `suffix` gives each reference a suffix for the new month, such as `JE-1001-202612`, so the repeat is not refused as already posted; over REST you can instead map each reference to its new one. The MCP tool always adds the suffix.
@@ -273,7 +292,7 @@ A run's documents are kept for 30 days when simulated and 90 after an answer; af
 
 ### Record as Already Posted
 
-For documents posted in the system before PlaidCloud was in use, `POST /erp/record-posted` records them as Posted without contacting the system, so a run that has them later refuses to post them again. Send the spreadsheet as `file`, with the `connection_id` and `environment_id` of the system. It needs the columns `reference` and `system_document`, and optionally `entity`, `posting_date` and `document_type` (a journal when left out). There is no page or MCP tool for it yet.
+For documents posted in the system before PlaidCloud was in use, `POST /erp/record-posted` records them as Posted without contacting the system, so a run that has them later refuses to post them again. Send the spreadsheet as `file`, with the `connection_id` and `environment_id` of the system. It needs the columns `reference` and `system_document`, and optionally `entity`, `posting_date` and `document_type` (a journal when left out). In the app, members with `erp.register.operate` see **Posted before this product was in use? Record as already posted** in **Post from a file**: it opens **Record as already posted**, where you choose the **Environment** and **System**, drop the spreadsheet and choose **Record as posted**. There is no MCP tool for it.
 
 - A document PlaidCloud already holds as posted, one still waiting for an answer, or a reference it holds as a different system document is listed as not recorded, with why.
 - An Unconfirmed document in the file is settled as Posted only for someone with the Posting Register Approver role; anyone else gets it back as not recorded.

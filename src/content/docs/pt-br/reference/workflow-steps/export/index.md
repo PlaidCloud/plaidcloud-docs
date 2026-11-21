@@ -33,3 +33,9 @@ Etapas de fluxo de trabalho que gravam tabelas de projeto em destinos externos �
 - [Exportação de arquivo espacial](/pt-br/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau (etapa)](/pt-br/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export (etapa)](/pt-br/reference/workflow-steps/export/export-hyper/)
+
+## Colunas gravadas
+
+A maioria das etapas de exportação grava todas as colunas da tabela de origem, como a tabela está quando a etapa é executada e na ordem das colunas da tabela, quando o Data Mapper não lista colunas de destino, ou seja, quando a tabela à direita na guia **Colunas** está vazia. Uma etapa deixada com a configuração pela metade, portanto, exporta a tabela inteira para o destino em vez de falhar, então verifique o Data Mapper antes de executar uma exportação para um destino externo.
+
+Se nenhuma coluna estiver mapeada e a tabela de origem não tiver nenhuma, uma exportação de CSV, JSON, SQL, Excel, PDF, Google Spreadsheet ou Kafka não grava nada e termina com um aviso. Em uma exportação de várias tabelas, como XML, Parquet, ORC, Avro ou Excel Sheets, essa tabela é ignorada com um aviso que a cita.

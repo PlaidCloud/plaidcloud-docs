@@ -33,3 +33,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [空間ファイルのエクスポート](/ja/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau ステップ](/ja/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export ステップ](/ja/reference/workflow-steps/export/export-hyper/)
+
+## 書き込まれる列
+
+ほとんどのエクスポートステップは、データマッパーにターゲット列が一覧表示されていない場合、つまり**列**タブの右側のテーブルが空の場合、実行時点のソーステーブルのすべての列を、テーブルの列の順序で書き込みます。そのため、設定が途中のステップでも失敗せず、テーブル全体が宛先にエクスポートされます。外部の宛先に対してエクスポートを実行する前に、データマッパーを確認してください。
+
+マッピングされた列がなく、ソーステーブルにも列がない場合、CSV、JSON、SQL、Excel、PDF、Googleスプレッドシート、Kafkaのエクスポートは何も書き込まず、警告付きで完了します。XML、Parquet、ORC、Avro、Excel Sheets ステップなど複数テーブルのエクスポートでは、そのテーブルを、テーブル名を示す警告付きでスキップします。
