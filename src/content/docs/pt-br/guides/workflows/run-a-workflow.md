@@ -102,6 +102,82 @@ A mensagem de sincronização de conector informa a sincronização. Se um worke
 
 Uma execução nunca permanece **Em execução** depois que o trabalho por trás dela deixou de existir. Se o servidor que executa o fluxo de trabalho for perdido, a execução termina como falha. Uma execução pode durar no máximo 12 horas: uma que ainda estiver em execução nesse momento falha com "Run failed: still running at the 12-hour limit. Re-run the workflow."
 
+## Run Insight
+
+O Run Insight mostra onde uma execução de um fluxo de trabalho gastou o seu tempo e quais etapas levaram mais ou menos tempo que o habitual. Ele avalia cada etapa em relação às execuções recentes dessa própria etapa, de modo que uma etapa que é sempre lenta não é destacada.
+
+### Abrir o Run Insight
+
+- Na tela, clique em **Histórico** na barra de ferramentas. Consulte [Designer visual de fluxo de trabalho](/pt-br/guides/workflows/advanced-workflows/).
+- Na guia **Fluxos de trabalho**, selecione um fluxo de trabalho e escolha **Run Insight** no menu **Ações** ou no menu de clique com o botão direito.
+- No Início, escolha **Abrir a última execução** em um cartão de fluxo de trabalho.
+- Na caixa de diálogo do histórico de execuções, escolha uma execução na tabela **Execuções** com **Abrir no Insight** ou abra a linha dela.
+- Em uma mensagem do Weave no aplicativo sobre uma execução lenta, clique em **Abrir a execução**. Consulte [Ser avisado quando uma execução termina](/pt-br/guides/ai-assistant/weave-findings/#ser-avisado-quando-uma-execução-termina).
+
+O título da caixa de diálogo é **Histórico de execuções** — nome do fluxo de trabalho. Os botões **Insight** e **Execuções** alternam entre esta visão e a tabela de execuções anteriores. O histórico de execuções de uma etapa, aberto a partir do Inspetor, mostra apenas a tabela.
+
+### Ler o título e a lista de atenção
+
+O título dá o resultado da execução em uma linha: **Levou** *tempo*, **Em execução há** *tempo* enquanto ela está em andamento, **Interrompido após** *tempo* para a última execução que foi interrompida, ou **Falhou em** o fluxo de trabalho em que falhou. Uma frase abaixo dele diz o que se destaca, como as etapas que ficaram mais lentas que o normal, o tempo gasto em espera, ou que todas as etapas com histórico ficaram dentro do intervalo normal. Em seguida vêm o horário de início e o número de fluxos de trabalho e de etapas e, quando algumas etapas têm histórico insuficiente para serem avaliadas, quantas são. Quando algo precisa de uma olhada, uma contagem marcada com **para revisar** aparece ao lado do título.
+
+Uma faixa de execuções recentes fica ao lado do título. Clique em uma execução na faixa para abri-la. Uma execução que falhou é marcada, assim como uma execução que executou menos etapas que a maioria das execuções recentes, porque não pode ser comparada com uma execução completa.
+
+**O que precisa de atenção** lista, nesta ordem, as falhas primeiro, depois o tempo além do normal e depois a espera. Clique em um item para selecioná-lo na visão.
+
+### Fluxo, linha do tempo e tabela
+
+Escolha uma visão no menu **Visão**.
+
+| Visão | O que mostra |
+|---|---|
+| **Fluxo** | Blocos cuja altura é o tempo. O âmbar é o tempo além do normal de uma etapa. Onde uma etapa chamou outros fluxos de trabalho, uma fatia **Sobrecarga de chamada** é o tempo da própria etapa fora desses fluxos de trabalho. Onde nenhuma etapa estava em execução, uma fatia **Aguardando** mostra a lacuna; um fluxo de trabalho executado em paralelo não desenha uma. |
+| **Linha do tempo** | Tempo de relógio desde o início da execução. Um contorno tracejado é quanto tempo o bloco levou na execução comparada. |
+| **Tabela** | Tudo na ordem das chamadas, com as colunas **Nome**, **Esta execução**, **Normalmente**, **Extra**, **Execução comparada** e **Status**. |
+
+Um fluxo de trabalho que chamou outros fluxos de trabalho os mostra dentro dele. Clique duas vezes em um bloco de fluxo de trabalho, ou escolha **Aumentar zoom**, para trabalhar dentro dele, e use a trilha acima da visão ou **Reduzir zoom** no menu **Ações** para voltar. Quando vários blocos que ficaram no ritmo estão juntos, o **Fluxo** os recolhe em um único bloco **N no ritmo**; clique em um deles, ou escolha **Mostrar todos os blocos** no menu **Ações**, para abri-los. **Recolher blocos no ritmo** os recolhe de novo.
+
+Selecione um bloco para ver o painel de detalhes dele, com o que se aplicar entre **Esta execução**, **Normalmente**, **Histórico**, **Além do normal** e **Execução comparada**, e com **Mostrar no fluxo de trabalho**, **Mostrar suas etapas** ou **Aumentar zoom**, **Abrir fluxo de trabalho** e **Ver log da execução**. **Abrir fluxo de trabalho** abre o fluxo de trabalho na tela e **Ver log da execução** abre o [log](/pt-br/guides/workflows/viewing-workflow-log/) dele.
+
+### O que as marcas significam
+
+| Marca | Significado |
+|---|---|
+| **Falhou** | Uma etapa terminou com erro. O painel mostra a mensagem dela, a menos que o seu perfil não possa ver o nome da etapa. |
+| **Mais lento que o normal** | A etapa levou mais tempo que o intervalo normal dela. |
+| **Mais lento do início ao fim** | Todas as etapas do fluxo de trabalho ficaram cerca da mesma quantidade mais lentas, o que aponta para algo que o fluxo de trabalho inteiro compartilha, e não para uma única etapa. Suas etapas mostram **Parte de uma lentidão compartilhada**. |
+| **Tem etapas lentas** | Um fluxo de trabalho com **Etapas lentas dentro** dele. |
+| **No ritmo** | A etapa ficou dentro do intervalo normal dela. |
+| **Mais rápido** | A etapa foi mais rápida que o intervalo normal dela. |
+| **Histórico insuficiente** | A etapa não foi executada vezes suficientes para ter um intervalo normal, então não é avaliada. |
+| **Erro, continuou** | A etapa falhou, mas está configurada para [continuar em caso de erro](/pt-br/guides/workflows/continue-on-error/). |
+| **Ignorado** | A etapa foi pulada. |
+| **Em execução** | A etapa ainda não terminou. |
+
+Uma etapa cujas execuções recentes já eram lentas ou variam muito pode não ser sinalizada. Uma execução no fim de um período, comparada com dias comuns, pode aparecer como mais lenta do início ao fim. Uma execução interrompida mais antiga aparece como uma execução curta, não como interrompida.
+
+O painel também pode explicar uma marca. **Aguardando** é o tempo em que nenhuma etapa estava em execução, então nenhuma etapa é culpada por ele. Em uma etapa que ficou mais lenta que o normal, **Linhas gravadas** compara a saída da etapa com a contagem normal dela, e é omitida quando a segurança em nível de linha filtra o que você pode ler, e **Salvo desde a última execução** diz que a etapa foi salva depois da execução anterior dela e antes de esta começar; o registro mostra um salvamento, não o que mudou. **Trabalho diferente** conta as etapas que não foram executadas e as etapas que foram executadas sem histórico, medidas em relação ao histórico de cada etapa ou, quando você compara com outra execução, em relação a essa execução. **Executado em paralelo** significa que as partes do fluxo de trabalho foram executadas ao mesmo tempo, então os tempos delas somam mais que o relógio. **Chamador incerto** significa que o histórico não consegue mostrar qual etapa chamou um fluxo de trabalho. **Nome oculto** marca uma etapa ou um fluxo de trabalho cujo nome o seu perfil não pode ver, mostrado como **Etapa oculta** ou **Fluxo de trabalho oculto**.
+
+### Comparar com
+
+**Comparar com** define em relação a que uma execução é medida, e o botão dele mostra **Comparar com: Normal**, **Comparar com: Execução anterior** ou **Comparar com: Execução escolhida**. **Normal** usa as execuções recentes de cada etapa. **Normal + execução anterior** e **Normal + uma execução escolhida** também acrescentam o tempo dessa execução para cada etapa, que a **Linha do tempo** contorna e a **Tabela** mostra em **Execução comparada**. A execução escolhida é selecionada entre as execuções recentes.
+
+### Um fluxo de trabalho dentro de uma execução maior
+
+Quando você abre um fluxo de trabalho que outro fluxo de trabalho chamou, o Insight mostra apenas a parte dele na execução. **Abrir a execução completa** troca a mesma caixa de diálogo para o fluxo de trabalho que iniciou a execução.
+
+### Execuções ao vivo
+
+Uma execução que ainda está em andamento é lida de novo a cada 30 segundos enquanto a caixa de diálogo estiver visível. Seu zoom, sua seleção e sua visão permanecem como estão. Sair do Insight para **Execuções** interrompe as atualizações, e voltar ao Insight lê a execução de novo e as retoma. O botão Atualizar, as setas circulares à direita da barra de ferramentas, recarrega a execução do zero, redefine o zoom e a seleção e recolhe de novo os blocos que ficaram no ritmo.
+
+### Para assistentes de IA e a API REST
+
+O mesmo perfil está disponível fora da caixa de diálogo:
+
+- REST: `GET /rest/v1/analyze/workflow/run-insight` com `project_id` e `workflow_id`. `run_id` escolhe a execução (a mais recente quando omitido), e `baseline` é `typical`, `previous` ou `run:<id>`.
+- MCP: `workflow_describe` com `include=['run_insight']`, e `run_id` e `baseline` opcionais.
+
+Cada fluxo de trabalho e cada etapa volta com o seu tempo, o seu lugar na execução, um veredito em relação ao próprio histórico e os motivos. Uma execução que não existe, ou que não tem linhas de etapas, não retorna nenhum perfil, e sim um aviso, em vez de um erro.
+
 ## Pausar, parar e retomar
 
 Enquanto um fluxo de trabalho está em execução, você pode **Pausar** para que as etapas em andamento terminem e as novas etapas aguardem, ou **Parar**, o que cancela as etapas que estavam na fila e quaisquer jobs de importação ou exportação ainda em execução, junto com a consulta ao warehouse que uma exportação estava lendo. As etapas de importação e de dimensão que ainda estavam na fila são canceladas de forma limpa, para que não atrasem importações e cargas de dimensão posteriores no espaço de trabalho. Parar também interrompe as sincronizações de conector (Singer) do fluxo de trabalho que estavam na fila ou em execução, de modo que uma sincronização não continue rodando depois que o fluxo de trabalho parou.

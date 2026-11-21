@@ -102,6 +102,82 @@ Die Meldung zur Connector-Synchronisierung nennt die Synchronisierung. Wenn ein 
 
 Eine Ausführung bleibt nie im Status **Wird ausgeführt**, wenn die Arbeit dahinter weggefallen ist. Geht der Server verloren, auf dem der Workflow läuft, endet die Ausführung als fehlgeschlagen. Eine Ausführung dauert höchstens 12 Stunden: Läuft sie zu diesem Zeitpunkt noch, schlägt sie mit „Run failed: still running at the 12-hour limit. Re-run the workflow.“ fehl.
 
+## Run Insight
+
+Run Insight zeigt, wohin die Zeit einer Ausführung eines Workflows geflossen ist und welche Schritte länger oder kürzer gedauert haben als üblich. Jeder Schritt wird an seinen eigenen letzten Ausführungen gemessen, sodass ein Schritt, der immer langsam ist, nicht hervorgehoben wird.
+
+### Run Insight öffnen
+
+- Klicken Sie auf der Arbeitsfläche in der Symbolleiste auf **Verlauf**. Siehe [Visueller Workflow-Designer](/de/guides/workflows/advanced-workflows/).
+- Wählen Sie auf der Registerkarte **Workflows** einen Workflow aus und wählen Sie im Menü **Aktionen** oder im Kontextmenü **Run Insight**.
+- Wählen Sie auf der Startseite auf einer Workflow-Karte **Letzte Ausführung öffnen**.
+- Wählen Sie im Dialog „Ausführungsverlauf“ in der Tabelle **Ausführungen** eine Ausführung mit **In Insight öffnen** oder öffnen Sie ihre Zeile.
+- Klicken Sie in einer In-App-Weave-Nachricht zu einer langsamen Ausführung auf **Ausführung öffnen**. Siehe [Benachrichtigung am Ende einer Ausführung](/de/guides/ai-assistant/weave-findings/#benachrichtigung-am-ende-einer-ausführung).
+
+Der Dialog trägt den Titel **Ausführungsverlauf** – Workflow-Name. Mit seinen Schaltflächen **Insight** und **Ausführungen** wechseln Sie zwischen dieser Ansicht und der Tabelle vergangener Ausführungen. Der Ausführungsverlauf eines einzelnen Schritts, den Sie aus dem Inspektor öffnen, zeigt nur die Tabelle.
+
+### Kopfzeile und Aufmerksamkeitsliste lesen
+
+Die Kopfzeile nennt das Ergebnis der Ausführung in einer Zeile: **Dauer:** *Zeit*, **Läuft seit** *Zeit*, solange sie läuft, **Nach** *Zeit* **gestoppt** bei einer zuletzt gestoppten Ausführung oder **Fehlgeschlagen nach** *Workflow*, dem Workflow, in dem sie fehlgeschlagen ist. Ein Satz darunter sagt, was auffällt, etwa die Schritte, die langsamer als üblich liefen, Wartezeit oder dass jeder Schritt mit Verlauf in seinem üblichen Bereich lief. Danach folgen die Startzeit, die Anzahl der Workflows und Schritte und, wenn der Verlauf einiger Schritte zu kurz für eine Bewertung ist, deren Anzahl. Wenn etwas einen Blick verdient, erscheint neben der Kopfzeile *N* **zu prüfen**.
+
+Neben der Kopfzeile steht ein Streifen mit den letzten Ausführungen. Klicken Sie im Streifen auf eine Ausführung, um sie zu öffnen. Eine fehlgeschlagene Ausführung ist markiert, ebenso eine Ausführung, die weniger Schritte als die meisten letzten Ausführungen ausgeführt hat, weil sie sich nicht mit einer vollständigen Ausführung vergleichen lässt.
+
+**Was Aufmerksamkeit braucht** listet in dieser Reihenfolge zuerst Fehler, dann Zeit über dem Üblichen und dann Wartezeiten auf. Klicken Sie auf einen Eintrag, um ihn in der Ansicht auszuwählen.
+
+### Ablauf, Zeitachse und Tabelle
+
+Wählen Sie im Menü **Ansicht** eine Ansicht aus.
+
+| Ansicht | Was sie zeigt |
+|---|---|
+| **Ablauf** | Blöcke, deren Höhe die Zeit ist. Bernstein ist Zeit über dem Üblichen eines Schritts. Hat ein Schritt andere Workflows aufgerufen, ist ein Segment **Aufrufaufwand** die eigene Zeit des Schritts außerhalb dieser Workflows. Lief kein Schritt, zeigt ein Segment **Wartend** die Lücke; ein Workflow, der parallel lief, zeichnet keines. |
+| **Zeitachse** | Uhrzeit ab dem Start der Ausführung. Eine gestrichelte Umrandung zeigt, wie lange der Block in der verglichenen Ausführung gedauert hat. |
+| **Tabelle** | Alles in Aufrufreihenfolge, mit den Spalten **Name**, **Diese Ausführung**, **Üblicherweise**, **Zusätzlich**, **Verglichene Ausführung** und **Status**. |
+
+Ein Workflow, der andere Workflows aufgerufen hat, zeigt diese in sich an. Doppelklicken Sie auf einen Workflow-Block oder wählen Sie **Vergrößern**, um darin zu arbeiten, und kehren Sie über den Pfad über der Ansicht oder mit **Verkleinern** im Menü **Aktionen** zurück. Liegen mehrere Schritte im Plan beieinander, faltet **Ablauf** sie zu einem Block *N* **im Plan** zusammen; klicken Sie darauf oder wählen Sie im Menü **Aktionen** **Alle Blöcke anzeigen**, um sie zu öffnen. **Schritte im Plan einklappen** klappt sie wieder ein.
+
+Wählen Sie einen Block aus, um sein Detailfenster zu sehen, mit dem, was von **Diese Ausführung**, **Üblicherweise**, **Verlauf**, **Über dem Üblichen** und **Verglichene Ausführung** zutrifft, und mit **In seinem Workflow anzeigen**, **Seine Schritte anzeigen** oder **Vergrößern**, **Workflow öffnen** und **Ausführungsprotokoll anzeigen**. **Workflow öffnen** öffnet den Workflow auf der Arbeitsfläche und **Ausführungsprotokoll anzeigen** öffnet sein [Protokoll](/de/guides/workflows/viewing-workflow-log/).
+
+### Was die Markierungen bedeuten
+
+| Markierung | Bedeutung |
+|---|---|
+| **Fehlgeschlagen** | Ein Schritt ist mit einem Fehler beendet worden. Das Fenster zeigt seine Meldung, es sei denn, Ihre Rolle kann den Namen des Schritts nicht sehen. |
+| **Langsamer als üblich** | Der Schritt hat länger gedauert als sein üblicher Bereich. |
+| **Durchgehend langsamer** | Jeder Schritt im Workflow lief etwa gleich viel langsamer, was auf etwas hindeutet, das der ganze Workflow gemeinsam hat, und nicht auf einen einzelnen Schritt. Seine Schritte zeigen **Teil einer gemeinsamen Verlangsamung**. |
+| **Mit langsamen Schritten** | Ein Workflow mit **Langsame Schritte darin**. |
+| **Im Plan** | Der Schritt lief innerhalb seines üblichen Bereichs. |
+| **Schneller** | Der Schritt lief schneller als sein üblicher Bereich. |
+| **Nicht genug Verlauf** | Der Schritt wurde zu selten ausgeführt, um einen üblichen Bereich zu haben, und wird deshalb nicht bewertet. |
+| **Fehler, fortgesetzt** | Der Schritt ist fehlgeschlagen, ist aber so eingestellt, dass er [bei einem Fehler fortfährt](/de/guides/workflows/continue-on-error/). |
+| **Übersprungen** | Der Schritt wurde übergangen. |
+| **Wird ausgeführt** | Der Schritt ist noch nicht beendet. |
+
+Ein Schritt, dessen letzte Ausführungen bereits langsam waren oder stark schwanken, wird möglicherweise nicht markiert. Eine Ausführung zum Periodenende kann im Vergleich zu gewöhnlichen Tagen durchgehend langsamer erscheinen. Eine ältere gestoppte Ausführung erscheint als kurze Ausführung, nicht als gestoppt.
+
+Das Fenster kann eine Markierung auch erklären. **Wartend** ist Zeit, in der kein Schritt lief, sodass kein Schritt dafür verantwortlich ist. Bei einem Schritt, der langsamer als üblich lief, vergleicht **Geschriebene Zeilen** die Ausgabe mit der üblichen Anzahl und entfällt, wenn Sicherheit auf Zeilenebene filtert, was Sie lesen können, und **Seit der letzten Ausführung gespeichert** besagt, dass der Schritt nach seiner vorherigen Ausführung und vor dem Start dieser Ausführung gespeichert wurde; der Datensatz zeigt ein Speichern, nicht was sich geändert hat. **Andere Arbeit** zählt die Schritte, die nicht ausgeführt wurden, und die Schritte, die ohne Verlauf ausgeführt wurden, gemessen am Verlauf jedes Schritts oder, wenn Sie mit einer anderen Ausführung vergleichen, an dieser Ausführung. **Parallel ausgeführt** bedeutet, dass die Teile des Workflows gleichzeitig liefen, sodass ihre Zeiten mehr ergeben als die Uhrzeit. **Aufrufer unsicher** bedeutet, dass der Verlauf nicht zeigen kann, welcher Schritt einen Workflow aufgerufen hat. **Name verborgen** kennzeichnet einen Schritt oder Workflow, dessen Namen Ihre Rolle nicht sehen kann; er erscheint als **Verborgener Schritt** oder **Verborgener Workflow**.
+
+### Vergleichen mit
+
+**Vergleichen mit** legt fest, woran eine Ausführung gemessen wird, und seine Schaltfläche lautet **Vergleichen mit: Üblich**, **Vergleichen mit: Vorherige Ausführung** oder **Vergleichen mit: Gewählte Ausführung**. **Üblich** verwendet die letzten Ausführungen jedes Schritts. **Üblich + vorherige Ausführung** und **Üblich + gewählte Ausführung** fügen außerdem die Zeit dieser Ausführung für jeden Schritt hinzu, die die **Zeitachse** umrandet und die die **Tabelle** unter **Verglichene Ausführung** zeigt. Die gewählte Ausführung wählen Sie aus den letzten Ausführungen aus.
+
+### Ein Workflow innerhalb einer größeren Ausführung
+
+Wenn Sie einen Workflow öffnen, den ein anderer Workflow aufgerufen hat, zeigt Insight nur den Teil der Ausführung, der zu diesem Workflow gehört. **Gesamte Ausführung öffnen** schaltet denselben Dialog auf den Workflow um, der die Ausführung gestartet hat.
+
+### Laufende Ausführungen
+
+Eine Ausführung, die noch läuft, wird alle 30 Sekunden neu gelesen, solange der Dialog sichtbar ist. Zoom, Auswahl und Ansicht bleiben erhalten. Wenn Sie Insight zugunsten von **Ausführungen** verlassen, enden die Aktualisierungen; kehren Sie zu Insight zurück, wird die Ausführung neu gelesen und die Aktualisierung setzt sich fort. Die Schaltfläche Aktualisieren, die kreisförmigen Pfeile rechts in der Symbolleiste, lädt die Ausführung von Grund auf neu, setzt Zoom und Auswahl zurück und klappt Blöcke im Plan wieder ein.
+
+### Für KI-Assistenten und die REST-API
+
+Dasselbe Profil ist auch außerhalb des Dialogs verfügbar:
+
+- REST: `GET /rest/v1/analyze/workflow/run-insight` mit `project_id` und `workflow_id`. `run_id` wählt die Ausführung (die letzte, wenn es fehlt), und `baseline` ist `typical`, `previous` oder `run:<id>`.
+- MCP: `workflow_describe` mit `include=['run_insight']` und optional `run_id` und `baseline`.
+
+Jeder Workflow und jeder Schritt wird mit seiner Zeit, seiner Stellung in der Ausführung, einer Bewertung an seinem eigenen Verlauf und den Gründen zurückgegeben. Eine Ausführung, die nicht existiert oder keine Schrittzeilen hat, liefert kein Profil, sondern eine Warnung statt eines Fehlers.
+
 ## Anhalten, Beenden und Fortsetzen
 
 Während ein Workflow läuft, können Sie ihn **anhalten**, sodass laufende Schritte abgeschlossen werden und neue Schritte warten, oder **beenden**, wodurch die Schritte in der Warteschlange und alle noch laufenden Import- oder Export-Jobs abgebrochen werden, zusammen mit der Warehouse-Abfrage, die ein Export gerade gelesen hat. Import- und Dimensionsschritte, die noch in der Warteschlange standen, werden sauber abgebrochen, sodass sie spätere Importe und Dimensionsladevorgänge im Workspace nicht blockieren. Beenden stoppt außerdem die in der Warteschlange stehenden oder laufenden Connector-Synchronisierungen (Singer) des Workflows, sodass eine Synchronisierung nicht weiterläuft, nachdem der Workflow beendet wurde.

@@ -102,6 +102,82 @@ Komunikat o synchronizacji konektora wskazuje nazwę synchronizacji. Jeśli proc
 
 Uruchomienie nigdy nie pozostaje w stanie **Uruchomiony** po zniknięciu pracy, która za nim stoi. Jeśli serwer wykonujący przepływ pracy zostanie utracony, uruchomienie kończy się niepowodzeniem. Uruchomienie może trwać najwyżej 12 godzin: takie, które w tym momencie nadal trwa, kończy się niepowodzeniem z komunikatem „Run failed: still running at the 12-hour limit. Re-run the workflow.”
 
+## Run Insight
+
+Run Insight pokazuje, na co jedno uruchomienie przepływu pracy zużyło czas i które kroki trwały dłużej lub krócej niż zwykle. Ocenia każdy krok względem jego własnych ostatnich uruchomień, więc krok, który jest zawsze wolny, nie jest wyróżniany.
+
+### Otwieranie Run Insight
+
+- Na kanwie kliknij **Historia** na pasku narzędzi. Zobacz [Wizualny projektant przepływów pracy](/pl/guides/workflows/advanced-workflows/).
+- Na karcie **Przepływy pracy** zaznacz jeden przepływ pracy i wybierz **Run Insight** z menu **Akcje** lub z menu kontekstowego.
+- Na stronie głównej wybierz **Otwórz ostatnie uruchomienie** na karcie przepływu pracy.
+- W oknie dialogowym historii uruchomień wybierz uruchomienie w tabeli **Uruchomienia** za pomocą **Otwórz w Insight** albo otwórz jego wiersz.
+- W komunikacie Weave w aplikacji o wolnym uruchomieniu kliknij **Otwórz uruchomienie**. Zobacz [Powiadamianie o zakończeniu uruchomienia](/pl/guides/ai-assistant/weave-findings/#powiadamianie-po-zakończeniu-uruchomienia).
+
+Okno dialogowe ma tytuł **Historia uruchomień** — nazwa przepływu pracy. Przyciski **Insight** i **Uruchomienia** przełączają między tym widokiem a tabelą poprzednich uruchomień. Historia uruchomień pojedynczego kroku, otwarta z Inspektora, pokazuje tylko tabelę.
+
+### Odczytywanie nagłówka i listy uwag
+
+Nagłówek podaje wynik uruchomienia w jednym wierszu: **Czas:** *czas*, **Trwa od** *czas*, gdy uruchomienie trwa, **Zatrzymano po** *czas* dla ostatniego uruchomienia, które zatrzymano, albo **Niepowodzenie po** przepływie pracy, w którym wystąpiło niepowodzenie. Zdanie pod nim mówi, co się wyróżnia, na przykład kroki, które działały wolniej niż zwykle, czas spędzony na oczekiwaniu albo to, że każdy krok z historią mieścił się w swoim zwykłym zakresie. Poniżej znajdują się czas rozpoczęcia i liczba przepływów pracy i kroków oraz, gdy niektóre kroki mają zbyt małą historię, by je ocenić, ich liczba. Gdy coś wymaga spojrzenia, obok nagłówka pojawia się licznik oznaczony **Do sprawdzenia:**.
+
+Obok nagłówka znajduje się pasek ostatnich uruchomień. Kliknij uruchomienie na pasku, aby je otworzyć. Uruchomienie, które zakończyło się niepowodzeniem, jest oznaczone, podobnie jak uruchomienie, które wykonało mniej kroków niż większość ostatnich uruchomień, ponieważ nie można go porównać z pełnym uruchomieniem.
+
+**Wymaga uwagi** wymienia w tej kolejności najpierw niepowodzenia, potem czas ponad normę, a na końcu oczekiwanie. Kliknij pozycję, aby zaznaczyć ją w widoku.
+
+### Przepływ, oś czasu i tabela
+
+Wybierz widok z menu **Widok**.
+
+| Widok | Co pokazuje |
+|---|---|
+| **Przepływ** | Bloki, których wysokość odpowiada czasowi. Bursztynowy kolor oznacza czas ponad normę kroku. Gdy krok wywołał inne przepływy pracy, wycinek **Narzut wywołania** to czas samego kroku poza tymi przepływami pracy. Gdy żaden krok nie był uruchomiony, wycinek **Oczekiwanie** pokazuje przerwę; przepływ pracy wykonany równolegle jej nie rysuje. |
+| **Oś czasu** | Czas zegarowy od początku uruchomienia. Przerywany kontur pokazuje, jak długo blok trwał w porównywanym uruchomieniu. |
+| **Tabela** | Wszystko w kolejności wywołań, z kolumnami **Nazwa**, **To uruchomienie**, **Zwykle**, **Dodatkowe**, **Porównywane uruchomienie** i **Stan**. |
+
+Przepływ pracy, który wywołał inne przepływy pracy, pokazuje je w swoim wnętrzu. Kliknij dwukrotnie blok przepływu pracy lub wybierz **Powiększ**, aby pracować w jego wnętrzu, a aby wrócić, użyj ścieżki nad widokiem albo **Pomniejsz** w menu **Akcje**. Gdy kilka bloków zgodnych z normą stoi obok siebie, **Przepływ** zwija je w jeden blok **N zgodnie z normą**; kliknij jeden z nich lub wybierz **Pokaż wszystkie bloki** w menu **Akcje**, aby je otworzyć. **Zwiń bloki zgodne z normą** zwija je ponownie.
+
+Zaznacz blok, aby zobaczyć jego panel szczegółów, z tymi spośród **To uruchomienie**, **Zwykle**, **Historia**, **Ponad normę** i **Porównywane uruchomienie**, które mają zastosowanie, oraz z opcjami **Pokaż w jego przepływie pracy**, **Pokaż jego kroki** lub **Powiększ**, **Otwórz przepływ pracy** i **Wyświetl dziennik uruchomienia**. **Otwórz przepływ pracy** otwiera przepływ pracy na kanwie, a **Wyświetl dziennik uruchomienia** otwiera jego [dziennik](/pl/guides/workflows/viewing-workflow-log/).
+
+### Co oznaczają znaczniki
+
+| Znacznik | Znaczenie |
+|---|---|
+| **Niepowodzenie** | Krok zakończył się błędem. Panel pokazuje jego komunikat, chyba że Twoja rola nie może zobaczyć nazwy kroku. |
+| **Wolniej niż zwykle** | Krok trwał dłużej niż jego zwykły zakres. |
+| **Wolniej w całości** | Każdy krok w przepływie pracy działał wolniej mniej więcej o tyle samo, co wskazuje na coś wspólnego dla całego przepływu pracy, a nie na pojedynczy krok. Jego kroki pokazują **Część wspólnego spowolnienia**. |
+| **Ma wolne kroki** | Przepływ pracy z **Wolne kroki wewnątrz**. |
+| **Zgodnie z normą** | Krok mieścił się w swoim zwykłym zakresie. |
+| **Szybciej** | Krok działał szybciej niż jego zwykły zakres. |
+| **Za mało historii** | Krok nie był uruchamiany wystarczająco często, by mieć zwykły zakres, więc nie jest oceniany. |
+| **Błąd, kontynuowano** | Krok zakończył się niepowodzeniem, ale jest skonfigurowany tak, aby [kontynuować po błędzie](/pl/guides/workflows/continue-on-error/). |
+| **Pominięto** | Krok został pominięty. |
+| **Uruchomiony** | Krok jeszcze się nie zakończył. |
+
+Krok, którego ostatnie uruchomienia były już wolne lub bardzo się różniły, może nie zostać oznaczony. Uruchomienie na koniec okresu, porównane ze zwykłymi dniami, może wyglądać na wolniejsze w całości. Starsze zatrzymane uruchomienie pojawia się jako krótkie uruchomienie, a nie jako zatrzymane.
+
+Panel może też wyjaśnić znacznik. **Oczekiwanie** to czas, gdy żaden krok nie był uruchomiony, więc nie ma kroku, który za to odpowiada. W kroku, który działał wolniej niż zwykle, **Zapisane wiersze** porównuje wynik kroku z jego zwykłą liczbą i jest pomijane, gdy zabezpieczenia na poziomie wierszy filtrują to, co możesz odczytać, a **Zapisano od ostatniego uruchomienia** oznacza, że krok został zapisany po jego poprzednim uruchomieniu i przed rozpoczęciem tego; rekord pokazuje zapis, a nie to, co się zmieniło. **Inna praca** zlicza kroki, które się nie uruchomiły, oraz kroki, które się uruchomiły bez historii, mierzone względem historii każdego kroku albo, gdy porównujesz z innym uruchomieniem, względem tego uruchomienia. **Wykonano równolegle** oznacza, że części przepływu pracy działały jednocześnie, więc ich czasy sumują się do więcej niż czas zegarowy. **Wywołujący niepewny** oznacza, że historia nie pozwala pokazać, który krok wywołał przepływ pracy. **Nazwa ukryta** oznacza krok lub przepływ pracy, którego nazwy Twoja rola nie może zobaczyć; są pokazane jako **Ukryty krok** lub **Ukryty przepływ pracy**.
+
+### Porównaj z
+
+**Porównaj z** ustala, względem czego mierzone jest uruchomienie, a jego przycisk pokazuje **Porównaj z: Norma**, **Porównaj z: Poprzednie uruchomienie** lub **Porównaj z: Wybrane uruchomienie**. **Norma** używa ostatnich uruchomień każdego kroku. **Norma + poprzednie uruchomienie** i **Norma + wybrane uruchomienie** dodają też czas tego uruchomienia dla każdego kroku, który **Oś czasu** obrysowuje, a **Tabela** pokazuje w kolumnie **Porównywane uruchomienie**. Wybrane uruchomienie wybiera się spośród ostatnich uruchomień.
+
+### Jeden przepływ pracy wewnątrz większego uruchomienia
+
+Gdy otworzysz przepływ pracy wywołany przez inny przepływ pracy, Insight pokazuje tylko jego część uruchomienia. **Otwórz całe uruchomienie** przełącza to samo okno dialogowe na przepływ pracy, który rozpoczął uruchomienie.
+
+### Uruchomienia na żywo
+
+Uruchomienie, które nadal trwa, jest odczytywane ponownie co 30 sekund, dopóki okno dialogowe jest widoczne. Powiększenie, zaznaczenie i widok pozostają bez zmian. Przejście z Insight do **Uruchomienia** zatrzymuje aktualizacje, a powrót do Insight ponownie odczytuje uruchomienie i wznawia je. Przycisk Odśwież, okrągłe strzałki po prawej stronie paska narzędzi, ładuje uruchomienie od nowa, resetuje powiększenie i zaznaczenie oraz ponownie zwija bloki zgodne z normą.
+
+### Dla asystentów AI i interfejsu REST API
+
+Ten sam profil jest dostępny poza oknem dialogowym:
+
+- REST: `GET /rest/v1/analyze/workflow/run-insight` z `project_id` i `workflow_id`. `run_id` wskazuje uruchomienie (najnowsze, gdy pominięto), a `baseline` to `typical`, `previous` lub `run:<id>`.
+- MCP: `workflow_describe` z `include=['run_insight']` oraz opcjonalnymi `run_id` i `baseline`.
+
+Każdy przepływ pracy i każdy krok wraca z czasem, miejscem w uruchomieniu, werdyktem względem własnej historii i powodami. Uruchomienie, które nie istnieje lub nie ma wierszy kroków, zwraca zamiast błędu brak profilu i ostrzeżenie.
+
 ## Wstrzymywanie, zatrzymywanie i wznawianie
 
 Gdy przepływ pracy jest uruchomiony, można użyć **Wstrzymaj**, aby kroki w toku się zakończyły, a nowe kroki czekały, lub **Zatrzymaj**, co anuluje kroki w kolejce oraz wszystkie nadal działające zadania importu lub eksportu, a także zapytanie w hurtowni danych, z którego odczytywał eksport. Kroki importu i wymiarów, które nadal były w kolejce, są anulowane w czysty sposób, więc nie blokują późniejszych importów i ładowań wymiarów w obszarze roboczym. Zatrzymanie zatrzymuje także oczekujące lub działające synchronizacje konektora (Singer) przepływu pracy, aby synchronizacja nie działała dalej po zatrzymaniu przepływu pracy.

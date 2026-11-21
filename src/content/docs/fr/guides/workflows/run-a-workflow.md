@@ -102,6 +102,82 @@ Le message de synchronisation de connecteur nomme la synchronisation. Si un work
 
 Une exécution ne reste jamais **En cours d'exécution** une fois que le travail qui la sous-tend a disparu. Si le serveur qui exécute le workflow est perdu, l'exécution se termine en échec. Une exécution peut durer au plus 12 heures : une exécution encore en cours à ce moment-là échoue avec le message « Run failed: still running at the 12-hour limit. Re-run the workflow. »
 
+## Run Insight
+
+Run Insight montre où une exécution d'un workflow a passé son temps, et quelles étapes ont pris plus ou moins de temps que d'habitude. Il juge chaque étape par rapport à ses propres exécutions récentes, de sorte qu'une étape toujours lente n'est pas signalée.
+
+### Ouvrir Run Insight
+
+- Sur le canevas, cliquez sur **Historique** dans la barre d'outils. Voir [Concepteur visuel de workflow](/fr/guides/workflows/advanced-workflows/).
+- Dans l'onglet **Workflows**, sélectionnez un workflow et choisissez **Run Insight** dans le menu **Actions** ou dans le menu contextuel.
+- Sur l'Accueil, choisissez **Ouvrir la dernière exécution** sur une carte de workflow.
+- Dans la boîte de dialogue de l'historique des exécutions, choisissez une exécution dans la table **Exécutions** avec **Ouvrir dans Insight**, ou ouvrez sa ligne.
+- Dans un message Weave intégré à l'application concernant une exécution lente, cliquez sur **Ouvrir l'exécution**. Voir [Être prévenu à la fin d'une exécution](/fr/guides/ai-assistant/weave-findings/#être-prévenu-à-la-fin-dune-exécution).
+
+La boîte de dialogue s'intitule **Historique des exécutions** — nom du workflow. Ses boutons **Insight** et **Exécutions** basculent entre cette vue et la table des exécutions passées. L'historique d'exécution d'une étape, ouvert depuis l'Inspecteur, n'affiche que la table.
+
+### Lire le titre et la liste d'attention
+
+Le titre donne le résultat de l'exécution en une ligne : **Durée :** *durée*, **En cours depuis** *durée* tant qu'elle s'exécute, **Arrêté après** *durée* pour une dernière exécution arrêtée, ou **Échec en** *workflow*, le workflow où elle a échoué. Une phrase en dessous dit ce qui ressort, comme les étapes plus lentes que d'habitude, le temps passé à attendre, ou le fait que chaque étape ayant un historique s'est exécutée dans sa plage habituelle. En dessous viennent l'heure de début, le nombre de workflows et d'étapes et, lorsque l'historique de certaines étapes est trop court pour être jugé, leur nombre. Lorsque quelque chose mérite un coup d'œil, *N* **à examiner** apparaît à côté du titre.
+
+Une bande des exécutions récentes se trouve à côté du titre. Cliquez sur une exécution de la bande pour l'ouvrir. Une exécution échouée est marquée, de même qu'une exécution qui a exécuté moins d'étapes que la plupart des exécutions récentes, car elle ne peut pas être comparée à une exécution complète.
+
+**Points d'attention** liste, dans cet ordre, d'abord les échecs, puis le temps au-delà de l'habituel, puis l'attente. Cliquez sur un élément pour le sélectionner dans la vue.
+
+### Flux, chronologie et table
+
+Choisissez une vue dans le menu **Vue**.
+
+| Vue | Ce qu'elle montre |
+|---|---|
+| **Flux** | Des blocs dont la hauteur est le temps. L'ambre est le temps au-delà de l'habituel d'une étape. Lorsqu'une étape a appelé d'autres workflows, une tranche **Surcoût d'appel** est le temps propre de l'étape en dehors de ces workflows. Lorsqu'aucune étape ne s'exécutait, une tranche **En attente** montre l'écart ; un workflow exécuté en parallèle n'en dessine pas. |
+| **Chronologie** | L'heure de l'horloge depuis le début de l'exécution. Un contour en pointillés indique la durée du bloc dans l'exécution comparée. |
+| **Table** | Tout dans l'ordre des appels, avec les colonnes **Nom**, **Cette exécution**, **Habituellement**, **Supplément**, **Exécution comparée** et **Statut**. |
+
+Un workflow qui a appelé d'autres workflows les affiche à l'intérieur de lui. Double-cliquez sur un bloc de workflow, ou choisissez **Zoom avant**, pour travailler à l'intérieur, et utilisez le fil d'Ariane au-dessus de la vue ou **Zoom arrière** dans le menu **Actions** pour revenir. Lorsque plusieurs étapes dans les temps sont côte à côte, **Flux** les replie en un seul bloc *N* **dans les temps** ; cliquez dessus, ou choisissez **Afficher tous les blocs** dans le menu **Actions**, pour les ouvrir. **Replier les blocs dans les temps** les replie de nouveau.
+
+Sélectionnez un bloc pour voir son panneau de détail, avec ce qui s'applique parmi **Cette exécution**, **Habituellement**, **Historique**, **Au-delà de l'habituel** et **Exécution comparée**, et avec **Afficher dans son workflow**, **Afficher ses étapes** ou **Zoom avant**, **Ouvrir le workflow** et **Afficher le journal d'exécution**. **Ouvrir le workflow** ouvre le workflow sur le canevas et **Afficher le journal d'exécution** ouvre son [journal](/fr/guides/workflows/viewing-workflow-log/).
+
+### Ce que signifient les marques
+
+| Marque | Signification |
+|---|---|
+| **Échec** | Une étape s'est terminée par une erreur. Le panneau affiche son message, sauf si votre rôle ne peut pas voir le nom de l'étape. |
+| **Plus lent que d'habitude** | L'étape a pris plus de temps que sa plage habituelle. |
+| **Lent sur toute la durée** | Chaque étape du workflow a été à peu près aussi lente, ce qui désigne quelque chose que tout le workflow partage plutôt qu'une seule étape. Ses étapes affichent **Part d'un ralentissement général**. |
+| **Avec étapes lentes** | Un workflow avec des **Étapes lentes à l'intérieur**. |
+| **Dans les temps** | L'étape s'est exécutée dans sa plage habituelle. |
+| **Plus rapide** | L'étape s'est exécutée plus vite que sa plage habituelle. |
+| **Historique insuffisant** | L'étape ne s'est pas exécutée assez souvent pour avoir une plage habituelle, elle n'est donc pas jugée. |
+| **Erreur, poursuivie** | L'étape a échoué mais est configurée pour [poursuivre en cas d'erreur](/fr/guides/workflows/continue-on-error/). |
+| **Ignoré** | L'étape a été sautée. |
+| **En cours d'exécution** | L'étape n'est pas terminée. |
+
+Une étape dont les exécutions récentes étaient déjà lentes ou varient beaucoup peut ne pas être signalée. Une exécution de fin de période, comparée à des jours ordinaires, peut apparaître plus lente sur toute la durée. Une ancienne exécution arrêtée apparaît comme une exécution courte, pas comme arrêtée.
+
+Le panneau peut aussi expliquer une marque. **En attente** est le temps pendant lequel aucune étape ne s'exécutait, donc aucune étape n'en est responsable. Sur une étape plus lente que d'habitude, **Lignes écrites** compare sa sortie à son compte habituel, et est omis lorsque la sécurité au niveau des lignes filtre ce que vous pouvez lire, et **Enregistré depuis sa dernière exécution** indique que l'étape a été enregistrée après son exécution précédente et avant le début de celle-ci ; l'enregistrement montre une sauvegarde, pas ce qui a changé. **Travail différent** compte les étapes qui ne se sont pas exécutées et les étapes qui se sont exécutées sans historique, mesurées par rapport à l'historique de chaque étape ou, lorsque vous comparez avec une autre exécution, par rapport à cette exécution. **Exécuté en parallèle** signifie que les parties du workflow se sont exécutées en même temps, de sorte que leurs durées s'additionnent à plus que l'horloge. **Appelant incertain** signifie que l'historique ne peut pas montrer quelle étape a appelé un workflow. **Nom masqué** marque une étape ou un workflow dont votre rôle ne peut pas voir le nom, affiché comme **Étape masquée** ou **Workflow masqué**.
+
+### Comparer à
+
+**Comparer à** définit ce par rapport à quoi une exécution est mesurée, et son bouton affiche **Comparer à : Habituel**, **Comparer à : Exécution précédente** ou **Comparer à : Exécution choisie**. **Habituel** utilise les exécutions récentes de chaque étape. **Habituel + exécution précédente** et **Habituel + une exécution choisie** ajoutent aussi le temps de cette exécution pour chaque étape, que la **Chronologie** contourne et que la **Table** affiche sous **Exécution comparée**. L'exécution choisie est sélectionnée parmi les exécutions récentes.
+
+### Un workflow à l'intérieur d'une exécution plus grande
+
+Lorsque vous ouvrez un workflow qu'un autre workflow a appelé, Insight n'affiche que la part de l'exécution qui revient à ce workflow. **Ouvrir toute l'exécution** fait passer la même boîte de dialogue au workflow qui a démarré l'exécution.
+
+### Exécutions en cours
+
+Une exécution encore en cours est relue toutes les 30 secondes tant que la boîte de dialogue est visible. Votre zoom, votre sélection et votre vue restent inchangés. Quitter Insight pour **Exécutions** arrête les mises à jour, et revenir à Insight relit l'exécution et les reprend. Le bouton Actualiser, les flèches circulaires à droite de la barre d'outils, recharge l'exécution depuis zéro, réinitialise le zoom et la sélection, et replie de nouveau les blocs dans les temps.
+
+### Pour les assistants IA et l'API REST
+
+Le même profil est disponible en dehors de la boîte de dialogue :
+
+- REST : `GET /rest/v1/analyze/workflow/run-insight` avec `project_id` et `workflow_id`. `run_id` choisit l'exécution (la dernière si omis), et `baseline` vaut `typical`, `previous` ou `run:<id>`.
+- MCP : `workflow_describe` avec `include=['run_insight']`, et `run_id` et `baseline` facultatifs.
+
+Chaque workflow et chaque étape revient avec son temps, sa place dans l'exécution, un verdict par rapport à son propre historique, et les raisons. Une exécution qui n'existe pas, ou qui n'a aucune ligne d'étape, ne renvoie aucun profil et un avertissement au lieu d'une erreur.
+
 ## Suspendre, arrêter et reprendre
 
 Pendant l'exécution d'un workflow, vous pouvez le **Suspendre**, de sorte que les étapes en cours se terminent et que les nouvelles étapes attendent, ou l'**Arrêter**, ce qui annule les étapes en file d'attente ainsi que les jobs d'importation ou d'exportation encore en cours, ainsi que la requête d'entrepôt qu'une exportation était en train de lire. Les étapes d'importation et de dimension encore en file d'attente sont annulées proprement, afin de ne pas retarder les importations et chargements de dimension suivants dans l'espace de travail. L'arrêt interrompt aussi les synchronisations de connecteur (Singer) du workflow, en file d'attente ou en cours, de sorte qu'une synchronisation ne continue pas de s'exécuter après l'arrêt du workflow.
