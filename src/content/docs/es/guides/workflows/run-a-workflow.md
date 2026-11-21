@@ -114,29 +114,29 @@ Run Insight muestra en qué empleó su tiempo una ejecución de un flujo de trab
 - En el cuadro de diálogo del historial de ejecuciones, elija una ejecución en la tabla **Ejecuciones** con **Abrir en Insight**, o abra su fila.
 - En un mensaje de Weave dentro de la aplicación sobre una ejecución lenta, haga clic en **Abrir la ejecución**. Consulte [Aviso al terminar una ejecución](/es/guides/ai-assistant/weave-findings/#aviso-al-terminar-una-ejecución).
 
-El cuadro de diálogo se titula **Historial de ejecuciones** — nombre del flujo de trabajo. Sus botones **Insight** y **Ejecuciones** alternan entre esta vista y la tabla de ejecuciones anteriores. El historial de ejecuciones de un paso, que se abre desde el Inspector, muestra solo la tabla.
+El cuadro de diálogo se titula **Historial de ejecuciones** — nombre del flujo de trabajo. Su selector **Insight** | **Ejecuciones** alterna entre esta vista y la tabla de ejecuciones anteriores. El historial de ejecuciones de un paso, que se abre desde el Inspector, muestra solo la tabla.
 
 ### Leer el titular y la lista de atención
 
 El titular indica el resultado de la ejecución en una línea: **Tardó** *tiempo*, **En ejecución desde hace** *tiempo* mientras se ejecuta, **Detenido tras** *tiempo* en una última ejecución que se detuvo, o **Falló en** *flujo de trabajo*, el flujo de trabajo en el que falló. Una frase debajo indica qué destaca, como los pasos que fueron más lentos de lo habitual, el tiempo de espera, o que todos los pasos con historial se ejecutaron dentro de su intervalo habitual. Después aparecen la hora de inicio, el número de flujos de trabajo y pasos y, cuando algunos pasos tienen muy poco historial para juzgarse, cuántos. Cuando algo merece una revisión, aparece junto al titular *N* **por revisar**.
 
-Junto al titular hay una franja de ejecuciones recientes. Haga clic en una ejecución de la franja para abrirla. Una ejecución fallida aparece marcada, y también una ejecución que ejecutó menos pasos que la mayoría de las ejecuciones recientes, porque no puede compararse con una ejecución completa.
+Junto al titular hay una franja de ejecuciones recientes, con un rótulo encima. Cada barra es una ejecución, tan alta como lo que tardó, y el día se indica solo donde cambia. Haga clic en una ejecución de la franja para abrirla. Una tapa roja y una ✕ marcan una ejecución fallida, y un contorno discontinuo marca una ejecución que ejecutó menos pasos que la mayoría de las ejecuciones recientes, porque no puede compararse con una ejecución completa.
 
-**Qué requiere atención** lista, en este orden, primero los errores, después el tiempo más allá de lo habitual y por último las esperas. Haga clic en un elemento para seleccionarlo en la vista.
+**Qué requiere atención** lista, en este orden, primero los errores, después el tiempo más allá de lo habitual y por último las esperas. Cada elemento es una tarjeta con su nombre, el tiempo que perdió o **Error**, dónde se encuentra y una barra de su tiempo en la que el gris es lo habitual y el ámbar lo que lo supera, y la barra de un error es roja. Un paso guardado desde su última ejecución lleva una etiqueta **Guardado el** *fecha*. Haga clic en una tarjeta para seleccionarla en la vista; la tarjeta seleccionada aparece resaltada.
 
 ### Flujo, cronología y tabla
 
-Elija una vista en el menú **Vista**.
+El encabezado situado sobre la vista contiene el nombre del flujo de trabajo, después **Comparar con**, después **Vista**, cuyos botones **Flujo**, **Cronología** y **Tabla** eligen la vista, y el botón Actualizar a la derecha.
 
 | Vista | Qué muestra |
 |---|---|
-| **Flujo** | Bloques cuya altura es el tiempo. El ámbar es el tiempo más allá de lo habitual de un paso. Cuando un paso llamó a otros flujos de trabajo, un segmento **Sobrecarga de llamada** es el tiempo propio del paso fuera de esos flujos de trabajo. Cuando no se estaba ejecutando ningún paso, un segmento **En espera** muestra el hueco; un flujo de trabajo que se ejecutó en paralelo no lo dibuja. |
+| **Flujo** | Bloques cuya altura es el tiempo. El ámbar es el tiempo más allá de lo habitual de un paso. Un bloque que no está abierto pero contiene un error muestra ✕ y un contorno rojo. Un bloque fallido o seleccionado demasiado corto para mostrar su nombre se dibuja más alto, y la leyenda indica que entonces no está a escala. Cuando un paso llamó a otros flujos de trabajo, un segmento **Sobrecarga de llamada** es el tiempo propio del paso fuera de esos flujos de trabajo. Cuando no se estaba ejecutando ningún paso, un segmento **En espera** muestra el hueco; un flujo de trabajo que se ejecutó en paralelo no lo dibuja. |
 | **Cronología** | Hora de reloj desde el inicio de la ejecución. Un contorno discontinuo indica cuánto tardó el bloque en la ejecución comparada. |
 | **Tabla** | Todo en orden de llamada, con las columnas **Nombre**, **Esta ejecución**, **Normalmente**, **Extra**, **Ejecución comparada** y **Estado**. |
 
-Un flujo de trabajo que llamó a otros flujos de trabajo los muestra en su interior. Haga doble clic en un bloque de flujo de trabajo, o elija **Acercar**, para trabajar dentro de él, y use la ruta situada sobre la vista o **Alejar** en el menú **Acciones** para volver. Cuando varios pasos al ritmo habitual están juntos, **Flujo** los pliega en un bloque *N* **al ritmo habitual**; haga clic en él, o elija **Mostrar todos los bloques** en el menú **Acciones**, para abrirlos. **Plegar bloques al ritmo habitual** los vuelve a plegar.
+Un flujo de trabajo que llamó a otros flujos de trabajo los muestra en su interior. Haga doble clic en un bloque de flujo de trabajo, o elija **Acercar**, para trabajar dentro de él, y use la ruta situada sobre la vista para volver. Cuando varios pasos al ritmo habitual están juntos, **Flujo** los pliega en un bloque *N* **al ritmo habitual**; haga clic en él, o haga clic en **Mostrar los** *número* **bloques** a la derecha de la ruta, para abrirlos; el número es la cantidad de bloques de la vista. **Plegar bloques al ritmo habitual** los vuelve a plegar, y el botón aparece solo cuando algo puede plegarse.
 
-Seleccione un bloque para ver su panel de detalle, con lo que corresponda de **Esta ejecución**, **Normalmente**, **Historial**, **Más allá de lo habitual** y **Ejecución comparada**, y con **Mostrar en su flujo de trabajo**, **Mostrar sus pasos** o **Acercar**, **Abrir flujo de trabajo** y **Ver registro de ejecución**. **Abrir flujo de trabajo** abre el flujo de trabajo en el lienzo y **Ver registro de ejecución** abre su [registro](/es/guides/workflows/viewing-workflow-log/).
+Seleccione un bloque para ver su panel de detalle. Muestra el nombre y el lugar del bloque, una etiqueta de estado con una de las marcas siguientes, y filas con lo que corresponda de **Esta ejecución**, **Normalmente**, **Historial**, **Más allá de lo habitual** y **Ejecución comparada**. Sigue una línea de tendencia: para el flujo de trabajo de la propia ejecución, sus ejecuciones completas recientes, con esta ejecución como un punto cuando se completó; para un paso con un intervalo habitual, ese intervalo como una banda con esta ejecución como un punto. Unas notas explican la marca, y los botones son **Mostrar en su flujo de trabajo**, **Mostrar sus pasos** o **Acercar**, **Abrir flujo de trabajo** y **Ver registro de ejecución**. **Abrir flujo de trabajo** abre el flujo de trabajo en el lienzo y **Ver registro de ejecución** abre su [registro](/es/guides/workflows/viewing-workflow-log/).
 
 ### Qué significan las marcas
 
@@ -159,7 +159,7 @@ El panel también puede explicar una marca. **En espera** es el tiempo en que no
 
 ### Comparar con
 
-**Comparar con** establece frente a qué se mide una ejecución, y su botón dice **Comparar con: Habitual**, **Comparar con: Ejecución anterior** o **Comparar con: Ejecución elegida**. **Habitual** usa las ejecuciones recientes de cada paso. **Habitual + ejecución anterior** y **Habitual + una ejecución elegida** añaden además el tiempo de esa ejecución para cada paso, que la **Cronología** contornea y la **Tabla** muestra en **Ejecución comparada**. La ejecución elegida se escoge entre las ejecuciones recientes.
+**Comparar con** establece frente a qué se mide una ejecución. Su botón de menú muestra la elección: **Habitual**, **Habitual + ejecución anterior** o **Habitual + ejecución del** seguido de la hora de inicio de la ejecución elegida. **Habitual** usa las ejecuciones recientes de cada paso. **Habitual + ejecución anterior** y **Habitual + una ejecución elegida** añaden además el tiempo de esa ejecución para cada paso, que la **Cronología** contornea y la **Tabla** muestra en **Ejecución comparada**. **Habitual + una ejecución elegida** abre una lista de las ejecuciones recientes para elegir una.
 
 ### Un flujo de trabajo dentro de una ejecución mayor
 
@@ -167,7 +167,7 @@ Cuando abre un flujo de trabajo al que llamó otro flujo de trabajo, Insight mue
 
 ### Ejecuciones en curso
 
-Una ejecución que sigue en curso se vuelve a leer cada 30 segundos mientras el cuadro de diálogo esté visible. El zoom, la selección y la vista se mantienen. Al salir de Insight hacia **Ejecuciones**, las actualizaciones se detienen, y al volver a Insight se vuelve a leer la ejecución y se reanudan. El botón Actualizar, las flechas circulares a la derecha de la barra de herramientas, recarga la ejecución desde cero, restablece el zoom y la selección, y vuelve a plegar los bloques al ritmo habitual.
+Una ejecución que sigue en curso se vuelve a leer cada 30 segundos mientras el cuadro de diálogo esté visible. El zoom, la selección y la vista se mantienen. Al salir de Insight hacia **Ejecuciones**, las actualizaciones se detienen, y al volver a Insight se vuelve a leer la ejecución y se reanudan. El botón Actualizar, las flechas circulares a la derecha del encabezado, recarga la ejecución desde cero, restablece el zoom y la selección, y vuelve a plegar los bloques al ritmo habitual.
 
 ### Para asistentes de IA y la API REST
 

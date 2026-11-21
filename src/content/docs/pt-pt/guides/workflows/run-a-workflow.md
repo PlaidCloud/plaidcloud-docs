@@ -114,29 +114,29 @@ O Run Insight mostra onde uma execução de um fluxo de trabalho gastou o seu te
 - Na caixa de diálogo do histórico de execuções, escolha uma execução na tabela **Execuções** com **Abrir na Análise** ou abra a respetiva linha.
 - Numa mensagem do Weave na aplicação sobre uma execução lenta, clique em **Abrir a execução**. Consulte [Ser avisado quando uma execução termina](/pt-pt/guides/ai-assistant/weave-findings/#ser-avisado-quando-uma-execução-termina).
 
-A caixa de diálogo tem o título **Histórico de execuções** — nome do fluxo de trabalho. Os botões **Análise** e **Execuções** alternam entre esta vista e a tabela de execuções anteriores. O histórico de execuções de um passo, aberto a partir do Inspetor, mostra apenas a tabela.
+A caixa de diálogo tem o título **Histórico de execuções** — nome do fluxo de trabalho. O seletor **Análise** | **Execuções** alterna entre esta vista e a tabela de execuções anteriores. O histórico de execuções de um passo, aberto a partir do Inspetor, mostra apenas a tabela.
 
 ### Ler o cabeçalho e a lista de atenção
 
 O cabeçalho indica o resultado da execução numa linha: **Demorou** *tempo*, **Em execução há** *tempo* enquanto decorre, **Parado após** *tempo* para a última execução que foi parada, ou **Falhou em** o fluxo de trabalho em que falhou. Uma frase por baixo diz o que se destaca, como os passos que foram mais lentos do que o habitual, o tempo passado em espera, ou que todos os passos com histórico se mantiveram dentro do intervalo habitual. Seguem-se a hora de início e o número de fluxos de trabalho e de passos e, quando alguns passos têm histórico insuficiente para serem avaliados, quantos são. Quando algo precisa de ser visto, uma contagem assinalada com **para rever** aparece junto ao cabeçalho.
 
-Uma faixa de execuções recentes fica ao lado do cabeçalho. Clique numa execução na faixa para a abrir. Uma execução que falhou é assinalada, tal como uma execução que executou menos passos do que a maioria das execuções recentes, porque não pode ser comparada com uma execução completa.
+Uma faixa de execuções recentes fica ao lado do cabeçalho, com uma legenda por cima. Cada barra é uma execução, tão alta quanto o tempo que demorou, e o dia só é indicado onde o dia muda. Clique numa execução na faixa para a abrir. Uma tampa vermelha e um ✕ assinalam uma execução que falhou, e um contorno tracejado assinala uma execução que executou menos passos do que a maioria das execuções recentes, porque não pode ser comparada com uma execução completa.
 
-**O que requer atenção** lista, por esta ordem, as falhas primeiro, depois o tempo acima do habitual e depois a espera. Clique num item para o selecionar na vista.
+**O que requer atenção** lista, por esta ordem, as falhas primeiro, depois o tempo acima do habitual e depois a espera. Cada item é um cartão com o respetivo nome, o tempo que perdeu ou **Falhou**, o local onde se encontra e uma barra do respetivo tempo em que o cinzento está dentro do habitual e o âmbar acima dele, e a barra de uma falha é vermelha. Um passo guardado desde a sua última execução tem uma etiqueta **Guardado a** *data*. Clique num cartão para o selecionar na vista; o cartão selecionado fica realçado.
 
 ### Fluxo, cronologia e tabela
 
-Escolha uma vista no menu **Vista**.
+O cabeçalho acima da vista contém o nome do fluxo de trabalho, depois **Comparar com**, depois **Vista**, cujos botões **Fluxo**, **Cronologia** e **Tabela** escolhem a vista, e o botão Atualizar à direita.
 
 | Vista | O que mostra |
 |---|---|
-| **Fluxo** | Blocos cuja altura é o tempo. O âmbar é o tempo acima do habitual de um passo. Onde um passo chamou outros fluxos de trabalho, uma fatia **Sobrecarga de chamada** é o tempo do próprio passo fora desses fluxos de trabalho. Onde nenhum passo estava em execução, uma fatia **Em espera** mostra a lacuna; um fluxo de trabalho executado em paralelo não desenha nenhuma. |
+| **Fluxo** | Blocos cuja altura é o tempo. O âmbar é o tempo acima do habitual de um passo. Um bloco que não está aberto mas contém uma falha mostra ✕ e um contorno vermelho. Um bloco que falhou ou está selecionado e é demasiado curto para ser nomeado é desenhado mais alto, e a legenda indica que, nesse caso, não está à escala. Onde um passo chamou outros fluxos de trabalho, uma fatia **Sobrecarga de chamada** é o tempo do próprio passo fora desses fluxos de trabalho. Onde nenhum passo estava em execução, uma fatia **Em espera** mostra a lacuna; um fluxo de trabalho executado em paralelo não desenha nenhuma. |
 | **Cronologia** | Tempo de relógio desde o início da execução. Um contorno tracejado indica quanto tempo o bloco demorou na execução comparada. |
 | **Tabela** | Tudo pela ordem das chamadas, com as colunas **Nome**, **Esta execução**, **Habitualmente**, **Extra**, **Execução comparada** e **Estado**. |
 
-Um fluxo de trabalho que chamou outros fluxos de trabalho mostra-os no seu interior. Faça duplo clique num bloco de fluxo de trabalho, ou escolha **Ampliar**, para trabalhar no seu interior, e utilize o caminho acima da vista ou **Reduzir** no menu **Ações** para voltar. Quando vários blocos que seguiram o ritmo habitual estão juntos, o **Fluxo** recolhe-os num único bloco **N no ritmo habitual**; clique num deles, ou escolha **Mostrar todos os blocos** no menu **Ações**, para os abrir. **Recolher blocos no ritmo habitual** volta a recolhê-los.
+Um fluxo de trabalho que chamou outros fluxos de trabalho mostra-os no seu interior. Faça duplo clique num bloco de fluxo de trabalho, ou escolha **Ampliar**, para trabalhar no seu interior, e utilize o caminho acima da vista para voltar. Quando vários blocos que seguiram o ritmo habitual estão juntos, o **Fluxo** recolhe-os num único bloco **N no ritmo habitual**; clique num deles, ou clique em **Mostrar os** *número* **blocos** à direita do caminho, para os abrir; o número é o de todos os blocos da vista. **Recolher blocos no ritmo habitual** volta a recolhê-los, e o botão só aparece quando algo pode ser recolhido.
 
-Selecione um bloco para ver o respetivo painel de detalhes, com o que se aplicar entre **Esta execução**, **Habitualmente**, **Histórico**, **Acima do habitual** e **Execução comparada**, e com **Mostrar no respetivo fluxo de trabalho**, **Mostrar os respetivos passos** ou **Ampliar**, **Abrir fluxo de trabalho** e **Ver registo da execução**. **Abrir fluxo de trabalho** abre o fluxo de trabalho na área de desenho e **Ver registo da execução** abre o respetivo [registo](/pt-pt/guides/workflows/viewing-workflow-log/).
+Selecione um bloco para ver o respetivo painel de detalhes. Mostra o nome e o local do bloco, uma etiqueta de estado com uma das marcas abaixo e linhas com o que se aplicar entre **Esta execução**, **Habitualmente**, **Histórico**, **Acima do habitual** e **Execução comparada**. Segue-se uma linha de tendência: para o fluxo de trabalho da própria execução, as respetivas execuções completas recentes, com esta execução como um ponto quando foi concluída; para um passo com um intervalo habitual, esse intervalo como uma banda com esta execução como um ponto. As notas explicam a marca, e os botões são **Mostrar no respetivo fluxo de trabalho**, **Mostrar os respetivos passos** ou **Ampliar**, **Abrir fluxo de trabalho** e **Ver registo da execução**. **Abrir fluxo de trabalho** abre o fluxo de trabalho na área de desenho e **Ver registo da execução** abre o respetivo [registo](/pt-pt/guides/workflows/viewing-workflow-log/).
 
 ### O que significam as marcas
 
@@ -159,7 +159,7 @@ O painel também pode explicar uma marca. **Em espera** é o tempo em que nenhum
 
 ### Comparar com
 
-**Comparar com** define em relação a que é medida uma execução, e o respetivo botão mostra **Comparar com: Habitual**, **Comparar com: Execução anterior** ou **Comparar com: Execução escolhida**. **Habitual** usa as execuções recentes de cada passo. **Habitual + execução anterior** e **Habitual + uma execução escolhida** acrescentam também o tempo dessa execução para cada passo, que a **Cronologia** contorna e a **Tabela** mostra em **Execução comparada**. A execução escolhida é selecionada entre as execuções recentes.
+**Comparar com** define em relação a que é medida uma execução. O respetivo botão de menu mostra a escolha: **Habitual**, **Habitual + execução anterior** ou **Habitual + execução de** com a hora de início da execução escolhida. **Habitual** usa as execuções recentes de cada passo. **Habitual + execução anterior** e **Habitual + uma execução escolhida** acrescentam também o tempo dessa execução para cada passo, que a **Cronologia** contorna e a **Tabela** mostra em **Execução comparada**. **Habitual + uma execução escolhida** abre uma lista das execuções recentes para escolher.
 
 ### Um fluxo de trabalho dentro de uma execução maior
 
@@ -167,7 +167,7 @@ Quando abre um fluxo de trabalho que outro fluxo de trabalho chamou, a Análise 
 
 ### Execuções em direto
 
-Uma execução que ainda está em curso é lida de novo a cada 30 segundos enquanto a caixa de diálogo estiver visível. O seu zoom, a seleção e a vista mantêm-se como estão. Sair da Análise para **Execuções** interrompe as atualizações, e voltar à Análise lê a execução de novo e retoma-as. O botão Atualizar, as setas circulares à direita da barra de ferramentas, volta a carregar a execução de raiz, repõe o zoom e a seleção e volta a recolher os blocos que seguiram o ritmo habitual.
+Uma execução que ainda está em curso é lida de novo a cada 30 segundos enquanto a caixa de diálogo estiver visível. O seu zoom, a seleção e a vista mantêm-se como estão. Sair da Análise para **Execuções** interrompe as atualizações, e voltar à Análise lê a execução de novo e retoma-as. O botão Atualizar, as setas circulares à direita do cabeçalho, volta a carregar a execução de raiz, repõe o zoom e a seleção e volta a recolher os blocos que seguiram o ritmo habitual.
 
 ### Para assistentes de IA e a API REST
 

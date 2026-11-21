@@ -114,29 +114,29 @@ O Run Insight mostra onde uma execução de um fluxo de trabalho gastou o seu te
 - Na caixa de diálogo do histórico de execuções, escolha uma execução na tabela **Execuções** com **Abrir no Insight** ou abra a linha dela.
 - Em uma mensagem do Weave no aplicativo sobre uma execução lenta, clique em **Abrir a execução**. Consulte [Ser avisado quando uma execução termina](/pt-br/guides/ai-assistant/weave-findings/#ser-avisado-quando-uma-execução-termina).
 
-O título da caixa de diálogo é **Histórico de execuções** — nome do fluxo de trabalho. Os botões **Insight** e **Execuções** alternam entre esta visão e a tabela de execuções anteriores. O histórico de execuções de uma etapa, aberto a partir do Inspetor, mostra apenas a tabela.
+O título da caixa de diálogo é **Histórico de execuções** — nome do fluxo de trabalho. A chave **Insight** | **Execuções** alterna entre esta visão e a tabela de execuções anteriores. O histórico de execuções de uma etapa, aberto a partir do Inspetor, mostra apenas a tabela.
 
 ### Ler o título e a lista de atenção
 
 O título dá o resultado da execução em uma linha: **Levou** *tempo*, **Em execução há** *tempo* enquanto ela está em andamento, **Interrompido após** *tempo* para a última execução que foi interrompida, ou **Falhou em** o fluxo de trabalho em que falhou. Uma frase abaixo dele diz o que se destaca, como as etapas que ficaram mais lentas que o normal, o tempo gasto em espera, ou que todas as etapas com histórico ficaram dentro do intervalo normal. Em seguida vêm o horário de início e o número de fluxos de trabalho e de etapas e, quando algumas etapas têm histórico insuficiente para serem avaliadas, quantas são. Quando algo precisa de uma olhada, uma contagem marcada com **para revisar** aparece ao lado do título.
 
-Uma faixa de execuções recentes fica ao lado do título. Clique em uma execução na faixa para abri-la. Uma execução que falhou é marcada, assim como uma execução que executou menos etapas que a maioria das execuções recentes, porque não pode ser comparada com uma execução completa.
+Uma faixa de execuções recentes fica ao lado do título, com uma legenda acima dela. Cada barra é uma execução, tão alta quanto o tempo que levou, e o dia só é rotulado onde o dia muda. Clique em uma execução na faixa para abri-la. Uma tampa vermelha e um ✕ marcam uma execução que falhou, e um contorno tracejado marca uma execução que executou menos etapas que a maioria das execuções recentes, porque não pode ser comparada com uma execução completa.
 
-**O que precisa de atenção** lista, nesta ordem, as falhas primeiro, depois o tempo além do normal e depois a espera. Clique em um item para selecioná-lo na visão.
+**O que precisa de atenção** lista, nesta ordem, as falhas primeiro, depois o tempo além do normal e depois a espera. Cada item é um cartão com o nome dele, o tempo que perdeu ou **Falhou**, onde ele fica e uma barra do tempo dele, em que o cinza está dentro do normal e o âmbar além dele, e a barra de uma falha é vermelha. Uma etapa salva desde a última execução traz uma etiqueta **Salvo em** *data*. Clique em um cartão para selecioná-lo na visão; o cartão selecionado fica destacado.
 
 ### Fluxo, linha do tempo e tabela
 
-Escolha uma visão no menu **Visão**.
+O cabeçalho acima da visão tem o nome do fluxo de trabalho, depois **Comparar com**, depois **Visão**, cujos botões **Fluxo**, **Linha do tempo** e **Tabela** escolhem a visão, e o botão Atualizar à direita.
 
 | Visão | O que mostra |
 |---|---|
-| **Fluxo** | Blocos cuja altura é o tempo. O âmbar é o tempo além do normal de uma etapa. Onde uma etapa chamou outros fluxos de trabalho, uma fatia **Sobrecarga de chamada** é o tempo da própria etapa fora desses fluxos de trabalho. Onde nenhuma etapa estava em execução, uma fatia **Aguardando** mostra a lacuna; um fluxo de trabalho executado em paralelo não desenha uma. |
+| **Fluxo** | Blocos cuja altura é o tempo. O âmbar é o tempo além do normal de uma etapa. Um bloco que não está aberto, mas contém uma falha, mostra ✕ e um contorno vermelho. Um bloco que falhou ou está selecionado e é curto demais para ser nomeado é desenhado mais alto, e a legenda diz que ele então não está em escala. Onde uma etapa chamou outros fluxos de trabalho, uma fatia **Sobrecarga de chamada** é o tempo da própria etapa fora desses fluxos de trabalho. Onde nenhuma etapa estava em execução, uma fatia **Aguardando** mostra a lacuna; um fluxo de trabalho executado em paralelo não desenha uma. |
 | **Linha do tempo** | Tempo de relógio desde o início da execução. Um contorno tracejado é quanto tempo o bloco levou na execução comparada. |
 | **Tabela** | Tudo na ordem das chamadas, com as colunas **Nome**, **Esta execução**, **Normalmente**, **Extra**, **Execução comparada** e **Status**. |
 
-Um fluxo de trabalho que chamou outros fluxos de trabalho os mostra dentro dele. Clique duas vezes em um bloco de fluxo de trabalho, ou escolha **Aumentar zoom**, para trabalhar dentro dele, e use a trilha acima da visão ou **Reduzir zoom** no menu **Ações** para voltar. Quando vários blocos que ficaram no ritmo estão juntos, o **Fluxo** os recolhe em um único bloco **N no ritmo**; clique em um deles, ou escolha **Mostrar todos os blocos** no menu **Ações**, para abri-los. **Recolher blocos no ritmo** os recolhe de novo.
+Um fluxo de trabalho que chamou outros fluxos de trabalho os mostra dentro dele. Clique duas vezes em um bloco de fluxo de trabalho, ou escolha **Aumentar zoom**, para trabalhar dentro dele, e use a trilha acima da visão para voltar. Quando vários blocos que ficaram no ritmo estão juntos, o **Fluxo** os recolhe em um único bloco **N no ritmo**; clique em um deles, ou clique em **Mostrar todos os** *número* **blocos** à direita da trilha, para abri-los; o número é o de todos os blocos da visão. **Recolher blocos no ritmo** os recolhe de novo, e o botão aparece apenas quando algo pode ser recolhido.
 
-Selecione um bloco para ver o painel de detalhes dele, com o que se aplicar entre **Esta execução**, **Normalmente**, **Histórico**, **Além do normal** e **Execução comparada**, e com **Mostrar no fluxo de trabalho**, **Mostrar suas etapas** ou **Aumentar zoom**, **Abrir fluxo de trabalho** e **Ver log da execução**. **Abrir fluxo de trabalho** abre o fluxo de trabalho na tela e **Ver log da execução** abre o [log](/pt-br/guides/workflows/viewing-workflow-log/) dele.
+Selecione um bloco para ver o painel de detalhes dele. Ele mostra o nome e o lugar do bloco, uma etiqueta de status com uma das marcas abaixo e linhas com o que se aplicar entre **Esta execução**, **Normalmente**, **Histórico**, **Além do normal** e **Execução comparada**. Uma linha de tendência vem em seguida: para o fluxo de trabalho da própria execução, as execuções completas recentes dele, com esta execução como um ponto quando foi concluída; para uma etapa com intervalo normal, esse intervalo como uma faixa com esta execução como um ponto. Observações explicam a marca, e os botões são **Mostrar no fluxo de trabalho**, **Mostrar suas etapas** ou **Aumentar zoom**, **Abrir fluxo de trabalho** e **Ver log da execução**. **Abrir fluxo de trabalho** abre o fluxo de trabalho na tela e **Ver log da execução** abre o [log](/pt-br/guides/workflows/viewing-workflow-log/) dele.
 
 ### O que as marcas significam
 
@@ -159,7 +159,7 @@ O painel também pode explicar uma marca. **Aguardando** é o tempo em que nenhu
 
 ### Comparar com
 
-**Comparar com** define em relação a que uma execução é medida, e o botão dele mostra **Comparar com: Normal**, **Comparar com: Execução anterior** ou **Comparar com: Execução escolhida**. **Normal** usa as execuções recentes de cada etapa. **Normal + execução anterior** e **Normal + uma execução escolhida** também acrescentam o tempo dessa execução para cada etapa, que a **Linha do tempo** contorna e a **Tabela** mostra em **Execução comparada**. A execução escolhida é selecionada entre as execuções recentes.
+**Comparar com** define em relação a que uma execução é medida. O botão de menu dele mostra a escolha: **Normal**, **Normal + execução anterior** ou **Normal + execução de** seguido do horário de início da execução escolhida. **Normal** usa as execuções recentes de cada etapa. **Normal + execução anterior** e **Normal + uma execução escolhida** também acrescentam o tempo dessa execução para cada etapa, que a **Linha do tempo** contorna e a **Tabela** mostra em **Execução comparada**. **Normal + uma execução escolhida** abre uma lista das execuções recentes para você escolher.
 
 ### Um fluxo de trabalho dentro de uma execução maior
 
@@ -167,7 +167,7 @@ Quando você abre um fluxo de trabalho que outro fluxo de trabalho chamou, o Ins
 
 ### Execuções ao vivo
 
-Uma execução que ainda está em andamento é lida de novo a cada 30 segundos enquanto a caixa de diálogo estiver visível. Seu zoom, sua seleção e sua visão permanecem como estão. Sair do Insight para **Execuções** interrompe as atualizações, e voltar ao Insight lê a execução de novo e as retoma. O botão Atualizar, as setas circulares à direita da barra de ferramentas, recarrega a execução do zero, redefine o zoom e a seleção e recolhe de novo os blocos que ficaram no ritmo.
+Uma execução que ainda está em andamento é lida de novo a cada 30 segundos enquanto a caixa de diálogo estiver visível. Seu zoom, sua seleção e sua visão permanecem como estão. Sair do Insight para **Execuções** interrompe as atualizações, e voltar ao Insight lê a execução de novo e as retoma. O botão Atualizar, as setas circulares à direita do cabeçalho, recarrega a execução do zero, redefine o zoom e a seleção e recolhe de novo os blocos que ficaram no ritmo.
 
 ### Para assistentes de IA e a API REST
 

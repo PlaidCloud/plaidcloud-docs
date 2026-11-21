@@ -114,29 +114,29 @@ Run Insight zeigt, wohin die Zeit einer Ausführung eines Workflows geflossen is
 - Wählen Sie im Dialog „Ausführungsverlauf“ in der Tabelle **Ausführungen** eine Ausführung mit **In Insight öffnen** oder öffnen Sie ihre Zeile.
 - Klicken Sie in einer In-App-Weave-Nachricht zu einer langsamen Ausführung auf **Ausführung öffnen**. Siehe [Benachrichtigung am Ende einer Ausführung](/de/guides/ai-assistant/weave-findings/#benachrichtigung-am-ende-einer-ausführung).
 
-Der Dialog trägt den Titel **Ausführungsverlauf** – Workflow-Name. Mit seinen Schaltflächen **Insight** und **Ausführungen** wechseln Sie zwischen dieser Ansicht und der Tabelle vergangener Ausführungen. Der Ausführungsverlauf eines einzelnen Schritts, den Sie aus dem Inspektor öffnen, zeigt nur die Tabelle.
+Der Dialog trägt den Titel **Ausführungsverlauf** – Workflow-Name. Mit dem Umschalter **Insight** | **Ausführungen** wechseln Sie zwischen dieser Ansicht und der Tabelle vergangener Ausführungen. Der Ausführungsverlauf eines einzelnen Schritts, den Sie aus dem Inspektor öffnen, zeigt nur die Tabelle.
 
 ### Kopfzeile und Aufmerksamkeitsliste lesen
 
-Die Kopfzeile nennt das Ergebnis der Ausführung in einer Zeile: **Dauer:** *Zeit*, **Läuft seit** *Zeit*, solange sie läuft, **Nach** *Zeit* **gestoppt** bei einer zuletzt gestoppten Ausführung oder **Fehlgeschlagen nach** *Workflow*, dem Workflow, in dem sie fehlgeschlagen ist. Ein Satz darunter sagt, was auffällt, etwa die Schritte, die langsamer als üblich liefen, Wartezeit oder dass jeder Schritt mit Verlauf in seinem üblichen Bereich lief. Danach folgen die Startzeit, die Anzahl der Workflows und Schritte und, wenn der Verlauf einiger Schritte zu kurz für eine Bewertung ist, deren Anzahl. Wenn etwas einen Blick verdient, erscheint neben der Kopfzeile *N* **zu prüfen**.
+Die Kopfzeile nennt das Ergebnis der Ausführung in einer Zeile: **Dauer:** *Zeit*, **Läuft seit** *Zeit*, solange sie läuft, **Nach** *Zeit* **gestoppt** bei einer zuletzt gestoppten Ausführung oder **Fehlgeschlagen in** *Workflow*, dem Workflow, in dem sie fehlgeschlagen ist. Ein Satz darunter sagt, was auffällt, etwa die Schritte, die langsamer als üblich liefen, Wartezeit oder dass jeder Schritt mit Verlauf in seinem üblichen Bereich lief. Danach folgen die Startzeit, die Anzahl der Workflows und Schritte und, wenn der Verlauf einiger Schritte zu kurz für eine Bewertung ist, deren Anzahl. Wenn etwas einen Blick verdient, erscheint neben der Kopfzeile *N* **zu prüfen**.
 
-Neben der Kopfzeile steht ein Streifen mit den letzten Ausführungen. Klicken Sie im Streifen auf eine Ausführung, um sie zu öffnen. Eine fehlgeschlagene Ausführung ist markiert, ebenso eine Ausführung, die weniger Schritte als die meisten letzten Ausführungen ausgeführt hat, weil sie sich nicht mit einer vollständigen Ausführung vergleichen lässt.
+Neben der Kopfzeile steht ein Streifen mit den letzten Ausführungen, mit einer Beschriftung darüber. Jeder Balken ist eine Ausführung, so hoch, wie sie gedauert hat, und der Tag ist nur dort beschriftet, wo er wechselt. Klicken Sie im Streifen auf eine Ausführung, um sie zu öffnen. Eine rote Kappe und ein ✕ markieren eine fehlgeschlagene Ausführung, und ein gestrichelter Umriss markiert eine Ausführung, die weniger Schritte als die meisten letzten Ausführungen ausgeführt hat, weil sie sich nicht mit einer vollständigen Ausführung vergleichen lässt.
 
-**Was Aufmerksamkeit braucht** listet in dieser Reihenfolge zuerst Fehler, dann Zeit über dem Üblichen und dann Wartezeiten auf. Klicken Sie auf einen Eintrag, um ihn in der Ansicht auszuwählen.
+**Was Aufmerksamkeit braucht** listet in dieser Reihenfolge zuerst Fehler, dann Zeit über dem Üblichen und dann Wartezeiten auf. Jeder Eintrag ist eine Karte mit seinem Namen, der Zeit, die er verloren hat, oder **Fehlgeschlagen**, seiner Position und einem Balken seiner Zeit, in dem Grau innerhalb des Üblichen und Bernstein darüber liegt, und der Balken eines Fehlers ist rot. Ein Schritt, der seit seiner letzten Ausführung gespeichert wurde, trägt ein Etikett **Gespeichert am** *Datum*. Klicken Sie auf eine Karte, um sie in der Ansicht auszuwählen; die ausgewählte Karte ist hervorgehoben.
 
 ### Ablauf, Zeitachse und Tabelle
 
-Wählen Sie im Menü **Ansicht** eine Ansicht aus.
+Die Kopfzeile über der Ansicht enthält den Namen des Workflows, dann **Vergleichen mit**, dann **Ansicht**, deren Schaltflächen **Ablauf**, **Zeitachse** und **Tabelle** die Ansicht auswählen, und rechts die Schaltfläche Aktualisieren.
 
 | Ansicht | Was sie zeigt |
 |---|---|
-| **Ablauf** | Blöcke, deren Höhe die Zeit ist. Bernstein ist Zeit über dem Üblichen eines Schritts. Hat ein Schritt andere Workflows aufgerufen, ist ein Segment **Aufrufaufwand** die eigene Zeit des Schritts außerhalb dieser Workflows. Lief kein Schritt, zeigt ein Segment **Wartend** die Lücke; ein Workflow, der parallel lief, zeichnet keines. |
+| **Ablauf** | Blöcke, deren Höhe die Zeit ist. Bernstein ist Zeit über dem Üblichen eines Schritts. Ein Block, der nicht geöffnet ist, aber einen Fehler enthält, zeigt ✕ und einen roten Umriss. Ein fehlgeschlagener oder ausgewählter Block, der zu kurz für seinen Namen ist, wird höher gezeichnet, und die Legende sagt dann, dass er nicht maßstabsgetreu ist. Hat ein Schritt andere Workflows aufgerufen, ist ein Segment **Aufrufaufwand** die eigene Zeit des Schritts außerhalb dieser Workflows. Lief kein Schritt, zeigt ein Segment **Wartend** die Lücke; ein Workflow, der parallel lief, zeichnet keines. |
 | **Zeitachse** | Uhrzeit ab dem Start der Ausführung. Eine gestrichelte Umrandung zeigt, wie lange der Block in der verglichenen Ausführung gedauert hat. |
 | **Tabelle** | Alles in Aufrufreihenfolge, mit den Spalten **Name**, **Diese Ausführung**, **Üblicherweise**, **Zusätzlich**, **Verglichene Ausführung** und **Status**. |
 
-Ein Workflow, der andere Workflows aufgerufen hat, zeigt diese in sich an. Doppelklicken Sie auf einen Workflow-Block oder wählen Sie **Vergrößern**, um darin zu arbeiten, und kehren Sie über den Pfad über der Ansicht oder mit **Verkleinern** im Menü **Aktionen** zurück. Liegen mehrere Schritte im Plan beieinander, faltet **Ablauf** sie zu einem Block *N* **im Plan** zusammen; klicken Sie darauf oder wählen Sie im Menü **Aktionen** **Alle Blöcke anzeigen**, um sie zu öffnen. **Schritte im Plan einklappen** klappt sie wieder ein.
+Ein Workflow, der andere Workflows aufgerufen hat, zeigt diese in sich an. Doppelklicken Sie auf einen Workflow-Block oder wählen Sie **Vergrößern**, um darin zu arbeiten, und kehren Sie über den Pfad über der Ansicht zurück. Liegen mehrere Schritte im Plan beieinander, faltet **Ablauf** sie zu einem Block *N* **im Plan** zusammen; klicken Sie darauf oder klicken Sie rechts vom Pfad auf **Alle** *Anzahl* **Blöcke anzeigen**, um sie zu öffnen; die Anzahl umfasst jeden Block in der Ansicht. **Schritte im Plan einklappen** klappt sie wieder ein, und die Schaltfläche erscheint nur, wenn sich etwas einklappen lässt.
 
-Wählen Sie einen Block aus, um sein Detailfenster zu sehen, mit dem, was von **Diese Ausführung**, **Üblicherweise**, **Verlauf**, **Über dem Üblichen** und **Verglichene Ausführung** zutrifft, und mit **In seinem Workflow anzeigen**, **Seine Schritte anzeigen** oder **Vergrößern**, **Workflow öffnen** und **Ausführungsprotokoll anzeigen**. **Workflow öffnen** öffnet den Workflow auf der Arbeitsfläche und **Ausführungsprotokoll anzeigen** öffnet sein [Protokoll](/de/guides/workflows/viewing-workflow-log/).
+Wählen Sie einen Block aus, um sein Detailfenster zu sehen. Es zeigt den Namen und die Position des Blocks, eine Statusanzeige mit einer der unten genannten Markierungen und Zeilen für das, was von **Diese Ausführung**, **Üblicherweise**, **Verlauf**, **Über dem Üblichen** und **Verglichene Ausführung** zutrifft. Darunter folgt eine Trendlinie: für den eigenen Workflow der Ausführung seine letzten vollständigen Ausführungen, mit dieser Ausführung als Punkt, wenn sie abgeschlossen wurde; für einen Schritt mit üblichem Bereich dieser Bereich als Band mit dieser Ausführung als Punkt. Hinweise erklären die Markierung, und die Schaltflächen sind **In seinem Workflow anzeigen**, **Seine Schritte anzeigen** oder **Vergrößern**, **Workflow öffnen** und **Ausführungsprotokoll anzeigen**. **Workflow öffnen** öffnet den Workflow auf der Arbeitsfläche und **Ausführungsprotokoll anzeigen** öffnet sein [Protokoll](/de/guides/workflows/viewing-workflow-log/).
 
 ### Was die Markierungen bedeuten
 
@@ -159,7 +159,7 @@ Das Fenster kann eine Markierung auch erklären. **Wartend** ist Zeit, in der ke
 
 ### Vergleichen mit
 
-**Vergleichen mit** legt fest, woran eine Ausführung gemessen wird, und seine Schaltfläche lautet **Vergleichen mit: Üblich**, **Vergleichen mit: Vorherige Ausführung** oder **Vergleichen mit: Gewählte Ausführung**. **Üblich** verwendet die letzten Ausführungen jedes Schritts. **Üblich + vorherige Ausführung** und **Üblich + gewählte Ausführung** fügen außerdem die Zeit dieser Ausführung für jeden Schritt hinzu, die die **Zeitachse** umrandet und die die **Tabelle** unter **Verglichene Ausführung** zeigt. Die gewählte Ausführung wählen Sie aus den letzten Ausführungen aus.
+**Vergleichen mit** legt fest, woran eine Ausführung gemessen wird. Die Menüschaltfläche zeigt die Auswahl: **Üblich**, **Üblich + vorherige Ausführung** oder **Üblich + Ausführung vom** Startzeitpunkt der gewählten Ausführung. **Üblich** verwendet die letzten Ausführungen jedes Schritts. **Üblich + vorherige Ausführung** und **Üblich + gewählte Ausführung** fügen außerdem die Zeit dieser Ausführung für jeden Schritt hinzu, die die **Zeitachse** umrandet und die die **Tabelle** unter **Verglichene Ausführung** zeigt. **Üblich + gewählte Ausführung** öffnet eine Liste der letzten Ausführungen zur Auswahl.
 
 ### Ein Workflow innerhalb einer größeren Ausführung
 
@@ -167,7 +167,7 @@ Wenn Sie einen Workflow öffnen, den ein anderer Workflow aufgerufen hat, zeigt 
 
 ### Laufende Ausführungen
 
-Eine Ausführung, die noch läuft, wird alle 30 Sekunden neu gelesen, solange der Dialog sichtbar ist. Zoom, Auswahl und Ansicht bleiben erhalten. Wenn Sie Insight zugunsten von **Ausführungen** verlassen, enden die Aktualisierungen; kehren Sie zu Insight zurück, wird die Ausführung neu gelesen und die Aktualisierung setzt sich fort. Die Schaltfläche Aktualisieren, die kreisförmigen Pfeile rechts in der Symbolleiste, lädt die Ausführung von Grund auf neu, setzt Zoom und Auswahl zurück und klappt Blöcke im Plan wieder ein.
+Eine Ausführung, die noch läuft, wird alle 30 Sekunden neu gelesen, solange der Dialog sichtbar ist. Zoom, Auswahl und Ansicht bleiben erhalten. Wenn Sie Insight zugunsten von **Ausführungen** verlassen, enden die Aktualisierungen; kehren Sie zu Insight zurück, wird die Ausführung neu gelesen und die Aktualisierung setzt sich fort. Die Schaltfläche Aktualisieren, die kreisförmigen Pfeile rechts in der Kopfzeile, lädt die Ausführung von Grund auf neu, setzt Zoom und Auswahl zurück und klappt Blöcke im Plan wieder ein.
 
 ### Für KI-Assistenten und die REST-API
 

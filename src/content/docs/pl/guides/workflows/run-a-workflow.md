@@ -114,29 +114,29 @@ Run Insight pokazuje, na co jedno uruchomienie przepływu pracy zużyło czas i 
 - W oknie dialogowym historii uruchomień wybierz uruchomienie w tabeli **Uruchomienia** za pomocą **Otwórz w Insight** albo otwórz jego wiersz.
 - W komunikacie Weave w aplikacji o wolnym uruchomieniu kliknij **Otwórz uruchomienie**. Zobacz [Powiadamianie o zakończeniu uruchomienia](/pl/guides/ai-assistant/weave-findings/#powiadamianie-po-zakończeniu-uruchomienia).
 
-Okno dialogowe ma tytuł **Historia uruchomień** — nazwa przepływu pracy. Przyciski **Insight** i **Uruchomienia** przełączają między tym widokiem a tabelą poprzednich uruchomień. Historia uruchomień pojedynczego kroku, otwarta z Inspektora, pokazuje tylko tabelę.
+Okno dialogowe ma tytuł **Historia uruchomień** — nazwa przepływu pracy. Przełącznik **Insight** | **Uruchomienia** zmienia ten widok a tabelą poprzednich uruchomień. Historia uruchomień pojedynczego kroku, otwarta z Inspektora, pokazuje tylko tabelę.
 
 ### Odczytywanie nagłówka i listy uwag
 
-Nagłówek podaje wynik uruchomienia w jednym wierszu: **Czas:** *czas*, **Trwa od** *czas*, gdy uruchomienie trwa, **Zatrzymano po** *czas* dla ostatniego uruchomienia, które zatrzymano, albo **Niepowodzenie po** przepływie pracy, w którym wystąpiło niepowodzenie. Zdanie pod nim mówi, co się wyróżnia, na przykład kroki, które działały wolniej niż zwykle, czas spędzony na oczekiwaniu albo to, że każdy krok z historią mieścił się w swoim zwykłym zakresie. Poniżej znajdują się czas rozpoczęcia i liczba przepływów pracy i kroków oraz, gdy niektóre kroki mają zbyt małą historię, by je ocenić, ich liczba. Gdy coś wymaga spojrzenia, obok nagłówka pojawia się licznik oznaczony **Do sprawdzenia:**.
+Nagłówek podaje wynik uruchomienia w jednym wierszu: **Czas:** *czas*, **Trwa od** *czas*, gdy uruchomienie trwa, **Zatrzymano po** *czas* dla ostatniego uruchomienia, które zatrzymano, albo **Niepowodzenie w** przepływie pracy, w którym wystąpiło niepowodzenie. Zdanie pod nim mówi, co się wyróżnia, na przykład kroki, które działały wolniej niż zwykle, czas spędzony na oczekiwaniu albo to, że każdy krok z historią mieścił się w swoim zwykłym zakresie. Poniżej znajdują się czas rozpoczęcia i liczba przepływów pracy i kroków oraz, gdy niektóre kroki mają zbyt małą historię, by je ocenić, ich liczba. Gdy coś wymaga spojrzenia, obok nagłówka pojawia się licznik oznaczony **Do sprawdzenia:**.
 
-Obok nagłówka znajduje się pasek ostatnich uruchomień. Kliknij uruchomienie na pasku, aby je otworzyć. Uruchomienie, które zakończyło się niepowodzeniem, jest oznaczone, podobnie jak uruchomienie, które wykonało mniej kroków niż większość ostatnich uruchomień, ponieważ nie można go porównać z pełnym uruchomieniem.
+Obok nagłówka znajduje się pasek ostatnich uruchomień z podpisem nad nim. Każdy słupek to uruchomienie, a jego wysokość odpowiada czasowi, jaki zajęło; dzień jest opisany tylko tam, gdzie się zmienia. Kliknij uruchomienie na pasku, aby je otworzyć. Czerwona nasadka i ✕ oznaczają uruchomienie, które zakończyło się niepowodzeniem, a przerywany kontur oznacza uruchomienie, które wykonało mniej kroków niż większość ostatnich uruchomień, ponieważ nie można go porównać z pełnym uruchomieniem.
 
-**Wymaga uwagi** wymienia w tej kolejności najpierw niepowodzenia, potem czas ponad normę, a na końcu oczekiwanie. Kliknij pozycję, aby zaznaczyć ją w widoku.
+**Wymaga uwagi** wymienia w tej kolejności najpierw niepowodzenia, potem czas ponad normę, a na końcu oczekiwanie. Każda pozycja jest kartą z nazwą, utraconym czasem lub oznaczeniem **Niepowodzenie**, miejscem, w którym się znajduje, oraz paskiem jej czasu, na którym szary kolor oznacza czas w normie, a bursztynowy czas ponad normę, a pasek niepowodzenia jest czerwony. Krok zapisany po ostatnim uruchomieniu ma znacznik **Zapisano** *data*. Kliknij kartę, aby zaznaczyć ją w widoku; zaznaczona karta jest wyróżniona.
 
 ### Przepływ, oś czasu i tabela
 
-Wybierz widok z menu **Widok**.
+Nagłówek nad widokiem zawiera nazwę przepływu pracy, następnie **Porównaj z**, potem **Widok**, którego przyciski **Przepływ**, **Oś czasu** i **Tabela** wybierają widok, a po prawej przycisk Odśwież.
 
 | Widok | Co pokazuje |
 |---|---|
-| **Przepływ** | Bloki, których wysokość odpowiada czasowi. Bursztynowy kolor oznacza czas ponad normę kroku. Gdy krok wywołał inne przepływy pracy, wycinek **Narzut wywołania** to czas samego kroku poza tymi przepływami pracy. Gdy żaden krok nie był uruchomiony, wycinek **Oczekiwanie** pokazuje przerwę; przepływ pracy wykonany równolegle jej nie rysuje. |
+| **Przepływ** | Bloki, których wysokość odpowiada czasowi. Bursztynowy kolor oznacza czas ponad normę kroku. Blok, który nie jest otwarty, ale zawiera niepowodzenie, pokazuje ✕ i czerwony kontur. Zakończony niepowodzeniem lub zaznaczony blok zbyt krótki, by pomieścić nazwę, jest rysowany wyższy, a legenda mówi, że nie jest wtedy w skali. Gdy krok wywołał inne przepływy pracy, wycinek **Narzut wywołania** to czas samego kroku poza tymi przepływami pracy. Gdy żaden krok nie był uruchomiony, wycinek **Oczekiwanie** pokazuje przerwę; przepływ pracy wykonany równolegle jej nie rysuje. |
 | **Oś czasu** | Czas zegarowy od początku uruchomienia. Przerywany kontur pokazuje, jak długo blok trwał w porównywanym uruchomieniu. |
 | **Tabela** | Wszystko w kolejności wywołań, z kolumnami **Nazwa**, **To uruchomienie**, **Zwykle**, **Dodatkowe**, **Porównywane uruchomienie** i **Stan**. |
 
-Przepływ pracy, który wywołał inne przepływy pracy, pokazuje je w swoim wnętrzu. Kliknij dwukrotnie blok przepływu pracy lub wybierz **Powiększ**, aby pracować w jego wnętrzu, a aby wrócić, użyj ścieżki nad widokiem albo **Pomniejsz** w menu **Akcje**. Gdy kilka bloków zgodnych z normą stoi obok siebie, **Przepływ** zwija je w jeden blok **N zgodnie z normą**; kliknij jeden z nich lub wybierz **Pokaż wszystkie bloki** w menu **Akcje**, aby je otworzyć. **Zwiń bloki zgodne z normą** zwija je ponownie.
+Przepływ pracy, który wywołał inne przepływy pracy, pokazuje je w swoim wnętrzu. Kliknij dwukrotnie blok przepływu pracy lub wybierz **Powiększ**, aby pracować w jego wnętrzu, a aby wrócić, użyj ścieżki nad widokiem. Gdy kilka bloków zgodnych z normą stoi obok siebie, **Przepływ** zwija je w jeden blok **N zgodnie z normą**; kliknij jeden z nich lub kliknij **Pokaż wszystkie bloki (***liczba***)** po prawej stronie ścieżki, aby je otworzyć; liczba oznacza wszystkie bloki w widoku. **Zwiń bloki zgodne z normą** zwija je ponownie, a przycisk pojawia się tylko wtedy, gdy coś można zwinąć.
 
-Zaznacz blok, aby zobaczyć jego panel szczegółów, z tymi spośród **To uruchomienie**, **Zwykle**, **Historia**, **Ponad normę** i **Porównywane uruchomienie**, które mają zastosowanie, oraz z opcjami **Pokaż w jego przepływie pracy**, **Pokaż jego kroki** lub **Powiększ**, **Otwórz przepływ pracy** i **Wyświetl dziennik uruchomienia**. **Otwórz przepływ pracy** otwiera przepływ pracy na kanwie, a **Wyświetl dziennik uruchomienia** otwiera jego [dziennik](/pl/guides/workflows/viewing-workflow-log/).
+Zaznacz blok, aby zobaczyć jego panel szczegółów. Pokazuje on nazwę i miejsce bloku, znacznik stanu z jednym z poniższych oznaczeń oraz wiersze z tymi spośród **To uruchomienie**, **Zwykle**, **Historia**, **Ponad normę** i **Porównywane uruchomienie**, które mają zastosowanie. Następnie widać linię trendu: dla przepływu pracy tego uruchomienia są to jego ostatnie pełne uruchomienia, z tym uruchomieniem jako kropką, gdy zostało ukończone; dla kroku ze zwykłym zakresem jest to ten zakres jako pasmo z tym uruchomieniem jako kropką. Uwagi wyjaśniają oznaczenie, a przyciski to **Pokaż w jego przepływie pracy**, **Pokaż jego kroki** lub **Powiększ**, **Otwórz przepływ pracy** i **Wyświetl dziennik uruchomienia**. **Otwórz przepływ pracy** otwiera przepływ pracy na kanwie, a **Wyświetl dziennik uruchomienia** otwiera jego [dziennik](/pl/guides/workflows/viewing-workflow-log/).
 
 ### Co oznaczają znaczniki
 
@@ -159,7 +159,7 @@ Panel może też wyjaśnić znacznik. **Oczekiwanie** to czas, gdy żaden krok n
 
 ### Porównaj z
 
-**Porównaj z** ustala, względem czego mierzone jest uruchomienie, a jego przycisk pokazuje **Porównaj z: Norma**, **Porównaj z: Poprzednie uruchomienie** lub **Porównaj z: Wybrane uruchomienie**. **Norma** używa ostatnich uruchomień każdego kroku. **Norma + poprzednie uruchomienie** i **Norma + wybrane uruchomienie** dodają też czas tego uruchomienia dla każdego kroku, który **Oś czasu** obrysowuje, a **Tabela** pokazuje w kolumnie **Porównywane uruchomienie**. Wybrane uruchomienie wybiera się spośród ostatnich uruchomień.
+**Porównaj z** ustala, względem czego mierzone jest uruchomienie. Przycisk jego menu pokazuje wybór: **Norma**, **Norma + poprzednie uruchomienie** lub **Norma + uruchomienie z** czasem rozpoczęcia wybranego uruchomienia. **Norma** używa ostatnich uruchomień każdego kroku. **Norma + poprzednie uruchomienie** i **Norma + wybrane uruchomienie** dodają też czas tego uruchomienia dla każdego kroku, który **Oś czasu** obrysowuje, a **Tabela** pokazuje w kolumnie **Porównywane uruchomienie**. **Norma + wybrane uruchomienie** otwiera listę ostatnich uruchomień do wyboru.
 
 ### Jeden przepływ pracy wewnątrz większego uruchomienia
 
@@ -167,7 +167,7 @@ Gdy otworzysz przepływ pracy wywołany przez inny przepływ pracy, Insight poka
 
 ### Uruchomienia na żywo
 
-Uruchomienie, które nadal trwa, jest odczytywane ponownie co 30 sekund, dopóki okno dialogowe jest widoczne. Powiększenie, zaznaczenie i widok pozostają bez zmian. Przejście z Insight do **Uruchomienia** zatrzymuje aktualizacje, a powrót do Insight ponownie odczytuje uruchomienie i wznawia je. Przycisk Odśwież, okrągłe strzałki po prawej stronie paska narzędzi, ładuje uruchomienie od nowa, resetuje powiększenie i zaznaczenie oraz ponownie zwija bloki zgodne z normą.
+Uruchomienie, które nadal trwa, jest odczytywane ponownie co 30 sekund, dopóki okno dialogowe jest widoczne. Powiększenie, zaznaczenie i widok pozostają bez zmian. Przejście z Insight do **Uruchomienia** zatrzymuje aktualizacje, a powrót do Insight ponownie odczytuje uruchomienie i wznawia je. Przycisk Odśwież, okrągłe strzałki po prawej stronie nagłówka, ładuje uruchomienie od nowa, resetuje powiększenie i zaznaczenie oraz ponownie zwija bloki zgodne z normą.
 
 ### Dla asystentów AI i interfejsu REST API
 
