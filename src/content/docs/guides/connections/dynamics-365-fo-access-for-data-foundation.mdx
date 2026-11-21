@@ -7,13 +7,13 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-[Data Foundation](/guides/projects/data-foundation/) brings data from every ERP system and instance you connect into one Common Finance Model, and Dynamics 365 Finance and Operations is one of the ERPs it reads directly. The connection uses a Microsoft Entra ID application with a client secret for the master data, and your Fabric (Synapse) Link SQL endpoint for the general journal. This page is for the Dynamics 365 administrator who sets that up, and for the PlaidCloud user who asks them to.
+[Data Foundation](/guides/projects/data-foundation/) brings data from every ERP system and instance you connect into one Common Finance Model, and Dynamics 365 Finance and Operations is one of the ERPs it reads directly. The connection uses a Microsoft Entra ID application with a client secret for the master data, and your Fabric (Synapse) Link SQL endpoint for the general journal, the sub-ledgers and bank balances. This page is for the Dynamics 365 administrator who sets that up, and for the PlaidCloud user who asks them to.
 
 PlaidCloud only reads data. Nobody sends a client secret or a SQL password by email.
 
 ## Send the Access Request
 
-On the project's **Foundation** tab, choose **Create a new connection** under **Dynamics 365 Finance and Operations connection**. The form shows the full request. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "Read-only Dynamics 365 Finance and Operations access for PlaidCloud."
+On the project's **Systems** page, under **Data Foundation** in **Home**, choose your system in **System** under **Add a system** and click **Don't have access yet?**. The system waits for access, and one request covering the project's systems is shown. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "Access for PlaidCloud."
 
 ## What the Dynamics 365 Administrator Sets Up
 
@@ -25,6 +25,7 @@ On the project's **Foundation** tab, choose **Create a new connection** under **
 
    - General ledger: legal entities, fiscal calendars, main accounts, financial dimension values, exchange rates
    - Accounts receivable: customers and customer invoice lines
+   - Accounts payable: vendors (optional)
    - Product information management: released products
    - Inventory management: on-hand and inventory transactions (optional)
    - Budgeting: budget register entries (optional)
@@ -35,6 +36,11 @@ On the project's **Foundation** tab, choose **Create a new connection** under **
    - `generaljournalentry`
    - `fiscalcalendarperiod`
    - `dimensionattributelevelvalue`, with one row per dimension value of each financial dimension combination and the name of its dimension
+   - for open items and payments (optional): `custtrans`, `vendtrans`, `custsettlement`, `vendsettlement`
+   - for supplier invoice lines (optional): `vendinvoicetrans`, `vendinvoicejour`
+   - for bank balances (optional): `bankaccounttrans`, `bankaccounttable`
+
+   Sites and profit centers are the values of the `Site` and `BusinessUnit` financial dimensions.
 
 </Steps>
 
@@ -43,19 +49,20 @@ On the project's **Foundation** tab, choose **Create a new connection** under **
 | The administrator sends | Entered in PlaidCloud as |
 |---|---|
 | The Environment URL, `https://<name>.operations.dynamics.com` | **Environment URL** |
-| The Directory (tenant) ID | **Directory (tenant) ID** |
-| The Application (client) ID | **Application (client) ID** |
-| The Fabric Link SQL endpoint, database and login | A separate SQL connection in PlaidCloud, chosen in the `fabric_connection_id` system setting |
-| The main account categories of your cost of goods sold accounts (PlaidCloud assumes `COGS`) | The `cogs_categories` system setting |
-| The main account categories of the accounts that are not operating: interest, income tax, foreign exchange gains and losses, other income | The `non_operating_categories` system setting |
-| The financial dimension that names a line's intercompany partner (PlaidCloud assumes `IntercompanyPartner`) | The `ic_partner_dimension` system setting |
-| The legal entities PlaidCloud may read | Chosen under **Legal entities** in PlaidCloud |
+| The Directory (tenant) ID | **Azure AD Tenant ID** |
+| The Application (client) ID | **Client ID** |
+| The `dataAreaId` of one legal entity | **Legal Entity / Company (dataAreaId)**: the connection needs one, and Data Foundation reads the legal entities chosen under **Companies** |
+| The Fabric Link SQL endpoint, database and login | A separate SQL connection in PlaidCloud, whose connection ID goes in the **Fabric Link SQL connection (its connection ID)** system setting |
+| The main account categories of your cost of goods sold accounts (PlaidCloud assumes `COGS`) | The **Cost of goods sold main account categories** system setting |
+| The main account categories of the accounts that are not operating: interest, income tax, foreign exchange gains and losses, other income | The **Non-operating main account categories** system setting |
+| The financial dimension that names a line's intercompany partner (PlaidCloud assumes `IntercompanyPartner`) | The **Intercompany partner dimension** system setting |
+| The legal entities PlaidCloud may read | Under **Options**, **Companies**: tick them, or none for all of them |
 
-The client secret and the SQL login's password never go by email. The PlaidCloud user's team pastes the **Client secret** into PlaidCloud themselves, and the SQL connection holds the SQL login. Legal entities that are consolidation entities go under the `consolidation_companies` system setting, so their postings aren't counted as a company's activity.
+The client secret and the SQL login's password never go by email. The PlaidCloud user's team pastes the **Client Secret** into PlaidCloud themselves, and the SQL connection holds the SQL login. Legal entities that are consolidation entities go under the **Consolidation legal entities** system setting, so their postings aren't counted as a company's activity.
 
 ## Check the Access
 
-Back in PlaidCloud, enter the values and click **Test connection**. Each dataset shows as **Readable**, **Missing permission** or **Error**:
+Back in PlaidCloud, once the system is added, click **Test connection** on its row on the **Systems** page. Each dataset shows as **Readable**, **Missing permission** or **Error**:
 
 | Dataset | Permission it needs |
 |---|---|
@@ -67,9 +74,13 @@ Back in PlaidCloud, enter the values and click **Test connection**. Each dataset
 | Products | Product information management: View released products |
 | Currency rates | General ledger: View exchange rates |
 | Trial balance, General ledger | View the general ledger (the journal, through Fabric Link) |
-| Sales lines, Inventory balances, Budget | Optional |
+| Every other dataset | Optional, not part of the test |
 
-When a dataset is missing, the test names the permission to add. Ask the administrator to add it to the role and test again. Sales lines, Inventory balances and Budget are optional: an environment that doesn't hold them still loads everything else.
+When a dataset is missing, the test names the permission to add. Ask the administrator to add it to the role and test again.
+
+The optional datasets are sites, profit centers, suppliers, sales lines, inventory balances, budgets, bank balances, supplier invoice lines, open items and payments. An environment that doesn't hold one still loads everything else. A month's bank balances, supplier invoice lines, open items or payments that can't be read from Fabric Link keep the rows they already had and are read again at the next load.
+
+Dynamics 365 has no balance object the connection can read, so no month-end balance loads: the ledger is compared with its own trial balance.
 
 ## Related
 

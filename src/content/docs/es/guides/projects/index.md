@@ -14,7 +14,10 @@ La mayoría de los equipos empiezan con un proyecto por área de análisis: un p
 
 - [Administrar proyectos](/es/guides/projects/managing-projects/): cree, configure y organice proyectos en su espacio de trabajo
 - [Data Foundation: el Common Finance Model](/es/guides/projects/data-foundation/): reúna datos de ERP de varios sistemas e instancias de ERP, mediante sus conexiones directas, en un único Common Finance Model que leen los informes, las métricas y los asistentes de IA
-- [Primeros pasos con Data Foundation](/es/guides/projects/data-foundation-getting-started/): la lista de verificación de configuración, desde un proyecto nuevo hasta un modelo cargado, comprobado y entregado
+- [Primeros pasos con Data Foundation](/es/guides/projects/data-foundation-getting-started/): los pasos desde un proyecto nuevo hasta un modelo cargado, comprobado y entregado
+- [Verificación de Data Foundation y cierre de mes](/es/guides/projects/data-foundation-proof/): las cinco garantías detrás de cada carga, la actualidad de los datos de cada sistema, el cierre de un mes y las notificaciones que indican que un proyecto requiere atención
+- [Paneles de control, métricas y rutas de análisis de Data Foundation](/es/guides/projects/data-foundation-dashboards/): los diecisiete paneles de control que recibe cada proyecto de Data Foundation, quién los ve y las métricas y rutas de análisis con las que responde Weave
+- [Data Foundation con un agente de IA conectado por MCP](/es/integrations/ai-coding-agents/data-foundation/): haga que un agente de IA, o la API REST, consulte la situación de un proyecto, explique una cifra de sus estados financieros, redacte el comentario de cierre de mes y responda a sus preguntas
 - [Cost to Serve](/es/guides/projects/cost-to-serve/): distribuya los gastos operativos entre los clientes por actividad y vea el margen después del costo de atenderlos
 - [Operational Transfer Pricing](/es/guides/projects/operational-transfer-pricing/): compare el nivel de beneficio de cada entidad con los rangos de su política y vea el ajuste
 - [Inicio del proyecto](/es/guides/projects/project-home/): vea un proyecto de un vistazo y administre sus variables, programaciones, acceso, valores predeterminados de datos y aplicaciones

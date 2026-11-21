@@ -14,7 +14,7 @@ PlaidCloud 只读取数据。切勿通过电子邮件发送密码。
 
 ## 发送访问请求
 
-在项目的**基础数据**选项卡上，在 **Oracle E-Business Suite 连接**下选择**创建新连接**。表单会显示完整的请求和 **How to set up PlaidLink** 链接。单击**复制请求**可将其粘贴到您自己的邮件中，或单击**通过电子邮件发送请求**，在邮件程序中打开它，主题为“Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink).”
+在**主页**的 **Data Foundation** 下打开项目的**系统**页面，在**添加系统**下的**系统**中选择您的系统，然后单击**还没有访问权限？**。该系统会进入等待访问权限状态，并显示一份涵盖项目各个系统的请求。单击**复制请求**可将其粘贴到您自己的邮件中，单击**通过电子邮件发送请求**则会在您的邮件程序中打开，邮件主题为“PlaidCloud 访问权限”。
 
 ## EBS 管理员需要设置的内容
 
@@ -22,19 +22,28 @@ PlaidCloud 只读取数据。切勿通过电子邮件发送密码。
 
 1. **安装 PlaidLink**：在可以访问 EBS 数据库的服务器上安装，并在 PlaidCloud 中注册。
 
-2. **授予 SELECT 权限**：向 PlaidLink 的 APPS 架构用户（或对 APPS 对象具有同义词的只读架构用户）授予以下对象的 SELECT 权限：
+2. **创建只读数据库用户**：为 PlaidLink 创建，切勿使用 APPS 或任何其他可以更改数据的架构用户。为其授予以下权限，每项都配有一个指向 APPS 对象的同名同义词；除非表中另有说明，均为 SELECT 权限：
 
    | 区域 | 对象 |
    |---|---|
-   | 总账 | `GL_LEDGERS`、`GL_LEDGER_NORM_SEG_VALS`、`GL_CODE_COMBINATIONS`、`GL_PERIODS`、`GL_PERIOD_STATUSES`、`GL_JE_HEADERS`、`GL_JE_LINES`、`GL_BALANCES`、`GL_DAILY_RATES` |
+   | 会话（必需） | `FND_GLOBAL` 和 `MO_GLOBAL` 的 EXECUTE 权限；`FND_RESPONSIBILITY_VL`；以及 `FND_USER`，或以该名称命名、仅包含 `USER_ID`、`USER_NAME`、`EMPLOYEE_ID` 和 `DESCRIPTION` 的视图。缺少这些对象时，所有读取都会失败 |
+   | 总账 | `GL_LEDGERS`、`GL_LEDGER_NORM_SEG_VALS`、`GL_CODE_COMBINATIONS`、`GL_PERIODS`、`GL_PERIOD_STATUSES`、`GL_JE_HEADERS`、`GL_JE_LINES`、`GL_BALANCES`、`GL_DAILY_RATES`。`GL_BALANCES` 必须包含每个期间，而不仅是最新期间：它是总账用于比较的月末余额 |
    | 弹性域 | `FND_ID_FLEX_SEGMENTS`、`FND_SEGMENT_ATTRIBUTE_VALUES`、`FND_FLEX_VALUES_VL`、`FND_FLEX_VALUE_NORM_HIERARCHY` |
    | 销售（可选） | `RA_CUSTOMER_TRX_ALL`、`RA_CUSTOMER_TRX_LINES_ALL`、`RA_CUST_TRX_TYPES_ALL`、`RA_CUST_TRX_LINE_GL_DIST_ALL`、`HZ_CUST_ACCOUNTS`、`HZ_PARTIES`、`MTL_PARAMETERS`、`MTL_SYSTEM_ITEMS_B` |
+   | 日记账审批人（可选） | `GL_JE_BATCHES` |
+   | 实体所在国家/地区（可选） | `XLE_REGISTRATIONS`、`HZ_LOCATIONS` |
+   | 应收账款、应付账款、银行余额和供应商发票（可选） | `AR_PAYMENT_SCHEDULES_ALL`、`AR_CASH_RECEIPTS_ALL`、`AR_RECEIVABLE_APPLICATIONS_ALL`、`AR_ADJUSTMENTS_ALL`、`AR_RECEIPT_METHODS`、`RA_TERMS_TL`、`CE_BANK_ACCOUNTS`、`AP_INVOICES_ALL`、`AP_INVOICE_LINES_ALL`、`AP_INVOICE_DISTRIBUTIONS_ALL`、`AP_PAYMENT_SCHEDULES_ALL`、`AP_INVOICE_PAYMENTS_ALL`、`AP_CHECKS_ALL`、`AP_SUPPLIERS`、`AP_SUPPLIER_SITES_ALL`、`AP_TERMS_TL`、`PO_HEADERS_ALL`、`PO_LINES_ALL`、`MTL_ITEM_CATEGORIES`、`MTL_CATEGORIES_B` |
+   | 采购、库存、预算、标准成本和固定资产（可选） | `PO_LINE_LOCATIONS_ALL`、`PO_DISTRIBUTIONS_ALL`、`RCV_TRANSACTIONS`、`ORG_ORGANIZATION_DEFINITIONS`、`MTL_MATERIAL_TRANSACTIONS`、`MTL_SECONDARY_INVENTORIES`、`CST_STANDARD_COSTS`、`GL_BUDGETS`、`GL_BUDGET_VERSIONS`、`FA_ADDITIONS_B`、`FA_ADDITIONS_TL`、`FA_CATEGORIES_B`、`FA_BOOK_CONTROLS`、`FA_BOOKS`、`FA_CATEGORY_BOOKS`、`FA_DISTRIBUTION_HISTORY`、`FA_DEPRN_PERIODS`、`FA_DEPRN_SUMMARY`、`FA_RETIREMENTS`、`FA_TRANSACTION_HEADERS` |
 
-3. **指定一个应用程序用户**（`FND_USER`）和一个职责，该职责须能查看您要报告的所有账簿和平衡段值。
+   库存从物料事务中读取，因此需要保留这些事务才能获得其历史记录。预算是 `GL_BALANCES` 中的预算余额。
+
+3. **指定一个应用程序用户**（`FND_USER`）和一个查询职责（只能查看的职责），该职责须能查看您要报告的所有账簿和平衡段值。
 
 4. **描述会计科目表**。说明哪些段是平衡段、自然科目、成本中心和公司间段（它们的段限定符）。当某个费用科目或其上方的父级值被描述为销货成本、销售成本或收入成本时，PlaidCloud 会将该费用科目归类为销货成本。当其中某个值的名称指向利息收入或费用、融资收入或成本、外汇、所得税费用，或其他收入和费用时，PlaidCloud 会将该科目归类为非经营性。如果您的父级值对这些使用了其他措辞，请告知 PlaidCloud。
 
-5. **确认汇率类型**。每个主账簿在账簿的换算选项中指定其期间平均汇率类型和期末汇率类型。PlaidCloud 使用这两种类型的每日汇率进行换算。
+5. **指定站点段和利润中心段**：如果您在会计科目表的某个段（`SEGMENT1` 至 `SEGMENT30`）中保存站点或利润中心。EBS 没有适用于二者的限定符。PlaidCloud 会将每个段的值集中的值读取为站点列表和利润中心列表。
+
+6. **确认汇率类型**。每个主账簿在账簿的换算选项中指定其期间平均汇率类型和期末汇率类型。PlaidCloud 使用这两种类型的每日汇率进行换算。
 
 </Steps>
 
@@ -46,24 +55,24 @@ PlaidCloud 只读取数据。切勿通过电子邮件发送密码。
 
 | 管理员发送 | 在 PlaidCloud 中输入为 |
 |---|---|
-| 数据库主机 | **Database host** |
-| 数据库端口 | **数据库端口**（除非更改，否则为 1521） |
+| 数据库主机 | **主机或 IP 地址** |
+| 数据库端口 | **端口**（除非更改，否则为 1521） |
 | 服务名称 | **服务名称** |
-| APPS 架构用户 | **APPS schema user** |
-| APPS 架构密码，通过安全的连接表单提供 | **APPS schema password**，由您的团队自行粘贴 |
-| `FND_USER` | **Application user (FND_USER)** |
-| 职责键 | **Responsibility key** |
-| PlaidCloud 可以读取的平衡段值 | 在 **Balancing segment values** 下，系统在加载之前无法列出这些值：在**名称**下输入一个值，或留空以加载主账簿的所有实体 |
+| 只读数据库用户 | **数据库用户（APPS 架构）** |
+| 其密码，通过安全的连接表单提供 | **密码**，由您的团队自行输入 |
+| `FND_USER` | **应用程序用户 (FND_USER.USER_NAME)** |
+| 职责键 | **职责键 (FND_RESPONSIBILITY.RESPONSIBILITY_KEY)** |
+| PlaidCloud 可以读取的平衡段值 | 在**选项**的**公司**下，EBS 无法列出这些值：输入这些值，以逗号分隔，或留空以加载每个主账簿的所有实体 |
 
-访问该实例的 PlaidLink 代理在系统设置中选择，名为 `agent`。
+访问该实例的 PlaidLink 代理在系统设置 **PlaidLink agent** 中指定。站点段和利润中心段填入系统设置 **Site segment** 和 **Profit centre segment**。
 
 <Aside type="caution">
-切勿通过电子邮件发送密码。**APPS schema password** 是机密：它存储在连接上，不会再次显示。
+切勿通过电子邮件发送密码。**密码**是机密：它存储在连接上，不会再次显示。
 </Aside>
 
 ## 检查访问权限
 
-返回 PlaidCloud，输入各值并单击**测试连接**。每个数据集显示为**可读取**、**缺少权限**或**错误**：
+返回 PlaidCloud，添加系统后，在**系统**页面上该系统所在的行中单击**测试连接**。由于 EBS 通过 PlaidLink 代理访问，测试会检查连接是否指定了代理登录所需的全部信息。表本身在首次加载时读取，届时会指出代理无权读取的表。各数据集读取的对象如下：
 
 | 数据集 | 读取的对象 |
 |---|---|
@@ -77,8 +86,19 @@ PlaidCloud 只读取数据。切勿通过电子邮件发送密码。
 | 客户 | `HZ_CUST_ACCOUNTS`、`HZ_PARTIES`（可选） |
 | 产品 | `MTL_PARAMETERS`、`MTL_SYSTEM_ITEMS_B`（可选） |
 | 销售明细行 | `RA_CUSTOMER_TRX` 表（可选） |
+| 月末余额 | `GL_BALANCES`，每个期间（可选） |
+| 银行余额 | `CE_BANK_ACCOUNTS`，以及每个银行现金科目的月末余额（可选） |
+| 站点、利润中心 | 您为二者分别指定的段的值（可选） |
+| 供应商 | `AP_SUPPLIERS`、`AP_SUPPLIER_SITES_ALL`、`AP_TERMS_TL`（可选） |
+| 未清项、付款 | 应收账款、应付账款和银行表（可选） |
+| 供应商发票明细行 | `AP_INVOICE_LINES_ALL`，以及应付账款单据（可选） |
+| 采购订单 | `PO_` 表、`RCV_TRANSACTIONS` 和发票明细行（可选） |
+| 库存余额 | `MTL_MATERIAL_TRANSACTIONS`、`MTL_SECONDARY_INVENTORIES`（可选） |
+| 标准成本 | `CST_STANDARD_COSTS`（可选） |
+| 预算 | `GL_BALANCES` 预算余额、`GL_BUDGETS`、`GL_BUDGET_VERSIONS`（可选） |
+| 固定资产、资产变动 | `FA_` 表（可选） |
 
-当数据集显示为**缺少权限**时，请管理员授予对这些对象的 SELECT 权限后重新测试。客户、产品和销售明细行是可选的：不使用它们的实例仍会加载其他所有内容。
+当加载指出代理无权读取某个表时，请管理员授予对该表的 SELECT 权限后重新加载。未授权的可选表会产生一条指出该表的警告，其他所有内容照常加载。未清项、付款、供应商发票、采购订单、标准成本、库存、预算、资产以及月末余额和银行余额会保留其已有的行，直到该表可以读取。
 
 ## 相关内容
 

@@ -14,7 +14,10 @@ A maioria das equipas começa com um projeto por área analítica: um projeto pa
 
 - [Gerir projetos](/pt-pt/guides/projects/managing-projects/) — criar, configurar e organizar projetos na área de trabalho
 - [Data Foundation: o Common Finance Model](/pt-pt/guides/projects/data-foundation/) — reúna dados ERP de vários sistemas e instâncias ERP, através das respetivas ligações diretas, num único Common Finance Model que os relatórios, os indicadores e os assistentes de IA leem
-- [Introdução ao Data Foundation](/pt-pt/guides/projects/data-foundation-getting-started/) — a lista de verificação de configuração, desde um projeto novo até um modelo carregado, verificado e entregue
+- [Introdução ao Data Foundation](/pt-pt/guides/projects/data-foundation-getting-started/) — os passos desde um projeto novo até um modelo carregado, verificado e entregue
+- [Prova do Data Foundation e fecho mensal](/pt-pt/guides/projects/data-foundation-proof/) — as cinco garantias por trás de cada carregamento, a atualidade dos dados de cada sistema, o fecho de um mês e as notificações que indicam que um projeto requer atenção
+- [Painéis de controlo, indicadores e caminhos de análise do Data Foundation](/pt-pt/guides/projects/data-foundation-dashboards/) — os dezassete painéis de controlo que cada projeto Data Foundation recebe, quem os vê e os indicadores e caminhos de análise com que o Weave responde
+- [Data Foundation com um agente de IA ligado por MCP](/pt-pt/integrations/ai-coding-agents/data-foundation/) — peça a um agente de IA, ou à API REST, que leia o ponto de situação de um projeto, explique um valor das respetivas demonstrações, redija o comentário de fecho mensal e responda às suas perguntas
 - [Cost to Serve](/pt-pt/guides/projects/cost-to-serve/) — distribua as despesas operacionais pelos clientes por atividade e veja a margem após o custo de os servir
 - [Operational Transfer Pricing](/pt-pt/guides/projects/operational-transfer-pricing/) — teste o nível de lucro de cada entidade face aos intervalos da sua política e veja o acerto
 - [Página inicial do projeto](/pt-pt/guides/projects/project-home/) — veja um projeto num relance e faça a gestão das suas variáveis, agendamentos, acesso, predefinições de dados e aplicações

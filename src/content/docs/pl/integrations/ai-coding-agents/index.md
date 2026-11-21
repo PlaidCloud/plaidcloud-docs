@@ -18,6 +18,7 @@ Strony w tej sekcji opisują, co udostępnia serwer, jak się uwierzytelniać or
 - **[Ścieżki analizy](./analysis-paths/)** — nadaj kluczowym tabelom przyjazne nazwy i domyślną, aby wystarczyło zapytać „dlaczego to wzrosło w ostatnim kwartale?”
 - **[Budowanie pulpitów](./build-dashboards/)** — poproś o wykresy i pulpity na podstawie opublikowanych tabel i widoków, przez to samo połączenie z PlaidCloud.
 - **[Definicje metryk](./metric-definitions/)** — ustal raz, jak oblicza się liczbę biznesową, aby każda odpowiedź, która jej używa, była obliczana tak samo.
+- **[Data Foundation](./data-foundation/)** — sprawdzaj, na jakim etapie jest projekt Data Foundation, wyjaśniaj wartości z jego sprawozdań, przygotowuj wstępny komentarz na koniec miesiąca i odpowiadaj na jego pytania.
 
 ## Połącz swojego asystenta
 

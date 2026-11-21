@@ -30,12 +30,13 @@ Uma definição de indicador é uma receita, não um resultado guardado. É reca
 | **Descrição** (`memo` na API) | O que o número significa e quando o utilizar, para o assistente e para as pessoas. Até 1000 carateres. | *Receita após devoluções e descontos. Utilizar para todas as questões sobre receita.* |
 | **Tabela de origem** | A tabela de onde provêm as linhas. | `sales_fact` |
 | **Junções** | Tabelas de consulta associadas à origem através de colunas correspondentes. Cada tabela de consulta deve ter apenas uma linha por chave (uma linha por código de região, por exemplo), caso contrário as linhas que lhe correspondem são contadas duas vezes. | `region_lookup`, fazendo corresponder `region_code` na origem a `code` na tabela de consulta |
-| **Medida** | Como se somam as linhas: `sum`, `count`, `count_distinct`, `min`, `max` ou `avg` de uma coluna, ou `weighted_avg` de uma coluna ponderada por uma segunda coluna (`weight`): a soma do valor vezes o peso nas linhas em que ambos estão definidos, dividida pela soma desses pesos; vazio se os pesos somarem zero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
+| **Medida** | Como se somam as linhas: `sum`, `count`, `count_distinct`, `min`, `max`, `avg` ou `median` de uma coluna, ou `weighted_avg` de uma coluna ponderada por uma segunda coluna (`weight`): a soma do valor vezes o peso nas linhas em que ambos estão definidos, dividida pela soma desses pesos; vazio se os pesos somarem zero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
 | **Filtros** | Que linhas contam sempre. Cada filtro é uma coluna, um operador (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) e os seus valores. | `status` `eq` *Posted* |
 | **Colunas de decomposição** (`grain` na API) | As colunas pelas quais uma pessoa pode agrupar e filtrar quando faz a pergunta. Os filtros são fixos; as colunas de decomposição são escolha de quem pergunta. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Cenário** (opcional) | A coluna que separa as linhas reais das linhas de orçamento, e o valor de cada uma. O indicador corresponde às suas linhas reais; as linhas de orçamento só são lidas para uma [variação](#comparar-ordenar-e-quota). | `scenario`, real *Actual*, orçamento *Budget* |
 | **Dimensões** (opcional, `dimensions` na API) | Uma coluna de decomposição associada a uma dimensão, de modo que as palavras de uma pergunta sejam comparadas com os membros e os aliases dessa dimensão e convertidas nos valores da coluna: consulte [Questionar sobre um indicador](#questionar-sobre-um-indicador). A dimensão tem de existir no projeto. | `region_lookup.region` associada à dimensão *Região* |
-| **Colunas de tempo** (opcional, `time` na API) | Uma coluna de data, ou uma coluna de ano fiscal e uma coluna de período, para que uma pergunta possa pedir um período fiscal e [compará-lo ao longo do tempo](#comparar-ao-longo-do-tempo). | `fiscal_year` e `fiscal_period` |
+| **Colunas de tempo** (opcional, `time` na API) | Uma coluna de data, ou uma coluna de ano fiscal e uma coluna de período, para que uma pergunta possa pedir um período fiscal e [compará-lo ao longo do tempo](#comparar-ao-longo-do-tempo). Indicam também se o indicador é um [saldo](#saldos) no fim de cada período. | `fiscal_year` e `fiscal_period` |
+| **Anterior** (opcional, `prior` na API) | Uma medida e filtros que uma [comparação temporal](#o-ano-passado-lido-de-outra-forma) lê, em vez dos do próprio indicador, para um período de um ano fiscal anterior. | O indicador lê este ano às taxas de câmbio do ano passado; `prior` lê o ano passado tal como reportado |
 
 Uma coluna de uma tabela de consulta escreve-se `<table>.<column>`; o assistente escreve-as por si. Todas as tabelas e colunas de uma definição têm de existir no projeto; uma definição que indique uma que não exista é recusada ao ser guardada. Um indicador com cenário não pode filtrar pela coluna do cenário nem oferecê-la como coluna de decomposição: o cenário determina que linhas são lidas, pelo que um filtro como `scenario` `eq` *Actual* pertence ao cenário, e não aos filtros.
 
@@ -101,6 +102,7 @@ Um **indicador derivado** é aritmética sobre indicadores que já existem: a *R
 | Operação | O que calcula | Dados de entrada |
 |---|---|---|
 | `ratio` | o primeiro dado dividido pelo segundo | dois indicadores |
+| `ratio_abs` | o primeiro dado dividido pela dimensão do segundo, de modo que uma quota de um total negativo se lê como uma quota de um total positivo | dois indicadores |
 | `add` | o primeiro dado mais o segundo | dois indicadores |
 | `subtract` | o primeiro dado menos o segundo | dois indicadores |
 | `scale` | o dado multiplicado por um `factor` fixo | um indicador e um número |
@@ -198,6 +200,16 @@ Uma pergunta indica então o **período** a que se refere: um ano fiscal, ou um 
 Um total acumulado destina-se a indicadores `sum` e `count`. Uma média, uma contagem distinta, um mínimo ou um máximo não se somam ao longo do tempo e são recusados. Um período sem linhas não tem linha num total acumulado, e o total prossegue para além dele.
 
 As colunas de tempo não podem ser usadas para filtrar nem agrupar numa pergunta que indique um período, compare ao longo do tempo ou peça um total acumulado: determinam que linhas são lidas e como são colocadas. Uma pergunta que não faça nada disto pode continuar a filtrar e agrupar por elas como por qualquer coluna de decomposição. São também recusados: um período para além do fim do ano (período 13 num calendário de 12 períodos), um trimestre num calendário sem trimestres, uma comparação temporal ou um total acumulado num indicador derivado, e uma pergunta que não indique o tipo de período de que a sua comparação precisa. Um indicador derivado pode ser pedido para um período quando todos os seus dados de entrada têm colunas de tempo no mesmo calendário fiscal, e nesse caso também nenhuma delas pode ser usada para filtrar ou agrupar. Uma comparação temporal é a única comparação da pergunta, pelo que não pode ser combinada com uma variação face ao orçamento, embora uma quota e uma ordenação continuem a aplicar-se à diferença.
+
+### Saldos
+
+Alguns valores são um saldo no fim de cada período, como a tesouraria ou as contas a receber em aberto, e não um montante que se soma ao longo do período. Defina `balance` como `true` nas colunas de tempo de um indicador deste tipo. Um trimestre, um ano ou um intervalo **até à data** lê então o seu último período, e nunca a soma dos seus períodos. Defina `period_label` como a coluna de decomposição que designa cada período, como uma coluna de mês que contenha `2026-06`, e uma pergunta decomposta por essa coluna lê o fim de cada período.
+
+Uma pergunta sobre um saldo que não indique nenhum período, e que não decomponha o indicador nem o filtre pela sua coluna de período (a coluna de data, no caso de uma data) ou pelo seu `period_label`, é recusada com *this metric is a balance at each period end: name the period to read it at*. Cada dado de entrada de saldo de um indicador derivado é verificado da mesma forma.
+
+### O ano passado, lido de outra forma
+
+O `prior` de uma definição contém uma medida e filtros que uma comparação temporal lê, em vez dos do próprio indicador, para o seu período anterior quando esse período se situa num ano fiscal anterior. O indicador pode então ler este ano às taxas de câmbio do ano passado, enquanto `prior` lê o ano passado tal como reportado, pelo que a comparação mostra a variação sem o efeito da evolução das taxas. Uma comparação dentro de um mesmo ano fiscal, como o terceiro trimestre face ao segundo, lê a medida e os filtros do próprio indicador para ambos os períodos.
 
 ## Retirar um indicador
 

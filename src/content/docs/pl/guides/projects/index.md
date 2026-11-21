@@ -14,7 +14,10 @@ Większość zespołów zaczyna od jednego projektu na obszar analityczny: proje
 
 - [Zarządzanie projektami](/pl/guides/projects/managing-projects/) — tworzenie, konfigurowanie i porządkowanie projektów w obszarze roboczym
 - [Data Foundation: Common Finance Model](/pl/guides/projects/data-foundation/) — połącz dane ERP z wielu systemów i instancji ERP, przez ich bezpośrednie połączenia, w jeden Common Finance Model, z którego korzystają raporty, metryki i asystenci AI
-- [Rozpoczęcie pracy z Data Foundation](/pl/guides/projects/data-foundation-getting-started/) — lista kontrolna konfiguracji, od nowego projektu do załadowanego, sprawdzonego i przekazanego modelu
+- [Rozpoczęcie pracy z Data Foundation](/pl/guides/projects/data-foundation-getting-started/) — kolejne kroki od nowego projektu do załadowanego, sprawdzonego i przekazanego modelu
+- [Dowody Data Foundation i zamknięcie miesiąca](/pl/guides/projects/data-foundation-proof/) — pięć gwarancji stojących za każdym ładowaniem, aktualność danych z każdego systemu, zamykanie miesiąca i powiadomienia o tym, że projekt wymaga uwagi
+- [Pulpity, metryki i ścieżki analizy Data Foundation](/pl/guides/projects/data-foundation-dashboards/) — siedemnaście pulpitów, które otrzymuje każdy projekt Data Foundation, kto je widzi oraz metryki i ścieżki analizy, na podstawie których odpowiada Weave
+- [Data Foundation z agentem AI połączonym przez MCP](/pl/integrations/ai-coding-agents/data-foundation/) — pozwól agentowi AI lub interfejsowi REST API odczytać, na jakim etapie jest projekt, wyjaśnić wartość z jego sprawozdań, przygotować komentarz do zamknięcia miesiąca i odpowiadać na pytania
 - [Cost to Serve](/pl/guides/projects/cost-to-serve/) — rozdziel koszty operacyjne na klientów według działań i zobacz marżę po uwzględnieniu kosztu ich obsługi
 - [Operational Transfer Pricing](/pl/guides/projects/operational-transfer-pricing/) — porównaj poziom zysku każdej jednostki z zakresami określonymi w polityce i zobacz korektę wyrównującą
 - [Strona główna projektu](/pl/guides/projects/project-home/) — zobacz projekt w skrócie i zarządzaj jego zmiennymi, harmonogramami, dostępem, ustawieniami domyślnymi danych i aplikacjami

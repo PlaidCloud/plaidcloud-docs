@@ -18,6 +18,7 @@ Las páginas de esta sección explican qué expone el servidor, cómo autenticar
 - **[Rutas de análisis](./analysis-paths/)**: dé a sus tablas clave nombres descriptivos y un valor predeterminado, para poder preguntar simplemente "¿por qué subió esto el trimestre pasado?"
 - **[Creación de paneles de control](./build-dashboards/)**: pida gráficos y paneles de control sobre sus tablas y vistas publicadas, a través de la misma conexión de PlaidCloud.
 - **[Definiciones de métricas](./metric-definitions/)**: acuerde una sola vez cómo se calcula un número de negocio, para que todas las respuestas que lo usen se calculen de la misma manera.
+- **[Data Foundation](./data-foundation/)**: lea en qué punto se encuentra un proyecto de Data Foundation, explique una cifra de sus estados financieros, redacte el comentario de cierre mensual y responda a sus preguntas.
 
 ## Conecte su asistente
 

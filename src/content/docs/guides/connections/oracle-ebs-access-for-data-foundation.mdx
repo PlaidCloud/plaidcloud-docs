@@ -13,7 +13,7 @@ PlaidCloud only reads data. Nobody sends a password by email.
 
 ## Send the Access Request
 
-On the project's **Foundation** tab, choose **Create a new connection** under **Oracle E-Business Suite connection**. The form shows the full request and a **How to set up PlaidLink** link. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink)."
+On the project's **Systems** page, under **Data Foundation** in **Home**, choose your system in **System** under **Add a system** and click **Don't have access yet?**. The system waits for access, and one request covering the project's systems is shown. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "Access for PlaidCloud."
 
 ## What the EBS Administrator Sets Up
 
@@ -21,19 +21,28 @@ On the project's **Foundation** tab, choose **Create a new connection** under **
 
 1. **Install PlaidLink** on a server that can reach the EBS database, and register it in PlaidCloud.
 
-2. **Grant SELECT** to the PlaidLink APPS-schema user (or a read-only schema user with synonyms to the APPS objects) on:
+2. **Create a read-only database user** for PlaidLink, never APPS or any other schema user that can change data. Give it these grants, each with a synonym of the same name to the APPS object, SELECT unless the table says otherwise:
 
    | Area | Objects |
    |---|---|
-   | General Ledger | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | Session (required) | EXECUTE on `FND_GLOBAL` and `MO_GLOBAL`; `FND_RESPONSIBILITY_VL`; and `FND_USER`, or a view of it under that name holding only `USER_ID`, `USER_NAME`, `EMPLOYEE_ID` and `DESCRIPTION`. Without them every read fails |
+   | General Ledger | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES`. `GL_BALANCES` must hold every period, not only the latest: it is the month-end balance the ledger is compared with |
    | Flexfields | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
    | Sales (optional) | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+   | Journal approver (optional) | `GL_JE_BATCHES` |
+   | Entity country (optional) | `XLE_REGISTRATIONS`, `HZ_LOCATIONS` |
+   | Receivables, payables, bank balances and supplier invoices (optional) | `AR_PAYMENT_SCHEDULES_ALL`, `AR_CASH_RECEIPTS_ALL`, `AR_RECEIVABLE_APPLICATIONS_ALL`, `AR_ADJUSTMENTS_ALL`, `AR_RECEIPT_METHODS`, `RA_TERMS_TL`, `CE_BANK_ACCOUNTS`, `AP_INVOICES_ALL`, `AP_INVOICE_LINES_ALL`, `AP_INVOICE_DISTRIBUTIONS_ALL`, `AP_PAYMENT_SCHEDULES_ALL`, `AP_INVOICE_PAYMENTS_ALL`, `AP_CHECKS_ALL`, `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL`, `PO_HEADERS_ALL`, `PO_LINES_ALL`, `MTL_ITEM_CATEGORIES`, `MTL_CATEGORIES_B` |
+   | Purchasing, stock, budgets, standard costs and fixed assets (optional) | `PO_LINE_LOCATIONS_ALL`, `PO_DISTRIBUTIONS_ALL`, `RCV_TRANSACTIONS`, `ORG_ORGANIZATION_DEFINITIONS`, `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES`, `CST_STANDARD_COSTS`, `GL_BUDGETS`, `GL_BUDGET_VERSIONS`, `FA_ADDITIONS_B`, `FA_ADDITIONS_TL`, `FA_CATEGORIES_B`, `FA_BOOK_CONTROLS`, `FA_BOOKS`, `FA_CATEGORY_BOOKS`, `FA_DISTRIBUTION_HISTORY`, `FA_DEPRN_PERIODS`, `FA_DEPRN_SUMMARY`, `FA_RETIREMENTS`, `FA_TRANSACTION_HEADERS` |
 
-3. **Name an application user** (`FND_USER`) and a responsibility that can see every ledger and balancing segment value you want reported.
+   Stock is read from the material transactions, so its history needs them kept. Budgets are the budget balances in `GL_BALANCES`.
+
+3. **Name an application user** (`FND_USER`) and an inquiry responsibility, one that can only view, that can see every ledger and balancing segment value you want reported.
 
 4. **Describe the chart of accounts.** Say which segments are the balancing segment, the natural account, the cost centre and the intercompany segment (their segment qualifiers). PlaidCloud types an expense account as cost of goods sold when it or a parent value above it is described as cost of goods sold, cost of sales or cost of revenue. It types an account as non-operating when one of them names interest income or expense, finance income or cost, foreign exchange, income tax expense, or other income and expense. Tell PlaidCloud if your parent values use other words for these.
 
-5. **Confirm the rate types.** Each primary ledger names its period-average and period-end rate types, in the ledger's translation options. PlaidCloud translates with the daily rates of those two types.
+5. **Name the site and profit center segments**, if you keep sites or profit centers in a segment of the chart of accounts (`SEGMENT1` to `SEGMENT30`). EBS has no qualifier for either. PlaidCloud reads the values of each segment's value set as the site and profit center lists.
+
+6. **Confirm the rate types.** Each primary ledger names its period-average and period-end rate types, in the ledger's translation options. PlaidCloud translates with the daily rates of those two types.
 
 </Steps>
 
@@ -45,24 +54,24 @@ The wrong responsibility returns another ledger's rows without an error. Confirm
 
 | The administrator sends | Entered in PlaidCloud as |
 |---|---|
-| The database host | **Database host** |
-| The database port | **Database port** (1521 unless you change it) |
-| The service name | **Service name** |
-| The APPS schema user | **APPS schema user** |
-| The APPS schema password, through the secure connection form | **APPS schema password**, which your team pastes in itself |
-| The `FND_USER` | **Application user (FND_USER)** |
-| The responsibility key | **Responsibility key** |
-| The balancing segment values PlaidCloud may read | Under **Balancing segment values**, which the system can't list before a load: enter one value under **Name**, or leave it blank to load every entity of the primary ledger |
+| The database host | **Host or IP Address** |
+| The database port | **Port** (1521 unless you change it) |
+| The service name | **Service Name** |
+| The read-only database user | **Database User (APPS Schema)** |
+| Its password, through the secure connection form | **Password**, which your team enters itself |
+| The `FND_USER` | **Application User (FND_USER.USER_NAME)** |
+| The responsibility key | **Responsibility Key (FND_RESPONSIBILITY.RESPONSIBILITY_KEY)** |
+| The balancing segment values PlaidCloud may read | Under **Options**, **Companies**, which EBS can't list: enter the values, separated by commas, or leave it empty to load every entity of every primary ledger |
 
-The PlaidLink agent that reaches the instance is chosen under System settings as `agent`.
+The PlaidLink agent that reaches the instance is named in the **PlaidLink agent** system setting. The site and profit center segments go under the **Site segment** and **Profit centre segment** system settings.
 
 <Aside type="caution">
-Never email the password. **APPS schema password** is a secret: it is stored on the connection and never shown again.
+Never email the password. **Password** is a secret: it is stored on the connection and never shown again.
 </Aside>
 
 ## Check the Access
 
-Back in PlaidCloud, enter the values and click **Test connection**. Each dataset shows as **Readable**, **Missing permission** or **Error**:
+Back in PlaidCloud, once the system is added, click **Test connection** on its row on the **Systems** page. Because EBS is reached through the PlaidLink agent, the test checks that the connection names everything the agent signs in with. The tables themselves are read at the first load, and a table the agent may not read is named then. Each dataset reads:
 
 | Dataset | Objects it reads |
 |---|---|
@@ -76,8 +85,19 @@ Back in PlaidCloud, enter the values and click **Test connection**. Each dataset
 | Customers | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES` (optional) |
 | Products | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` (optional) |
 | Sales lines | The `RA_CUSTOMER_TRX` tables (optional) |
+| Month-end balance | `GL_BALANCES`, every period (optional) |
+| Bank balances | `CE_BANK_ACCOUNTS`, with the month-end balance of each bank's cash account (optional) |
+| Sites, Profit centers | The values of the segment you name for each (optional) |
+| Suppliers | `AP_SUPPLIERS`, `AP_SUPPLIER_SITES_ALL`, `AP_TERMS_TL` (optional) |
+| Open items, Payments | The receivables, payables and bank tables (optional) |
+| Supplier invoice lines | `AP_INVOICE_LINES_ALL`, with the payables documents (optional) |
+| Purchase orders | The `PO_` tables, `RCV_TRANSACTIONS` and the invoice lines (optional) |
+| Inventory balances | `MTL_MATERIAL_TRANSACTIONS`, `MTL_SECONDARY_INVENTORIES` (optional) |
+| Standard costs | `CST_STANDARD_COSTS` (optional) |
+| Budget | `GL_BALANCES` budget balances, `GL_BUDGETS`, `GL_BUDGET_VERSIONS` (optional) |
+| Fixed assets, Asset movements | The `FA_` tables (optional) |
 
-When a dataset shows **Missing permission**, ask the administrator to grant SELECT on the objects and test again. Customers, products and sales lines are optional: an instance that doesn't use them still loads everything else.
+When a load names a table the agent may not read, ask the administrator to grant SELECT on it and load again. An optional table you don't grant is a warning naming it, and everything else loads. Open items, payments, supplier invoices, purchase orders, standard costs, inventory, budgets, assets and the month-end and bank balances keep the rows they already had until the table can be read.
 
 ## Related
 

@@ -30,12 +30,13 @@ Une définition de métrique est une recette, pas un résultat stocké. Elle est
 | **Description** (`memo` dans l'API) | Ce que signifie le chiffre et quand l'utiliser, pour l'assistant et pour les personnes. 1 000 caractères maximum. | *Chiffre d'affaires après retours et remises. À utiliser pour toutes les questions sur le chiffre d'affaires.* |
 | **Table source** | La table d'où proviennent les lignes. | `sales_fact` |
 | **Jointures** | Tables de référence jointes à la source sur des colonnes correspondantes. Chaque table de référence ne doit avoir qu'une ligne par clé (une ligne par code de région, par exemple), sans quoi les lignes correspondantes sont comptées deux fois. | `region_lookup`, avec correspondance entre `region_code` dans la source et `code` dans la table de référence |
-| **Mesure** | La façon d'additionner les lignes : `sum`, `count`, `count_distinct`, `min`, `max` ou `avg` d'une colonne, ou `weighted_avg` d'une colonne pondérée par une seconde colonne (`weight`) : somme de la valeur multipliée par le poids sur les lignes où les deux sont renseignés, divisée par la somme de ces poids ; vide si la somme des poids est nulle. | `sum` de `net_amount` ; `weighted_avg` de `unit_price` pondéré par `units` |
+| **Mesure** | La façon d'additionner les lignes : `sum`, `count`, `count_distinct`, `min`, `max`, `avg` ou `median` d'une colonne, ou `weighted_avg` d'une colonne pondérée par une seconde colonne (`weight`) : somme de la valeur multipliée par le poids sur les lignes où les deux sont renseignés, divisée par la somme de ces poids ; vide si la somme des poids est nulle. | `sum` de `net_amount` ; `weighted_avg` de `unit_price` pondéré par `units` |
 | **Filtres** | Les lignes qui comptent toujours. Chaque filtre se compose d'une colonne, d'un opérateur (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) et de ses valeurs. | `status` `eq` *Posted* |
 | **Colonnes de ventilation** (`grain` dans l'API) | Les colonnes selon lesquelles une personne peut regrouper et filtrer lorsqu'elle pose sa question. Les filtres sont fixes ; les colonnes de ventilation sont au choix de la personne qui interroge. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Scénario** (facultatif) | La colonne qui distingue les lignes réelles des lignes budgétaires, et la valeur de chacune. La métrique correspond à ses lignes réelles ; les lignes budgétaires ne sont lues que pour un [écart](#comparer-classer-et-partager). | `scenario`, réel *Actual*, budget *Budget* |
 | **Dimensions** (facultatif, `dimensions` dans l'API) | Une colonne de ventilation liée à une dimension, de sorte que les mots d'une question sont rapprochés des membres et des alias de cette dimension et transformés en valeurs de la colonne : consultez [Interroger une métrique](#interroger-une-métrique). La dimension doit exister dans le projet. | `region_lookup.region` liée à la dimension *Region* |
-| **Colonnes temporelles** (facultatif, `time` dans l'API) | Une colonne de date, ou une colonne d'exercice fiscal et une colonne de période, afin qu'une question puisse demander une période fiscale et [la comparer dans le temps](#comparer-dans-le-temps). | `fiscal_year` et `fiscal_period` |
+| **Colonnes temporelles** (facultatif, `time` dans l'API) | Une colonne de date, ou une colonne d'exercice fiscal et une colonne de période, afin qu'une question puisse demander une période fiscale et [la comparer dans le temps](#comparer-dans-le-temps). Elles indiquent aussi si la métrique est un [solde](#soldes) à chaque fin de période. | `fiscal_year` et `fiscal_period` |
+| **Antérieur** (facultatif, `prior` dans l'API) | Une mesure et des filtres qu'une [comparaison temporelle](#lan-dernier-lu-autrement) lit, à la place de ceux de la métrique, pour une période d'un exercice fiscal antérieur. | La métrique lit cette année aux taux de change de l'an dernier ; `prior` lit l'an dernier tel que publié |
 
 Une colonne d'une table de référence s'écrit `<table>.<column>` ; l'assistant les écrit pour vous. Chaque table et chaque colonne d'une définition doit exister dans le projet ; une définition qui en nomme une qui n'existe pas est refusée à l'enregistrement. Une métrique avec scénario ne peut pas filtrer sur la colonne de scénario ni la proposer comme colonne de ventilation : le scénario décide des lignes lues, de sorte qu'un filtre tel que `scenario` `eq` *Actual* relève du scénario et non des filtres.
 
@@ -101,6 +102,7 @@ Une **métrique dérivée** est une opération arithmétique sur des métriques 
 | Opération | Ce qu'elle calcule | Entrées |
 |---|---|---|
 | `ratio` | la première entrée divisée par la seconde | deux métriques |
+| `ratio_abs` | la première entrée divisée par la valeur absolue de la seconde, de sorte que la part d'un total négatif se lit comme la part d'un total positif | deux métriques |
 | `add` | la première entrée plus la seconde | deux métriques |
 | `subtract` | la première entrée moins la seconde | deux métriques |
 | `scale` | l'entrée multipliée par un `factor` fixe | une métrique et un nombre |
@@ -198,6 +200,16 @@ Une question nomme alors la **période** concernée : un exercice fiscal, ou un 
 Un total cumulé est réservé aux métriques `sum` et `count`. Une moyenne, un décompte distinct, un minimum ou un maximum ne s'additionne pas dans le temps et est refusé. Une période sans ligne n'a pas de ligne dans un total cumulé, et le total se poursuit au-delà.
 
 Les colonnes temporelles ne peuvent être ni filtrées ni regroupées dans une question qui nomme une période, compare dans le temps ou demande un total cumulé : elles décident des lignes lues et de leur placement. Une question qui ne fait rien de tout cela peut en revanche les filtrer et les regrouper comme n'importe quelle colonne de ventilation. Sont également refusés : une période au-delà de la fin de l'exercice (période 13 sur un calendrier à 12 périodes), un trimestre sur un calendrier sans trimestres, une comparaison temporelle ou un total cumulé sur une métrique dérivée, et une question qui ne nomme pas le type de période dont sa comparaison a besoin. Une métrique dérivée peut être interrogée pour une période lorsque chacune de ses entrées possède des colonnes temporelles sur le même calendrier fiscal, et aucune d'elles ne peut alors être filtrée ni regroupée non plus. Une comparaison temporelle est l'unique comparaison de la question ; elle ne peut donc pas être combinée avec un écart par rapport au budget, bien qu'une part et un classement s'appliquent toujours à la différence.
+
+### Soldes
+
+Certains chiffres sont un solde à chaque fin de période, comme la trésorerie ou les créances ouvertes, et non un montant qui s'additionne sur la période. Définissez `balance` sur `true` dans les colonnes temporelles d'une telle métrique. Un trimestre, une année ou une plage **à ce jour** lit alors sa dernière période, jamais la somme de ses périodes. Définissez `period_label` sur la colonne de ventilation qui nomme chaque période, comme une colonne de mois contenant `2026-06`, et une question ventilée par cette colonne lit chaque fin de période.
+
+Une question sur un solde qui ne nomme aucune période, et qui ne ventile ni ne filtre la métrique par sa colonne de période (la colonne de date, pour une date) ou par son `period_label`, est refusée avec *this metric is a balance at each period end: name the period to read it at*. Chaque entrée de type solde d'une métrique dérivée est vérifiée de la même façon.
+
+### L'an dernier, lu autrement
+
+Le `prior` d'une définition contient une mesure et des filtres qu'une comparaison temporelle lit, à la place de ceux de la métrique, pour sa période antérieure lorsque celle-ci tombe dans un exercice fiscal antérieur. La métrique peut alors lire cette année aux taux de change de l'an dernier, tandis que `prior` lit l'an dernier tel que publié, de sorte que la comparaison montre la variation sans l'effet des taux. Une comparaison au sein d'un même exercice fiscal, comme le troisième trimestre par rapport au deuxième, lit la mesure et les filtres propres à la métrique pour les deux périodes.
 
 ## Retirer une métrique
 

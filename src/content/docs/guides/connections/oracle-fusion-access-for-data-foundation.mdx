@@ -1,6 +1,6 @@
 ---
 title: Oracle Fusion Access for Data Foundation
-description: What an Oracle Fusion Cloud ERP administrator sets up so PlaidCloud Data Foundation can read Oracle Fusion directly — an integration user, an OAuth 2.0 application and nine BI Publisher reports — and what to send back.
+description: What an Oracle Fusion Cloud ERP administrator sets up so PlaidCloud Data Foundation can read Oracle Fusion directly — an integration user, an OAuth 2.0 application and a set of BI Publisher reports — and what to send back.
 sidebar:
   label: Oracle Fusion Access for Data Foundation
 ---
@@ -13,24 +13,26 @@ PlaidCloud only reads data. Nobody sends a password or a client secret by email.
 
 ## Send the Access Request
 
-On the project's **Foundation** tab, choose **Create a new connection** under **Oracle Fusion connection**. The form shows the full request. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "Read-only Oracle Fusion Cloud ERP access for PlaidCloud (OAuth 2.0 client credentials)."
+On the project's **Systems** page, under **Data Foundation** in **Home**, choose your system in **System** under **Add a system** and click **Don't have access yet?**. The system waits for access, and one request covering the project's systems is shown. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "Access for PlaidCloud."
 
 ## What the Oracle Fusion Administrator Sets Up
 
 <Steps>
 
-1. **Create an integration user** and give it a job role that can view, for every ledger you report on:
+1. **Create an integration user** and give it a custom job role that can only view, for every ledger you report on. Don't use a role that can enter, post or approve anything, such as General Accountant. The role needs:
 
-   - General Ledger: ledgers, accounting calendars and period statuses, journal batches, journals and account balances (for example "General Accountant" with data access to those ledgers)
+   - General Ledger: ledgers, accounting calendars and period statuses, journal batches, journals and account balances (inquiry privileges, with data access to those ledgers)
    - Currency conversion rates (daily rates)
    - Key flexfield segment labels, value sets and their account hierarchy (trees)
-   - Receivables: invoices and their distributions, and customer accounts
-   - Inventory items
+   - Receivables and Payables: invoices, receipts, payments and their distributions, and customer accounts and suppliers
+   - Cash Management bank accounts
+   - Inventory items and on-hand quantities
+   - For each optional report you deploy, the matching view-only access: Purchasing (View Purchase Order, `PO_VIEW_PURCHASE_ORDER_PRIV`, and receipt inquiry, with data access to the procurement business units), Fixed Assets (asset inquiry, with data access to the corporate and tax asset books), Cost Management (Review Item Costs, with data access to the cost organizations) and Budgets (General Ledger budget balance inquiry)
    - Run access to the BI Publisher reports in step 3 and the ERP Integration Service (ESS jobs)
 
 2. **Register a confidential application** in the identity domain (IAM) with the client credentials grant and the scope of the Fusion Applications REST API. Copy its client ID and secret.
 
-3. **Deploy nine BI Publisher reports** under `/Custom/PlaidCloud/DataFoundation`. Each one runs as an ESS job, with the report name as the job definition, and returns a CSV with the columns listed in the request:
+3. **Deploy the BI Publisher reports** under `/Custom/PlaidCloud/DataFoundation`. Each one runs as an ESS job, with the report name as the job definition, and returns a CSV with the columns listed in the request. The first six are required: the ledger is built from them. The others are optional: without one, the data it carries stays empty and nothing else is affected.
 
    | Report | What it returns |
    |---|---|
@@ -38,13 +40,24 @@ On the project's **Foundation** tab, choose **Create a new connection** under **
    | `PlaidCloudSegmentValues` | Every value of those value sets, with the natural account type and the value hierarchy |
    | `PlaidCloudCalendar` | The accounting periods of every ledger, with the ledger's period-average and period-end rate types |
    | `PlaidCloudCodeCombinations` | The code combinations and their segments |
-   | `PlaidCloudBalances` | The opening balances of every ledger |
-   | `PlaidCloudJournalLines` | The journal lines, read one ledger, period and balancing segment value at a time |
-   | `PlaidCloudCustomers` | The customer accounts and their party names |
-   | `PlaidCloudItems` | The items of the master inventory organization |
-   | `PlaidCloudSalesLines` | One row per Receivables invoice line |
+   | `PlaidCloudBalances` | The balances of every ledger in every period, adjusting periods included: the opening balances and the month-end balance the ledger is compared with |
+   | `PlaidCloudJournalLines` | The journal lines, read one ledger, period and balancing segment value at a time, with who entered and approved each journal, when, and the journal it reverses |
+   | `PlaidCloudCustomers` | The customer accounts and their party names (optional) |
+   | `PlaidCloudItems` | The items of the master inventory organization (optional) |
+   | `PlaidCloudSalesLines` | One row per Receivables invoice line (optional) |
+   | `PlaidCloudSites` | The values of the `GL_SITE` segment (optional) |
+   | `PlaidCloudSuppliers` | The suppliers (optional) |
+   | `PlaidCloudArDocuments`, `PlaidCloudReceipts` | Receivables transactions and what was applied to them, for open items and payments (optional) |
+   | `PlaidCloudApInvoices`, `PlaidCloudApPayments` | Payables invoices and what was applied to them, for open items and payments (optional) |
+   | `PlaidCloudApInvoiceLines` | One row per Payables invoice line (optional) |
+   | `PlaidCloudBankBalances` | Each bank account's own balance at every month end (optional) |
+   | `PlaidCloudInventory` | The on-hand quantity and value of every item and subinventory at every month end (optional) |
+   | `PlaidCloudBudget` | The approved budget by month (optional) |
+   | `PlaidCloudPurchaseOrders`, `PlaidCloudPurchaseOrderEvents` | Purchase order lines, and their receipts and matched invoices (optional) |
+   | `PlaidCloudAssets`, `PlaidCloudAssetMovements` | The asset register of the corporate book, and each asset's movements in the corporate and tax books (optional) |
+   | `PlaidCloudStandardCosts` | Each item's standard cost per month (optional) |
 
-   The exact columns of each report are in the request text on the **Foundation** tab. Give the report names exactly as shown.
+   The exact columns of each report are in the access request text. Give the report names exactly as shown. If you deployed `PlaidCloudBalances` or `PlaidCloudApInvoices` for an earlier version, extend them as the request describes: `PlaidCloudBalances` must now return every period with its activity.
 
 </Steps>
 
@@ -52,28 +65,28 @@ On the project's **Foundation** tab, choose **Create a new connection** under **
 
 | The administrator sends | Entered in PlaidCloud as |
 |---|---|
-| The host of your Fusion Applications URL, without `https://` | **Pod host** |
-| The token URL of the identity domain | **Token URL** |
+| The host of your Fusion Applications URL, without `https://` | **Pod Host** |
+| The token URL of the identity domain | **Identity Domain Token URL** |
 | The scope of the REST API application | **Scope** |
 | The client ID from step 2 | **Client ID** |
-| The client secret from step 2 | **Client secret** |
-| The balancing segment values PlaidCloud may read | Under **Balancing segment values**, which Fusion can't list: enter one value under **Name**, or leave it blank to load every one |
+| The client secret from step 2 | **Client Secret** |
+| The balancing segment values PlaidCloud may read | Under **Options**, **Companies**, which Fusion can't list: enter the values, separated by commas, or leave it empty to load every one |
 
 The request's closing list asks for these values together. Share the client secret through your password manager, not by email. The PlaidCloud user's team pastes it into PlaidCloud themselves.
 
 ## Check the Access
 
-Back in PlaidCloud, enter the values and click **Test connection**. Each dataset shows as **Readable**, **Missing permission** or **Error**:
+Back in PlaidCloud, once the system is added, click **Test connection** on its row on the **Systems** page. It reads one object for each required dataset and shows each dataset as **Readable**, **Missing permission** or **Error**. The reports themselves run at the first load, and the optional ones aren't part of the test: one that is missing, or that the user may not run, is named at the next load.
 
-| Dataset | Read from |
+| Dataset | The test reads |
 |---|---|
-| Entities, Fiscal calendar, Chart of accounts, Departments | The ledgers, plus the key flexfield labels, segment values and calendar reports |
+| Entities, Fiscal calendar, Chart of accounts, Departments, Trial balance | The ledgers |
 | Currency rates | Daily conversion rates |
-| General ledger | Journal batches and the journal lines report |
-| Trial balance | The balances and code combinations reports |
-| Customers, Products, Sales lines | The customers, items and sales lines reports (optional) |
+| General ledger | Journal batches |
 
-When a dataset is missing, the test says which permission to add. Ask the administrator to add it to the job role and test again. Customers, Products and Sales lines are optional: a Fusion pod that doesn't hold them still loads everything else.
+When a dataset is missing, the test says which permission to add. Ask the administrator to add it to the job role and test again. A Fusion pod without an optional report still loads everything else: customers, products, sites and suppliers load empty, and any other dataset keeps what an earlier load landed until the report can be read again.
+
+Oracle Fusion has no profit center list that Data Foundation reads. A journal line's profit center is its chart's management segment.
 
 ## Related
 

@@ -1,0 +1,71 @@
+---
+title: Data Foundation mit einem über MCP verbundenen KI-Agenten
+description: Lassen Sie einen über MCP verbundenen KI-Agenten lesen, wo ein Data-Foundation-Projekt steht, eine Zahl seiner Finanzaufstellungen erklären, den Monatsabschlusskommentar entwerfen und seine Fragen beantworten, oder tun Sie dasselbe über die REST-API.
+sidebar:
+  label: Data Foundation für Agenten
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/data-foundation.mdx
+---
+
+Sobald Sie [einen KI-Agenten über das Model Context Protocol (MCP) mit Ihrem Workspace verbunden haben](../getting-started/), kann er mit einem [Data Foundation](/de/guides/projects/data-foundation/)-Projekt über zwei Werkzeuge arbeiten, die Sie vielleicht bereits verwenden: `project_describe` liest, wo das Projekt steht, und erklärt seine Zahlen, und `project_upsert` beantwortet seine Fragen. Der Weave-AI-Chat in PlaidCloud liest denselben Status: siehe [Weave-AI-Chat: Data Foundation](/de/guides/ai-assistant/weave-tab/#data-foundation).
+
+## Lesen, wo ein Projekt steht
+
+`project_describe(project_id=..., include=['foundation'])` ergänzt das Projekt um einen Eintrag `foundation`. Bei einem Projekt ohne Data Foundation ist `foundation` gleich `null`.
+
+| Feld | Inhalt |
+|---|---|
+| `run_state`, `warned` | Ob gerade eine Ausführung läuft und ob der letzte Ladevorgang mit einer Warnung endete. |
+| `systems` | Jedes System, das das Projekt liest oder benannt hat, mit seinem `state` (`waiting_for_access`, `connected`, `loading`, `loaded` oder `failed`), der Art, wie es sich anmeldet, und dem Zeitpunkt seines letzten Ladevorgangs. Die Anfrage, die für den Zugriff eines wartenden Systems zu senden ist, steht in `access_request`, und `GET /systems/access-request` liefert eine für jedes System. |
+| `questions` | Wie viele Fragen auf eine Antwort warten, und bis zu 50 davon, jede mit ihrer `id` und der vorgeschlagenen Antwort `suggested`. |
+| `upkeep` | Was das Projekt jetzt von jemandem braucht, jeweils als Satz mit einer `action`: wartende Fragen, Systeme, die auf Zugriff warten, fehlgeschlagen oder überfällig sind, rote Zusicherungen und abgeschlossene Monate, die ein System geändert hat. Außerdem listet es ohne Aktion die neuen Codes auf, die der letzte Ladevorgang verarbeitet hat, ohne nachzufragen. |
+| `starter_questions` | Fragen, die Sie zum Projekt stellen können, sobald ein Monat geladen ist. |
+| `differences` | Wenn **Mit jedem System abgestimmt** oder **Der Konzern geht auf** rot ist: bis zu 10 der neuesten Posten von jedem, mit den verantwortlichen Konten und Belegen, was jeden Posten bereinigt und wer das tut. |
+| `group` | Die Berichtswährung des Konzerns und der Monat, in dem sein Geschäftsjahr beginnt. |
+| `access_request` | Für jedes System, das das Projekt benennt, die Anfrage an seinen Administrator für den Zugriff, mit dem es liest. |
+
+`questions` ist `null` für einen Aufrufer mit reinem Lesezugriff auf das Projekt, und `upkeep` lässt die Fragen dann weg. Solange die Installation des Projekts noch aufgebaut wird, enthält `foundation` nur den Fortschritt der Installation (`install`), den Link des Projekts, `installing` und einen `run_state` mit dem Wert `running`; bei einer Abfrage mit einer `progress_id` lautet die Antwort nur `{project_id, install}`, bis `install.state` den Wert `done` hat (siehe [Ein Projekt aus einer Vorlage erstellen](#ein-projekt-aus-einer-vorlage-erstellen)).
+
+## Eine Zahl erklären
+
+Fügen Sie demselben Aufruf `explain` hinzu, um eine Position der Finanzaufstellungen zu erklären:
+
+- `explain={'line': 'revenue', 'period': '2026-06'}` gibt `explained` zurück: den Betrag der Position und die Positionen, Entitäten und Konten, aus denen er sich zusammensetzt, jede Liste mit dem größten Teil zuerst und in der Summe gleich der Position, mit den 10 größten Hauptbuchbelegen dahinter. Jeder Teil für eine Position, eine Entität oder ein Konto hat eine `address`, den Link, der nur diesen Teil erklärt; der Teil für die Eliminierungen sowie die Teile *Other lines (n)*, *Other entities (n)*, *Other accounts (n)* und *Rounding* haben keinen.
+- Fügen Sie `'span': 'ytd'` für das Geschäftsjahr bis zu diesem Monat hinzu; eine Bilanzposition wie `total_assets` ignoriert es und liest den Monat. Grenzen Sie es mit `entity`, `account`, `source_system` und den übrigen Auswahlen der Finanzaufstellungen ein.
+- Fügen Sie `'against': '2026-05'` hinzu, um zu erfahren, warum sich die Position seit diesem Monat verändert hat: Jeder Teil hat dann seinen `amount`, `before` und `change`, mit der größten Veränderung zuerst.
+- `explain={'commentary': '2026-06'}` gibt `commentary` zurück, einen Entwurf des Monatsabschlusskommentars: Umsatz, Bruttomarge, EBITDA und Jahresüberschuss für den Monat und das Geschäftsjahr bis dahin, verglichen mit dem Budget und demselben Monat ein Jahr zuvor. Geben Sie `null` als Monat für den neuesten an. Es ist immer ein Entwurf, den Sie vor der Verwendung prüfen.
+
+Die `line` ist ein Positionsschlüssel der Finanzaufstellungen, etwa `revenue`, `gross_margin`, `ebitda`, `operating_profit`, `net_income` oder `total_assets`. Eine Position, die die Finanzaufstellungen nicht haben, ein Monat, der nicht als `YYYY-MM` geschrieben ist, oder ein Schlüssel, den `explain` nicht annimmt, wird mit einer Meldung abgelehnt, die ihn nennt. Jede Zahl folgt dem Zeilenzugriff des Aufrufers.
+
+## Die Fragen beantworten
+
+`project_upsert(project_id=..., spec={}, answers=[{'id': ..., 'value': ...}])` beantwortet die Fragen eines Projekts anhand der `id` aus `questions`. Fügen Sie `accept_all_suggested=True` hinzu, um jede vorgeschlagene Antwort zu übernehmen, die Sie nicht selbst geben. Antworten erfordern Bearbeitungszugriff auf das Projekt, gelten beim nächsten **Laden** oder **Änderungen anwenden** und werden im Verlauf des Projekts erfasst.
+
+Der ganze Stapel wird zuerst geprüft: Ist eine Antwort ungültig, wird nichts geschrieben. `dry_run=True` zählt die Antworten, die Sie in `answers` geben, und gibt an, ob auch jede vorgeschlagene Antwort angenommen würde, ohne sie zu prüfen oder zu schreiben. Antworten gehen nur an ein bestehendes Projekt: Mit ihnen muss `spec` leer sein und `template` weggelassen werden.
+
+## Ein Projekt aus einer Vorlage erstellen
+
+`project_upsert(spec={'name': ...}, template=...)` installiert eine Data-Foundation-Vorlage im Hintergrund als neues privates Projekt. Es verwendet `memo` und `lakehouse_id` aus `spec`, wenn Sie sie angeben. Fragen Sie `project_describe(include=['foundation'], progress_id=...)` mit der zurückgegebenen `progress_id` ab. Bis `install.state` den Wert `done` hat, lautet die Antwort nur `{project_id, install}`; sobald das Projekt seine Systeme benennt, enthält `foundation.access_request` die Anfrage an den Administrator jedes Systems.
+
+## Über die REST-API
+
+Dasselbe Projekt ist über die REST-API unter `/rest/v1/analyze/foundation/{project_id}` verfügbar. Das Lesen erfordert die Rolle `analyze.project.read` und das Ändern `analyze.project.write`. `GET /questions` erfordert außerdem Bearbeitungszugriff auf das Projekt und lehnt einen Aufrufer mit reinem Lesezugriff ab.
+
+| Endpunkt | Funktion |
+|---|---|
+| `GET /systems` | Die Systeme, die das Projekt liest oder benannt hat, jedes mit seinem Zustand. |
+| `POST /systems` | Benennt Systeme (`{"systems": [{"type": ..., "connection_id": ...}]}`). Ein System, dem eine Verbindung zugewiesen wird, die sich mit Zugangsdaten oder über einen On-Premise-Agenten anmeldet, wird sofort angebunden und geladen. Eines, das sich per Zustimmung anmeldet und keine Verbindung hat, erhält eine, und seine Zeile enthält eine `authorize_url`, unter der jemand den Zugriff in der eigenen Anmeldung des Systems genehmigt, sodass kein Passwort an PlaidCloud gesendet wird. |
+| `POST /systems/attach` | Bindet nach dieser Genehmigung jedes gerade genehmigte Zustimmungssystem an und lädt es. Ein System, das noch nicht angebunden werden kann, wartet weiter, und seine Zeile nennt den Grund. |
+| `DELETE /systems/{key}` | Entfernt ein System: Entfernt eines, das noch wartet, und löscht eine dafür erstellte Verbindung, oder trennt ein angebundenes. |
+| `GET /systems/access-request` | Eine Anfrage für den Zugriff, den jedes System des Projekts benötigt. |
+| `POST /load` | Startet **Laden** oder, mit dem Abfrageparameter `pull=false`, **Änderungen anwenden**. Mit `{"system": ...}`, einem Schlüssel aus `GET /systems`, wird nur dieses System gelesen; das Modell wird dennoch über die Zeilen aller Systeme auf den neuesten Stand gebracht. |
+| `GET /questions` | Die Fragen, die auf eine Antwort warten, gruppiert, jede mit der vorgeschlagenen Antwort und den Nachweisen dafür. |
+| `POST /questions/answers` | Gibt Antworten (`{"answers": [{"id": ..., "value": ...}]}`) oder übernimmt jede vorgeschlagene (`"accept_all_suggested": true`). |
+| `GET /summary` | Die Seite **Zusammenfassung**: wo das Projekt steht, die fünf Zusicherungen, wie aktuell jedes System ist, die abgeschlossenen Monate und die Einstiegsfragen. |
+| `POST /close` | Schließt jede Entität oder die genannten bis einschließlich eines Monats ab (`{"through": "2026-06", "entities": []}`). |
+| `POST /close/accept-change` | Übernimmt, was ein System jetzt für einen abgeschlossenen Monat enthält, den es geändert hat (`{"system": ..., "entity": ..., "period": ...}`). |
+| `GET /history` | Wer was beantwortet, zugeordnet, abgeschlossen, neu ausgewiesen oder geändert hat, das Neueste zuerst, 200 Einträge pro Seite; übergeben Sie `next_cursor` als `cursor` für die nächste. `GET /history.xlsx` lädt alles herunter. |
+| `GET /reports` | Die Dashboards des Projekts, jedes mit seinem Link. |
+| `GET /explain` | Woraus sich eine Position der Finanzaufstellungen zusammensetzt, mit `line`, `period` und den obigen Auswahlen als Abfrageparametern. `GET /explain.xlsx` lädt jeden Hauptbuchbeleg dahinter herunter. In einem Enterprise-Profitability-Projekt werden `cogs`, `opex` und `operating_margin` durch die Schichten des Modells für eine Entität erklärt. |
+
+Das Benennen eines Systems mit einer Verbindung erfordert Zugriff auf diese Verbindung, und das Erstellen einer Verbindung dafür oder das Anbinden nach der Genehmigung erfordert die Rolle `analyze.connection.write`. Das Beantworten von Fragen, das Benennen oder Entfernen von Systemen und das Abschließen eines Monats erfordern Bearbeitungszugriff auf das Projekt; das Abschließen eines Monats oder das Übernehmen einer Änderung an einem abgeschlossenen Monat erfordert einen Manager oder Architect des Projekts. Laden, Entfernen eines Systems, Abschließen eines Monats oder Übernehmen einer Änderung, während eine Ausführung das Projekt sperrt, wird mit `409` und `run_locked` abgelehnt.

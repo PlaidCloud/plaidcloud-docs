@@ -1,6 +1,6 @@
 ---
 title: Acceso a Oracle Fusion para Data Foundation
-description: Qué configura un administrador de Oracle Fusion Cloud ERP para que PlaidCloud Data Foundation pueda leer Oracle Fusion directamente (un usuario de integración, una aplicación de OAuth 2.0 y nueve informes de BI Publisher) y qué debe enviar de vuelta.
+description: Qué configura un administrador de Oracle Fusion Cloud ERP para que PlaidCloud Data Foundation pueda leer Oracle Fusion directamente (un usuario de integración, una aplicación de OAuth 2.0 y un conjunto de informes de BI Publisher) y qué debe enviar de vuelta.
 sidebar:
   label: Acceso a Oracle Fusion para Data Foundation
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion-access-for-data-foundation.mdx
@@ -14,24 +14,26 @@ PlaidCloud solo lee datos. Nadie envía por correo electrónico una contraseña 
 
 ## Enviar la solicitud de acceso
 
-En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** en **Conexión de Oracle Fusion**. El formulario muestra la solicitud completa. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto "Read-only Oracle Fusion Cloud ERP access for PlaidCloud (OAuth 2.0 client credentials)."
+En la página **Sistemas** del proyecto, en **Data Foundation** dentro de **Inicio**, elija su sistema en **Sistema**, en **Agregar un sistema**, y haga clic en **¿Aún no tiene acceso?**. El sistema queda a la espera de acceso y se muestra una única solicitud que abarca los sistemas del proyecto. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto “Acceso para PlaidCloud”.
 
 ## Qué configura el administrador de Oracle Fusion
 
 <Steps>
 
-1. **Cree un usuario de integración** y asígnele un rol de trabajo que pueda ver, para cada libro sobre el que informe:
+1. **Cree un usuario de integración** y asígnele un rol de trabajo personalizado que solo pueda ver, para cada libro sobre el que informe. No use un rol que pueda introducir, contabilizar o aprobar nada, como General Accountant. El rol necesita:
 
-   - General Ledger: libros, calendarios contables y estados de períodos, lotes de diario, diarios y saldos de cuentas (por ejemplo, "General Accountant" con acceso a los datos de esos libros)
+   - General Ledger: libros, calendarios contables y estados de períodos, lotes de diario, diarios y saldos de cuentas (privilegios de consulta, con acceso a los datos de esos libros)
    - Tipos de conversión de moneda (tipos de cambio diarios)
    - Etiquetas de segmentos de key flexfield, conjuntos de valores y su jerarquía de cuentas (árboles)
-   - Cuentas por cobrar: facturas y sus distribuciones, y cuentas de clientes
-   - Artículos de inventario
+   - Cuentas por cobrar y cuentas por pagar: facturas, cobros, pagos y sus distribuciones, y cuentas de clientes y proveedores
+   - Cuentas bancarias de Cash Management
+   - Artículos de inventario y cantidades disponibles
+   - Para cada informe opcional que implemente, el acceso de solo consulta correspondiente: Purchasing (View Purchase Order, `PO_VIEW_PURCHASE_ORDER_PRIV`, y consulta de recepciones, con acceso a los datos de las unidades de negocio de compras), Fixed Assets (consulta de activos, con acceso a los datos de los libros de activos corporativos y fiscales), Cost Management (Review Item Costs, con acceso a los datos de las organizaciones de costos) y Budgets (consulta de saldos presupuestarios de General Ledger)
    - Acceso de ejecución a los informes de BI Publisher del paso 3 y al ERP Integration Service (trabajos de ESS)
 
 2. **Registre una aplicación confidencial** en el dominio de identidad (IAM) con la concesión de credenciales de cliente y el ámbito de la API REST de Fusion Applications. Copie su ID de cliente y su secreto.
 
-3. **Implemente nueve informes de BI Publisher** en `/Custom/PlaidCloud/DataFoundation`. Cada uno se ejecuta como un trabajo de ESS, con el nombre del informe como definición del trabajo, y devuelve un CSV con las columnas que se enumeran en la solicitud:
+3. **Implemente los informes de BI Publisher** en `/Custom/PlaidCloud/DataFoundation`. Cada uno se ejecuta como un trabajo de ESS, con el nombre del informe como definición del trabajo, y devuelve un CSV con las columnas que se enumeran en la solicitud. Los seis primeros son obligatorios: el libro mayor se construye a partir de ellos. Los demás son opcionales: sin uno de ellos, los datos que contiene quedan vacíos y no se ve afectado nada más.
 
    | Informe | Qué devuelve |
    |---|---|
@@ -39,13 +41,24 @@ En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** 
    | `PlaidCloudSegmentValues` | Cada valor de esos conjuntos de valores, con el tipo de cuenta natural y la jerarquía de valores |
    | `PlaidCloudCalendar` | Los períodos contables de cada libro, con los tipos de cambio de promedio del período y de cierre del período del libro |
    | `PlaidCloudCodeCombinations` | Las combinaciones de código y sus segmentos |
-   | `PlaidCloudBalances` | Los saldos iniciales de cada libro |
-   | `PlaidCloudJournalLines` | Las líneas de diario, leídas de a un libro, período y valor del segmento de equilibrio |
-   | `PlaidCloudCustomers` | Las cuentas de clientes y los nombres de sus terceros |
-   | `PlaidCloudItems` | Los artículos de la organización de inventario maestra |
-   | `PlaidCloudSalesLines` | Una fila por cada línea de factura de Receivables |
+   | `PlaidCloudBalances` | Los saldos de cada libro en cada período, incluidos los períodos de ajuste: los saldos iniciales y el saldo de cierre de mes con el que se compara el libro mayor |
+   | `PlaidCloudJournalLines` | Las líneas de diario, leídas de a un libro, período y valor del segmento de equilibrio, con quién introdujo y aprobó cada diario, cuándo, y el diario que revierte |
+   | `PlaidCloudCustomers` | Las cuentas de clientes y los nombres de sus terceros (opcional) |
+   | `PlaidCloudItems` | Los artículos de la organización de inventario maestra (opcional) |
+   | `PlaidCloudSalesLines` | Una fila por cada línea de factura de Receivables (opcional) |
+   | `PlaidCloudSites` | Los valores del segmento `GL_SITE` (opcional) |
+   | `PlaidCloudSuppliers` | Los proveedores (opcional) |
+   | `PlaidCloudArDocuments`, `PlaidCloudReceipts` | Las transacciones de Receivables y lo que se les aplicó, para las partidas abiertas y los pagos (opcional) |
+   | `PlaidCloudApInvoices`, `PlaidCloudApPayments` | Las facturas de Payables y lo que se les aplicó, para las partidas abiertas y los pagos (opcional) |
+   | `PlaidCloudApInvoiceLines` | Una fila por cada línea de factura de Payables (opcional) |
+   | `PlaidCloudBankBalances` | El saldo propio de cada cuenta bancaria al cierre de cada mes (opcional) |
+   | `PlaidCloudInventory` | La cantidad disponible y el valor de cada artículo y subinventario al cierre de cada mes (opcional) |
+   | `PlaidCloudBudget` | El presupuesto aprobado por mes (opcional) |
+   | `PlaidCloudPurchaseOrders`, `PlaidCloudPurchaseOrderEvents` | Las líneas de órdenes de compra, y sus recepciones y facturas conciliadas (opcional) |
+   | `PlaidCloudAssets`, `PlaidCloudAssetMovements` | El registro de activos del libro corporativo, y los movimientos de cada activo en los libros corporativo y fiscal (opcional) |
+   | `PlaidCloudStandardCosts` | El costo estándar de cada artículo por mes (opcional) |
 
-   Las columnas exactas de cada informe están en el texto de la solicitud de la pestaña **Foundation**. Indique los nombres de los informes exactamente como se muestran.
+   Las columnas exactas de cada informe están en el texto de la solicitud de acceso. Indique los nombres de los informes exactamente como se muestran. Si implementó `PlaidCloudBalances` o `PlaidCloudApInvoices` para una versión anterior, amplíelos como describe la solicitud: `PlaidCloudBalances` ahora debe devolver cada período con su actividad.
 
 </Steps>
 
@@ -54,27 +67,27 @@ En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** 
 | El administrador envía | Se introduce en PlaidCloud como |
 |---|---|
 | El host de su URL de Fusion Applications, sin `https://` | **Host del pod** |
-| La URL del token del dominio de identidad | **Token URL** |
+| La URL del token del dominio de identidad | **URL del token del dominio de identidad** |
 | El ámbito de la aplicación de la API REST | **Ámbito** |
 | El ID de cliente del paso 2 | **ID de cliente** |
 | El secreto de cliente del paso 2 | **Secreto de cliente** |
-| Los valores del segmento de equilibrio que PlaidCloud puede leer | En **Balancing segment values**, que Fusion no puede listar: introduzca un valor en **Nombre**, o déjelo en blanco para cargarlos todos |
+| Los valores del segmento de equilibrio que PlaidCloud puede leer | En **Opciones**, **Empresas**, que Fusion no puede listar: introduzca los valores, separados por comas, o deje el campo vacío para cargarlos todos |
 
 La lista final de la solicitud pide estos valores juntos. Comparta el secreto de cliente mediante su administrador de contraseñas, no por correo electrónico. El equipo del usuario de PlaidCloud lo pega en PlaidCloud por sí mismo.
 
 ## Comprobar el acceso
 
-De vuelta en PlaidCloud, introduzca los valores y haga clic en **Probar conexión**. Cada conjunto de datos se muestra como **Legible**, **Falta un permiso** o **Error**:
+De vuelta en PlaidCloud, una vez agregado el sistema, haga clic en **Probar conexión** en su fila de la página **Sistemas**. Lee un objeto por cada conjunto de datos obligatorio y muestra cada conjunto de datos como **Legible**, **Falta un permiso** o **Error**. Los propios informes se ejecutan en la primera carga, y los opcionales no forman parte de la prueba: uno que falte, o que el usuario no tenga permiso para ejecutar, se indica en la siguiente carga.
 
-| Conjunto de datos | Se lee de |
+| Conjunto de datos | Lo que lee la prueba |
 |---|---|
-| Entidades, calendario fiscal, plan de cuentas, departamentos | Los libros, además de los informes de etiquetas de key flexfield, valores de segmentos y calendario |
+| Entidades, calendario fiscal, plan de cuentas, departamentos, balance de comprobación | Los libros |
 | Tipos de cambio | Tipos de conversión diarios |
-| Libro mayor | Lotes de diario y el informe de líneas de diario |
-| Balance de comprobación | Los informes de saldos y de combinaciones de código |
-| Clientes, productos, líneas de ventas | Los informes de clientes, artículos y líneas de ventas (opcional) |
+| Libro mayor | Lotes de diario |
 
-Cuando falta un conjunto de datos, la prueba indica qué permiso agregar. Pida al administrador que lo agregue al rol de trabajo y vuelva a probar. Los clientes, los productos y las líneas de ventas son opcionales: un pod de Fusion que no los contiene carga igualmente todo lo demás.
+Cuando falta un conjunto de datos, la prueba indica qué permiso agregar. Pida al administrador que lo agregue al rol de trabajo y vuelva a probar. Un pod de Fusion sin un informe opcional carga igualmente todo lo demás: los clientes, los productos, los sitios y los proveedores se cargan vacíos, y cualquier otro conjunto de datos conserva lo que dejó una carga anterior hasta que el informe se pueda volver a leer.
+
+Oracle Fusion no tiene ninguna lista de centros de beneficio que Data Foundation lea. El centro de beneficio de una línea de diario es el segmento de gestión de su plan de cuentas.
 
 ## Relacionado
 

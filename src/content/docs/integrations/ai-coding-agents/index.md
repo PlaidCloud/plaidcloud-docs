@@ -17,6 +17,7 @@ The pages in this section cover what the server exposes, how to authenticate, an
 - **[Analysis Paths](./analysis-paths/)** — give your key tables friendly names and a default, so you can just ask "why did this go up last quarter?"
 - **[Build Dashboards](./build-dashboards/)** — ask for charts and dashboards over your published tables and views, through the same PlaidCloud connection.
 - **[Metric Definitions](./metric-definitions/)** — agree once how a business number is calculated, so every answer that uses it is calculated the same way.
+- **[Data Foundation](./data-foundation/)** — read where a Data Foundation project stands, explain a figure of its statements, draft the month-end commentary and answer its questions.
 
 ## Connect Your Assistant
 

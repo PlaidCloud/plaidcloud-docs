@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Połącz PlaidCloud z **OneStream**, aby Data Foundation mógł odczytywać Twoje skonsolidowane wyniki i uzgadniać z nimi zarządczy grupowy rachunek zysków i strat. OneStream jest obsługiwany przez swój konektor: PlaidCloud loguje się za pomocą poświadczeń klienta OAuth 2.0 i odczytuje adapter danych, który buduje administrator OneStream. Tylko odczytuje. Jeśli podasz sekwencję Data Management, PlaidCloud najpierw uruchamia tę sekwencję, aby odświeżyć dane odczytywane przez adapter, i nie uruchamia niczego więcej.
+Połącz PlaidCloud z **OneStream**, aby Data Foundation mógł odczytywać Twoje skonsolidowane wyniki i uzgadniać z nimi zarządczy grupowy rachunek zysków i strat. OneStream jest obsługiwany przez swój konektor: PlaidCloud loguje się za pomocą poświadczeń klienta OAuth 2.0 i odczytuje adapter danych, który buduje administrator OneStream. Tylko odczytuje.
 
 OneStream jest źródłem wyników, z którymi się uzgadnia, a nie pozycji księgi: jego wiersze trafiają jako scenariusz `Consolidated` tabeli budżetu modelu, wersja `OneStream`. Zobacz [Uzgadnianie z systemem konsolidacji](/pl/guides/projects/data-foundation/#uzgodnienie-z-systemem-konsolidacyjnym).
 
@@ -18,9 +18,9 @@ Kolumny adaptera są umową, którą uzgadniasz z administratorem OneStream. Gdy
 
 ## Co konfiguruje administrator OneStream
 
-Karta **Foundation** pisze prośbę o dostęp, którą możesz wysłać. Prosi ona o następujące elementy.
+Strona projektu **Systemy** pisze prośbę o dostęp, którą możesz wysłać; zobacz [Połącz swój ERP](/pl/guides/projects/data-foundation/#łączenie-systemu-erp). Prosi ona o następujące elementy.
 
-1. Klienta dla PlaidCloud w usłudze tożsamości OneStream, który używa przepływu **client credentials**, wraz z użytkownikiem usługi, który może uruchamiać adapter oraz — jeśli chcesz, aby PlaidCloud najpierw odświeżał wyniki — sekwencję Data Management.
+1. Klienta dla PlaidCloud w usłudze tożsamości OneStream, który używa przepływu **client credentials**, wraz z użytkownikiem usługi, który może tylko uruchamiać poniższe adaptery: bez uprawnień do Data Management, ładowania ani konsolidacji. PlaidCloud nie uruchamia żadnej sekwencji Data Management, więc odświeżaj wyniki odczytywane przez adaptery według własnego harmonogramu.
 
 2. W aplikacji i obszarze roboczym, dla których raportujesz, adapter danych o nazwie **Foundation_Results**, który zwraca jedną tabelę skonsolidowanych wyników z dokładnie tymi kolumnami:
 
@@ -29,13 +29,19 @@ Karta **Foundation** pisze prośbę o dostęp, którą możesz wysłać. Prosi o
    | `entity` | Element konsolidacji: jednostkę, element eliminacji lub sumę grupy. |
    | `account` | Kod konta. Tylko konta bazowe. |
    | `time` | Miesiąc w formacie `YYYY-MM`. |
-   | `scenario` | Scenariusz. |
+   | `scenario` | `Actual` dla skonsolidowanych wyników. `Budget` lub `Forecast` dla planu, odczytywane jako plan. |
    | `view` | `YTD` lub `Periodic`. PlaidCloud odczytuje tylko wiersze wybranego przez Ciebie widoku. |
    | `amount` | Liczba, w znaku i skali, w jakich pokazują ją Twoje raporty. |
    | `currency` | Waluta, w której podana jest kwota: waluta raportowania Twojej grupy. |
-   | `flow`, `ud1`, `ud2`, `ud3`, `ud4` | Wymiary przepływu i zdefiniowane przez użytkownika. Tylko elementy bazowe. |
+   | `flow` | Element przepływu. Tylko elementy bazowe. |
+   | `ud1` do `ud5` | Elementy działu, produktu, lokalizacji, przedstawiciela handlowego i projektu; `None`, gdy wiersz ich nie ma. Tylko elementy bazowe. |
+   | `version` | Wersja planu. Dla `Actual` pozostaw `None` lub puste. |
+   | `version_as_of` | Miesiąc w formacie `YYYY-MM`, według stanu na który sporządzono wersję planu. Dla `Actual` pozostaw `None` lub puste. |
+   | `quantity` | Liczba jednostek, dla której planowany jest wiersz planu, miesięcznie niezależnie od widoku. Dla `Actual` pozostaw `None` lub puste. |
 
    Udostępniaj elementy bazowe wymiarów konta, przepływu i zdefiniowanych przez użytkownika. Wiersz elementu nadrzędnego liczyłby jego elementy podrzędne dwukrotnie. Adapter odczytuje element konsolidacji ze zmiennej podstawienia `Member`, a widok z `View`.
+
+   Jeśli Twój plan obejmuje zatrudnienie lub liczbę wyprodukowanych jednostek, utwórz też adapter o nazwie **Foundation_Drivers** z kolumnami `entity`, `time`, `scenario`, `driver` (na przykład `headcount` lub `units_produced`), `value`, `unit` (`FTE`, `EA` itd.), `ud1` (dział), `ud2` (produkt), `ud3` (lokalizacja), `version` i `version_as_of`. Odczytuje on `Member` w ten sam sposób i jest opcjonalny: bez niego lub bez dostępu do niego planowane klucze alokacji nie są ładowane, a sprawdzenia gotowości to sygnalizują.
 
 3. Elementy do odczytania: jednostki, elementy eliminacji i suma grupy.
 
@@ -61,21 +67,21 @@ Karta **Foundation** pisze prośbę o dostęp, którą możesz wysłać. Prosi o
 
 </Steps>
 
-Możesz też utworzyć połączenie na karcie **Foundation** podczas dodawania źródła: wybierz **Utwórz nowe połączenie** i wypełnij **Adres URL hosta API**, **Identyfikator klienta**, **Klucz tajny klienta**, **Token URL**, **Aplikacja** i **Obszar roboczy**, które oznaczają to samo co powyższe pola.
+Możesz też utworzyć połączenie podczas dodawania systemu na stronie **Systemy**: wybierz **Nowe połączenie** w polu **Połączenie**, a otworzy się ten sam edytor połączeń.
 
 ## Dodawanie do projektu Data Foundation
 
-Na karcie **Foundation** dodaj połączenie jako źródło, tak jak każde inne (zobacz [Połącz swój ERP](/pl/guides/projects/data-foundation/#łączenie-systemu-erp)). OneStream nie udostępnia listy elementów do zaznaczenia, więc formularz prosi o element konsolidacji do odczytania: wpisz go w polu **Nazwa**. Następnie w sekcji **System settings** opisz kwoty adaptera. Ustawienia są widoczne pod tymi nazwami:
+Na stronie projektu **Systemy** dodaj OneStream wraz z jego połączeniem, tak jak każdy inny system (zobacz [Połącz swój ERP](/pl/guides/projects/data-foundation/#łączenie-systemu-erp)). OneStream nie udostępnia listy elementów do zaznaczenia, więc w sekcji **Opcje**, w polu **Spółki**, wpisz elementy konsolidacji do odczytania, oddzielone przecinkami: co najmniej jeden. Następnie w sekcji **Ustawienia systemu** opisz kwoty adaptera:
 
 | Ustawienie | Co oznacza |
 |---|---|
-| `view` | `ytd` (domyślnie), gdy kwoty adaptera są narastające od początku roku, lub `periodic`. Wiersze narastające od początku roku trafiają jako kwoty okresowe. |
-| `sign` | `natural` (domyślnie): każde konto w swoim znaku, tak jak raportuje je OneStream. `debit_positive`: obciążenia dodatnie. |
-| `scale` | Mnożnik do pełnych jednostek waluty: `1000`, gdy OneStream udostępnia tysiące. Domyślnie `1`. |
-| `fy_start_month` | Miesiąc rozpoczęcia roku obrotowego, od `1` do `12`, do przeliczania wartości narastających od początku roku na okresowe. Domyślnie `1`. |
-| `application`, `workspace` | Zastępują wartości połączenia. Pozostaw puste, aby użyć wartości połączenia. |
-| `table` | Nazwa tabeli w zestawie danych adaptera. Domyślnie `Results`. |
-| `sequence` | Sekwencja Data Management uruchamiana przed odczytem, aby odświeżyć dane odczytywane przez adapter. |
+| **View member** | `ytd` (domyślnie), gdy kwoty adaptera są narastające od początku roku, lub `periodic`. Wiersze narastające od początku roku trafiają jako kwoty okresowe. |
+| **Sign convention** | `natural` (domyślnie): każde konto w swoim znaku, tak jak raportuje je OneStream. `debit_positive`: obciążenia dodatnie. |
+| **Amount scale** | Mnożnik do pełnych jednostek waluty: `1000`, gdy OneStream udostępnia tysiące. Domyślnie `1`. |
+| **First month of the fiscal year** | Miesiąc rozpoczęcia roku obrotowego, od `1` do `12`, do przeliczania wartości narastających od początku roku na okresowe. Domyślnie `1`. |
+| **Application**, **Workspace** | Zastępują wartości połączenia. Pozostaw puste, aby użyć wartości połączenia. |
+| **Adapter results table** | Nazwa tabeli w zestawie danych adaptera. Domyślnie `Results`. |
+| **Substitution variables** | Zmienne podstawienia ustawiane dla adaptera, po jednej w wierszu w postaci `name = value`, na przykład `Time = 2026M1`. |
 
 Zmapuj elementy OneStream na swoje jednostki za pomocą pliku mapy kodów, który dotyczy tego źródła. Zobacz [Tabela przeliczeniowa jednostek](/pl/guides/projects/data-foundation/#tabela-przypisań-jednostek). Źródło nie odczytuje okna historii: ogranicza je własne zmienne podstawienia adaptera.
 
