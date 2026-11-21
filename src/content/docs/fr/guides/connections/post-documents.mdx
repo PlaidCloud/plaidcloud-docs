@@ -67,7 +67,7 @@ Ajoutez une étape **Comptabiliser des documents** à un workflow : elle se tro
 
 1. **1 · La table** : choisissez la **Table** des documents, une ligne par ligne de document. Dès que le premier document est construit, la section indique combien de lignes et de documents elle a lus dans la table.
 2. **2 · Correspondance des colonnes** : ce que l'étape a reconnu dans chaque colonne de votre table. Une colonne dont le nom est un champ de comptabilisation est **Reconnue par son nom** ; une colonne dont le nom est une variante connue est **Reconnue par un autre nom**. Une colonne que l'étape ne reconnaît pas reçoit une liste : choisissez le champ qu'elle contient dans **Que représente cette colonne ?**, et elle s'affiche comme **Vous l'avez choisie**. Seules les colonnes pour lesquelles vous faites un choix sont enregistrées avec l'étape. Deux colonnes ne reçoivent jamais le même champ : la première le conserve.
-3. **3 · Le premier document, tel que son système le recevra** : le premier document de la table, acheminé et mis au format de son système, avec ses lignes. Lorsqu'il ne peut pas encore être construit, la section en donne la raison, dans les mêmes termes qu'une raison Non comptabilisé.
+3. **3 · Le premier document, tel que son système le recevra** : le premier document de la table, acheminé et mis au format de son système, avec ses lignes, et avec toute valeur fixe que son système donne à une colonne que la table n'a pas (consultez [Paramètres d'un système](/fr/guides/connections/erp-systems/#paramètres-dun-système)). Lorsqu'il ne peut pas encore être construit, la section en donne la raison, dans les mêmes termes qu'une raison Non comptabilisé.
 
 L'étape a besoin d'une **Table**. Si vous cochez un montant de blocage, ce montant doit être un nombre, et si vous ajoutez une ligne d'arrondi, elle a besoin d'un compte.
 
@@ -119,8 +119,6 @@ Les documents qui partagent une valeur de `set` sont comptabilisés ensemble ou 
 Cochez les conditions qui retiennent un document pour qu'une personne l'approuve :
 
 - **Le montant est supérieur à** : un montant. Il est comparé au montant du document dans la devise propre du document.
-- **Il a été comptabilisé depuis un fichier**
-- **C'est une extourne, un avoir ou une correction**
 - **Il est signalé comme inhabituel**
 - **Toujours**
 
@@ -205,6 +203,10 @@ Une exécution contenant des documents en **Serait comptabilisé** propose **Com
 - Un document qu'une règle de blocage retient est retenu de nouveau pour cet envoi. La personne qui a appuyé sur **Comptabiliser ces documents** et celle qui a lancé l'exécution ne peuvent pas l'approuver.
 - Seuls les documents que vous pouvez voir sont envoyés. Un document dont la copie stockée a expiré est Non comptabilisé : la page d'exécution indique « Ce n'est pas encore disponible. », et la réponse REST porte le message « Le document stocké a expiré ; exécutez de nouveau. »
 
+### Vérifier dans le système
+
+Une exécution dont des documents ont été comptabilisés propose **Vérifier dans le système**, ou **Vérifier dans** suivi du nom du système lorsqu'ils sont tous sur un seul système. Elle demande à chaque système si les documents comptabilisés de l'exécution s'y trouvent et enregistre les réponses : dans le [Registre des écritures](/fr/guides/connections/posting-register/), un document qui s'y trouve affiche **Dans les livres** à côté de son **Document système**, et un document absent ou différent passe dans **Nécessite une attention**. Elle ne concerne que les documents sur des connexions pour lesquelles vous avez un droit d'accès, dans des projets auxquels vous avez accès, et nécessite `analyze.workflow.write`.
+
 ### Arrêter une exécution
 
 Une exécution Réel toujours en cours, avec des documents pas encore envoyés, propose **Arrêter l'exécution**. Les documents pas encore envoyés deviennent Non comptabilisés, et la page d'exécution indique « L'exécution a été arrêtée avant l'envoi de ce document. » Les documents déjà envoyés sont laissés tels quels, et la page vous indique combien ont été arrêtés et combien avaient déjà été envoyés. Tant qu'une exécution Réel est en plein envoi, avant l'enregistrement du moindre document, elle ne peut pas encore être arrêtée.
@@ -242,26 +244,43 @@ Une référence n'est comptabilisée qu'une fois. Lorsqu'une exécution contient
 
 Sur un système dont la clé porte l'entité, la même référence pour une autre entité est un document différent. Sur tout autre système, elle est refusée : « Cette référence est déjà utilisée sur ce système. »
 
-Un document que l'étape a comptabilisé auparavant et qu'elle n'a pas produit cette fois est laissé tel quel. Pour l'extourner, appelez `POST /rest/v1/analyze/erp/reverse/these` avec l'exécution ; cet appel extourne ce que l'étape de l'exécution a comptabilisé auparavant et n'a pas produit, ou seulement celles d'entre elles que vous nommez, comme une nouvelle exécution. Il n'existe pas encore de bouton pour cela sur la page d'exécution.
+Un document que l'étape a comptabilisé auparavant et qu'elle n'a pas produit cette fois est laissé tel quel. Une fois qu'une exécution Réel d'une étape est terminée, sa page les liste, par exemple « 3 documents comptabilisés auparavant n'ont pas été produits cette fois. Ils sont laissés tels quels. », avec la référence et le système de chacun. La liste contient ce que l'étape a comptabilisé en Réel dans les périodes des documents de cette exécution, qui est toujours **Comptabilisé**, non crédité en totalité, et que vous pouvez voir. Un document dont l'exécution n'est plus conservée n'y figure pas ; extournez-le depuis le [Registre des écritures](/fr/guides/connections/posting-register/).
+
+**Inverser ceux-ci**, avec un nombre comme **Inverser ces 3**, les extourne comme une nouvelle exécution une fois que vous avez confirmé. Une extourne qu'une seconde personne doit approuver attend sous **Approbation requise**, et **Ouvrir l'exécution d'inversion** ouvre la nouvelle exécution. Le bouton est proposé à un Architecte ou à un Gestionnaire sur un projet non verrouillé, et ne compte que ce que vous pouvez extourner maintenant : les documents d'un système sur lequel vous avez un droit d'accès, que le projet peut comptabiliser en Réel. Au-delà des 200 documents qu'une action peut porter, la liste s'arrête à 200 et le bouton n'est pas proposé. Via l'API REST, `POST /rest/v1/analyze/erp/reverse/these` avec l'exécution fait la même chose, ou extourne seulement ceux que vous nommez ; elle refuse une exécution encore en cours ou qui était simulée.
 
 Pour une étape qui s'exécute à chaque période, comme celle qui comptabilise une allocation, réglez **Quand un document comptabilisé revient modifié** sur Corriger une fois pour toutes.
 
 ## Comptabiliser à partir d'un fichier
 
-Pour quelques journaux dans une feuille de calcul, vous pouvez comptabiliser un fichier sans aucun workflow, via l'API REST ou les outils MCP. Il n'existe pas encore de page pour cela dans l'application.
+Pour quelques journaux dans une feuille de calcul, vous pouvez comptabiliser un fichier sans aucun workflow.
+
+Dans le [Registre des écritures](/fr/guides/connections/posting-register/), limitez le périmètre à un seul projet, puis choisissez **Comptabiliser depuis un fichier…** dans le menu **Actions** de la barre d'outils **Écritures**. Cette commande est proposée aux membres qui détiennent `erp.register.operate` ; si le périmètre ne désigne pas un seul projet, elle affiche « Choisissez d'abord un projet dans le périmètre. » Le volet **Comptabiliser à partir d'un fichier** comporte trois cartes :
+
+1. **1 · Choisir le système et le type de document** : l'**Environnement**, le **Système** et les types de **Document** que ce système accepte. **Télécharger un fichier de départ** télécharge, sous forme de fichier Excel, les bons en-têtes de colonnes pour ce système et ce document, avec une ligne d'exemple.
+2. **2 · Téléverser le fichier** : déposez une feuille de calcul (`.xlsx` ou `.csv`) sur **Déposez un tableur ici**. Les autres fichiers déposés avec elle sont conservés avec l'exécution comme fichiers justificatifs, mais ne sont pas encore envoyés au système. La page d'exécution s'ouvre une fois l'exécution préparée.
+3. **Exécutions de fichiers précédentes** : les exécutions de fichiers précédentes du projet, chacune avec **Comptabiliser à nouveau**.
+
+Via l'API REST ou les outils MCP :
 
 1. `GET /erp/file-post/starter`, avec un `connection_id`, un `document_type` et un `format` (`xlsx` ou `csv`), télécharge les bons en-têtes de colonnes pour ce type de document sur ce système, avec une ligne d'exemple. Un type de document que le système n'accepte pas est refusé.
 2. `POST /erp/file-post` prend la feuille de calcul (`.xlsx` ou `.csv`) comme `file`, avec le `project_id`. Les autres fichiers envoyés comme `attachments` sont conservés avec l'exécution comme fichiers justificatifs, mais ne sont pas encore envoyés au système. L'outil MCP `erp_file_post` prend à la place un fichier des documents PlaidCloud, par son `account_id` et son `path`.
 3. L'exécution s'ouvre en mode Simuler, et rien n'est envoyé. Examinez-la sur sa [page d'exécution](#la-page-dexécution), puis comptabilisez-la avec **Comptabiliser ces documents**.
 
 - Chaque document va vers le système dans lequel son entité comptabilise, comme pour toute autre exécution.
-- Un fichier sans colonne `doc_number` ne prépare rien et répond `ask: one_journal`. Renvoyez-le avec `one_journal` à true pour comptabiliser tout le fichier comme un seul journal, avec le nom du fichier comme référence, ou à false pour comptabiliser chaque ligne comme son propre journal, numéroté d'après le nom du fichier.
+- Un fichier sans colonne `doc_number` ne prépare rien et demande **Traiter ce fichier comme un seul journal ?** **Oui, un seul journal** comptabilise tout le fichier comme un seul journal, avec le nom du fichier comme référence ; **Non** vous demande d'ajouter une colonne `doc_number` et de choisir de nouveau le fichier. Via l'API REST, il répond `ask: one_journal` : renvoyez-le avec `one_journal` à true pour un seul journal, ou à false pour comptabiliser chaque ligne comme son propre journal, numéroté d'après le nom du fichier.
 - Dans un fichier qui a une colonne `doc_number`, les lignes qui n'en ont pas sont omises, avec un avertissement. Les en-têtes qui ne sont pas des colonnes de comptabilisation sont ignorés, et les avertissements les nomment.
 - Un fichier vide, ou sans ligne, ne prépare rien et le dit. Il en va de même pour un projet dont la comptabilisation est Désactivée.
 
 ### Comptabiliser à nouveau
 
-Comptabiliser à nouveau comptabilise de nouveau les documents de l'exécution d'un fichier avec une nouvelle date de comptabilisation et de nouvelles références, pour un journal qui revient chaque mois : `POST /erp/file-post/{run_id}/again`, ou l'outil MCP `erp_file_post_again`.
+Comptabiliser à nouveau comptabilise de nouveau les documents de l'exécution d'un fichier avec une nouvelle date de comptabilisation et de nouvelles références, pour un journal qui revient chaque mois.
+
+Dans l'application, la page d'exécution d'un fichier propose **Comptabiliser à nouveau** à un Architecte ou à un Gestionnaire sur un projet non verrouillé, tant que les documents de l'exécution sont conservés ; **Exécutions de fichiers précédentes** dans **Comptabiliser à partir d'un fichier** le propose aussi. Choisissez la **Date de comptabilisation**, puis :
+
+- **Comptabiliser à nouveau** donne à chaque référence un suffixe, afin que la répétition ne soit pas refusée comme déjà comptabilisée, et ouvre la nouvelle exécution en mode Simuler.
+- **Répéter chaque mois** la place plutôt sur une planification : le même jour du mois que la date de comptabilisation (le 28 au plus), à 06:00 UTC, chaque répétition étant datée du jour de son exécution. Elle comptabilise en Réel lorsque les documents de ce fichier ont été comptabilisés en Réel, dans la mesure où le projet le permet.
+
+Via l'API REST, `POST /erp/file-post/{run_id}/again` le comptabilise à nouveau, ou l'outil MCP `erp_file_post_again` :
 
 - La `posting_date` est une date ISO, ou l'une des valeurs `today`, `first_of_month`, `last_of_month`, `first_of_next_month` et `last_of_prev_month`, ou un décalage tel que `+1m` ou `-7d` par rapport à la propre date de comptabilisation de chaque document.
 - `references` défini sur `suffix` donne à chaque référence un suffixe pour le nouveau mois, comme `JE-1001-202612`, afin que la répétition ne soit pas refusée comme déjà comptabilisée ; via REST, vous pouvez à la place faire correspondre chaque référence à sa nouvelle référence. L'outil MCP ajoute toujours le suffixe.
@@ -274,7 +293,7 @@ Les documents d'une exécution sont conservés 30 jours lorsqu'ils sont simulés
 
 ### Enregistrer comme déjà comptabilisé
 
-Pour des documents comptabilisés dans le système avant l'utilisation de PlaidCloud, `POST /erp/record-posted` les enregistre comme Comptabilisés sans contacter le système, de sorte qu'une exécution qui les contient refuse ensuite de les comptabiliser de nouveau. Envoyez la feuille de calcul comme `file`, avec le `connection_id` et le `environment_id` du système. Elle nécessite les colonnes `reference` et `system_document`, et facultativement `entity`, `posting_date` et `document_type` (un journal lorsqu'elle est omise). Il n'existe pas encore de page ni d'outil MCP pour cela.
+Pour des documents comptabilisés dans le système avant l'utilisation de PlaidCloud, `POST /erp/record-posted` les enregistre comme Comptabilisés sans contacter le système, de sorte qu'une exécution qui les contient refuse ensuite de les comptabiliser de nouveau. Envoyez la feuille de calcul comme `file`, avec le `connection_id` et le `environment_id` du système. Elle nécessite les colonnes `reference` et `system_document`, et facultativement `entity`, `posting_date` et `document_type` (un journal lorsqu'elle est omise). Dans l'application, les membres qui détiennent `erp.register.operate` voient **Comptabilisé avant l'utilisation de ce produit ? Enregistrer comme déjà comptabilisé** dans **Comptabiliser à partir d'un fichier** : cela ouvre **Enregistrer comme déjà comptabilisé**, où vous choisissez l'**Environnement** et le **Système**, déposez la feuille de calcul et choisissez **Enregistrer comme comptabilisé**. Il n'existe pas d'outil MCP pour cela.
 
 - Un document que PlaidCloud détient déjà comme comptabilisé, un document qui attend encore une réponse, ou une référence qu'il détient comme un autre document du système est listé comme non enregistré, avec la raison.
 - Un document Non confirmé du fichier n'est réglé comme Comptabilisé que pour une personne ayant le rôle Approbateur du registre des écritures ; toute autre personne le récupère comme non enregistré.

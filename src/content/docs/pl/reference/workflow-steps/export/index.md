@@ -33,3 +33,9 @@ Kroki przepływu pracy, które zapisują tabele projektu w zewnętrznych miejsca
 - [Eksport pliku przestrzennego](/pl/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/pl/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/pl/reference/workflow-steps/export/export-hyper/)
+
+## Zapisywane kolumny
+
+Większość kroków eksportu zapisuje wszystkie kolumny tabeli źródłowej w takim kształcie, w jakim tabela wygląda w chwili uruchomienia kroku, w kolejności kolumn tabeli, gdy Data Mapper nie wymienia kolumn docelowych, czyli gdy prawa tabela na karcie **Kolumny** jest pusta. Krok skonfigurowany tylko częściowo eksportuje więc do miejsca docelowego całą tabelę zamiast zakończyć się niepowodzeniem, dlatego przed uruchomieniem eksportu do zewnętrznego miejsca docelowego sprawdź Data Mapper.
+
+Jeśli nie zmapowano kolumn, a tabela źródłowa ich nie ma, eksport CSV, JSON, SQL, Excel, PDF, Google Spreadsheet lub Kafka niczego nie zapisuje i kończy się ostrzeżeniem. W eksporcie kilku tabel, takim jak XML, Parquet, ORC, Avro lub Excel Sheets, taka tabela jest pomijana z ostrzeżeniem wskazującym jej nazwę.

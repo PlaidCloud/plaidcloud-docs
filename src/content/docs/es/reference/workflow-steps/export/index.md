@@ -33,3 +33,9 @@ Pasos de flujo de trabajo que escriben tablas de proyecto en destinos externos: 
 - [Exportación de archivo espacial](/es/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/es/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/es/reference/workflow-steps/export/export-hyper/)
+
+## Columnas escritas
+
+La mayoría de los pasos de exportación escriben todas las columnas de la tabla de origen, tal como está cuando se ejecuta el paso y en el orden de columnas de la tabla, cuando el asignador de datos no enumera columnas de destino, es decir, cuando la tabla de la derecha de la pestaña **Columnas** está vacía. Por lo tanto, un paso configurado a medias exporta la tabla completa a su destino en lugar de fallar, así que revise el asignador de datos antes de ejecutar una exportación a un destino externo.
+
+Si no hay columnas asignadas y la tabla de origen no tiene ninguna, una exportación de CSV, JSON, SQL, Excel, PDF, Google Spreadsheet o Kafka no escribe nada y termina con una advertencia. En una exportación de varias tablas, como XML, Parquet, ORC, Avro o Excel Sheets, esa tabla se omite con una advertencia que la indica.

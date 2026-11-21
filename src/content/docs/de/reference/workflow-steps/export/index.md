@@ -33,3 +33,9 @@ Workflow-Schritte, die Projekttabellen in externe Ziele schreiben — Dateiforma
 - [Geodatei-Export](/de/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/de/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/de/reference/workflow-steps/export/export-hyper/)
+
+## Geschriebene Spalten
+
+Die meisten Export-Schritte schreiben alle Spalten der Quelltabelle in dem Zustand, in dem die Tabelle bei der Ausführung des Schritts vorliegt, und in der Spaltenreihenfolge der Tabelle, wenn der Data Mapper keine Zielspalten aufführt, das heißt, wenn die rechte Tabelle auf der Registerkarte **Spalten** leer ist. Ein nur halb konfigurierter Schritt exportiert daher die gesamte Tabelle an sein Ziel, statt zu scheitern. Prüfen Sie deshalb den Data Mapper, bevor Sie einen Export in ein externes Ziel ausführen.
+
+Sind keine Spalten zugeordnet und hat die Quelltabelle keine, schreibt ein Export von CSV, JSON, SQL, Excel, PDF, Google Spreadsheet oder Kafka nichts und endet mit einer Warnung. Bei einem Export mehrerer Tabellen, etwa XML, Parquet, ORC, Avro oder Excel Sheets, wird diese Tabelle mit einer Warnung, die sie nennt, übersprungen.
