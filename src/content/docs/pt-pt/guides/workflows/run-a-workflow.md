@@ -102,6 +102,82 @@ A mensagem da sincronização de conector indica o nome da sincronização. Se u
 
 Uma execução nunca fica **Em execução** depois de o trabalho por trás dela ter desaparecido. Se o servidor que executa o fluxo de trabalho for perdido, a execução termina como falhada. Uma execução pode durar no máximo 12 horas: uma que ainda esteja em execução nesse momento falha com "Run failed: still running at the 12-hour limit. Re-run the workflow."
 
+## Run Insight
+
+O Run Insight mostra onde uma execução de um fluxo de trabalho gastou o seu tempo e que passos demoraram mais ou menos tempo do que é habitual. Avalia cada passo em relação às execuções recentes desse mesmo passo, pelo que um passo que é sempre lento não é destacado.
+
+### Abrir o Run Insight
+
+- Na área de desenho, clique em **Histórico** na barra de ferramentas. Consulte [Estruturador visual de fluxos de trabalho](/pt-pt/guides/workflows/advanced-workflows/).
+- No separador **Fluxos de trabalho**, selecione um fluxo de trabalho e escolha **Run Insight** no menu **Ações** ou no menu de clique com o botão direito.
+- No Início, escolha **Abrir a última execução** num cartão de fluxo de trabalho.
+- Na caixa de diálogo do histórico de execuções, escolha uma execução na tabela **Execuções** com **Abrir na Análise** ou abra a respetiva linha.
+- Numa mensagem do Weave na aplicação sobre uma execução lenta, clique em **Abrir a execução**. Consulte [Ser avisado quando uma execução termina](/pt-pt/guides/ai-assistant/weave-findings/#ser-avisado-quando-uma-execução-termina).
+
+A caixa de diálogo tem o título **Histórico de execuções** — nome do fluxo de trabalho. Os botões **Análise** e **Execuções** alternam entre esta vista e a tabela de execuções anteriores. O histórico de execuções de um passo, aberto a partir do Inspetor, mostra apenas a tabela.
+
+### Ler o cabeçalho e a lista de atenção
+
+O cabeçalho indica o resultado da execução numa linha: **Demorou** *tempo*, **Em execução há** *tempo* enquanto decorre, **Parado após** *tempo* para a última execução que foi parada, ou **Falhou em** o fluxo de trabalho em que falhou. Uma frase por baixo diz o que se destaca, como os passos que foram mais lentos do que o habitual, o tempo passado em espera, ou que todos os passos com histórico se mantiveram dentro do intervalo habitual. Seguem-se a hora de início e o número de fluxos de trabalho e de passos e, quando alguns passos têm histórico insuficiente para serem avaliados, quantos são. Quando algo precisa de ser visto, uma contagem assinalada com **para rever** aparece junto ao cabeçalho.
+
+Uma faixa de execuções recentes fica ao lado do cabeçalho. Clique numa execução na faixa para a abrir. Uma execução que falhou é assinalada, tal como uma execução que executou menos passos do que a maioria das execuções recentes, porque não pode ser comparada com uma execução completa.
+
+**O que requer atenção** lista, por esta ordem, as falhas primeiro, depois o tempo acima do habitual e depois a espera. Clique num item para o selecionar na vista.
+
+### Fluxo, cronologia e tabela
+
+Escolha uma vista no menu **Vista**.
+
+| Vista | O que mostra |
+|---|---|
+| **Fluxo** | Blocos cuja altura é o tempo. O âmbar é o tempo acima do habitual de um passo. Onde um passo chamou outros fluxos de trabalho, uma fatia **Sobrecarga de chamada** é o tempo do próprio passo fora desses fluxos de trabalho. Onde nenhum passo estava em execução, uma fatia **Em espera** mostra a lacuna; um fluxo de trabalho executado em paralelo não desenha nenhuma. |
+| **Cronologia** | Tempo de relógio desde o início da execução. Um contorno tracejado indica quanto tempo o bloco demorou na execução comparada. |
+| **Tabela** | Tudo pela ordem das chamadas, com as colunas **Nome**, **Esta execução**, **Habitualmente**, **Extra**, **Execução comparada** e **Estado**. |
+
+Um fluxo de trabalho que chamou outros fluxos de trabalho mostra-os no seu interior. Faça duplo clique num bloco de fluxo de trabalho, ou escolha **Ampliar**, para trabalhar no seu interior, e utilize o caminho acima da vista ou **Reduzir** no menu **Ações** para voltar. Quando vários blocos que seguiram o ritmo habitual estão juntos, o **Fluxo** recolhe-os num único bloco **N no ritmo habitual**; clique num deles, ou escolha **Mostrar todos os blocos** no menu **Ações**, para os abrir. **Recolher blocos no ritmo habitual** volta a recolhê-los.
+
+Selecione um bloco para ver o respetivo painel de detalhes, com o que se aplicar entre **Esta execução**, **Habitualmente**, **Histórico**, **Acima do habitual** e **Execução comparada**, e com **Mostrar no respetivo fluxo de trabalho**, **Mostrar os respetivos passos** ou **Ampliar**, **Abrir fluxo de trabalho** e **Ver registo da execução**. **Abrir fluxo de trabalho** abre o fluxo de trabalho na área de desenho e **Ver registo da execução** abre o respetivo [registo](/pt-pt/guides/workflows/viewing-workflow-log/).
+
+### O que significam as marcas
+
+| Marca | Significado |
+|---|---|
+| **Falhou** | Um passo terminou com um erro. O painel mostra a respetiva mensagem, a menos que o seu perfil não possa ver o nome do passo. |
+| **Mais lento do que o habitual** | O passo demorou mais do que o seu intervalo habitual. |
+| **Mais lento em toda a execução** | Todos os passos do fluxo de trabalho ficaram mais lentos aproximadamente na mesma medida, o que aponta para algo que o fluxo de trabalho inteiro partilha e não para um único passo. Os seus passos mostram **Parte de uma lentidão generalizada**. |
+| **Tem passos lentos** | Um fluxo de trabalho com **Passos lentos no interior**. |
+| **No ritmo habitual** | O passo executou-se dentro do seu intervalo habitual. |
+| **Mais rápido** | O passo foi mais rápido do que o seu intervalo habitual. |
+| **Histórico insuficiente** | O passo não foi executado vezes suficientes para ter um intervalo habitual, por isso não é avaliado. |
+| **Erro, continuou** | O passo falhou, mas está configurado para [continuar em caso de erro](/pt-pt/guides/workflows/continue-on-error/). |
+| **Ignorado** | O passo foi saltado. |
+| **Em execução** | O passo ainda não terminou. |
+
+Um passo cujas execuções recentes já eram lentas ou variam muito pode não ser assinalado. Uma execução no fim de um período, comparada com dias normais, pode aparecer como mais lenta em toda a execução. Uma execução parada mais antiga aparece como uma execução curta, não como parada.
+
+O painel também pode explicar uma marca. **Em espera** é o tempo em que nenhum passo estava em execução, pelo que nenhum passo é responsável por ele. Num passo que foi mais lento do que o habitual, **Linhas escritas** compara a saída do passo com a sua contagem habitual, e é omitida quando a segurança ao nível da linha filtra o que pode ler, e **Guardado desde a sua última execução** indica que o passo foi guardado depois da sua execução anterior e antes de esta começar; o registo mostra um guardar, não o que mudou. **Trabalho diferente** conta os passos que não foram executados e os passos que foram executados sem histórico, medidos em relação ao histórico de cada passo ou, quando compara com outra execução, em relação a essa execução. **Executado em paralelo** significa que as partes do fluxo de trabalho foram executadas ao mesmo tempo, pelo que os seus tempos somam mais do que o relógio. **Chamador incerto** significa que o histórico não consegue mostrar que passo chamou um fluxo de trabalho. **Nome oculto** assinala um passo ou um fluxo de trabalho cujo nome o seu perfil não pode ver, apresentado como **Passo oculto** ou **Fluxo de trabalho oculto**.
+
+### Comparar com
+
+**Comparar com** define em relação a que é medida uma execução, e o respetivo botão mostra **Comparar com: Habitual**, **Comparar com: Execução anterior** ou **Comparar com: Execução escolhida**. **Habitual** usa as execuções recentes de cada passo. **Habitual + execução anterior** e **Habitual + uma execução escolhida** acrescentam também o tempo dessa execução para cada passo, que a **Cronologia** contorna e a **Tabela** mostra em **Execução comparada**. A execução escolhida é selecionada entre as execuções recentes.
+
+### Um fluxo de trabalho dentro de uma execução maior
+
+Quando abre um fluxo de trabalho que outro fluxo de trabalho chamou, a Análise mostra apenas a parte desse fluxo de trabalho na execução. **Abrir a execução completa** passa a mesma caixa de diálogo para o fluxo de trabalho que iniciou a execução.
+
+### Execuções em direto
+
+Uma execução que ainda está em curso é lida de novo a cada 30 segundos enquanto a caixa de diálogo estiver visível. O seu zoom, a seleção e a vista mantêm-se como estão. Sair da Análise para **Execuções** interrompe as atualizações, e voltar à Análise lê a execução de novo e retoma-as. O botão Atualizar, as setas circulares à direita da barra de ferramentas, volta a carregar a execução de raiz, repõe o zoom e a seleção e volta a recolher os blocos que seguiram o ritmo habitual.
+
+### Para assistentes de IA e a API REST
+
+O mesmo perfil está disponível fora da caixa de diálogo:
+
+- REST: `GET /rest/v1/analyze/workflow/run-insight` com `project_id` e `workflow_id`. `run_id` escolhe a execução (a mais recente quando omitido), e `baseline` é `typical`, `previous` ou `run:<id>`.
+- MCP: `workflow_describe` com `include=['run_insight']`, e `run_id` e `baseline` opcionais.
+
+Cada fluxo de trabalho e cada passo devolve o seu tempo, o seu lugar na execução, um veredicto em relação ao seu próprio histórico e os motivos. Uma execução que não existe, ou que não tem linhas de passos, não devolve nenhum perfil, mas sim um aviso, em vez de um erro.
+
 ## Pausar, parar e retomar
 
 Enquanto um fluxo de trabalho está em execução, pode **Pausar** — os passos em curso terminam e os novos passos aguardam — ou **Parar**, o que cancela os passos que estavam em fila e quaisquer trabalhos de importação ou exportação ainda em execução, juntamente com a consulta ao warehouse que uma exportação estava a ler. Os passos de importação e de dimensão que ainda estavam em fila são cancelados de forma limpa, para não atrasarem importações e cargas de dimensão posteriores na área de trabalho. Parar também interrompe as sincronizações de conector (Singer) em fila ou em execução do fluxo de trabalho, para que uma sincronização não continue a ser executada depois de o fluxo de trabalho ter parado.

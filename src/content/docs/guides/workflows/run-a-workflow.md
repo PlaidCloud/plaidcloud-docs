@@ -101,6 +101,82 @@ The connector sync message names the sync. If a worker started the job and then 
 
 A run never stays **Running** after the work behind it has gone. If the server running the workflow is lost, the run ends as failed. A run can last at most 12 hours: one still running at that point fails with "Run failed: still running at the 12-hour limit. Re-run the workflow."
 
+## Run Insight
+
+Run Insight shows where one run of a workflow spent its time, and which steps took longer or less time than they usually do. It judges each step against that step's own recent runs, so a step that is always slow isn't singled out.
+
+### Open Run Insight
+
+- On the canvas, click **History** in the toolbar. See [Visual Workflow Designer](/guides/workflows/advanced-workflows/).
+- On the **Workflows** tab, select one workflow and choose **Run insight** from the **Actions** menu or the right-click menu.
+- On Home, choose **Open latest run** on a workflow card.
+- In the run history dialog, pick a run in the **Runs** table with **Open in Insight**, or open its row.
+- In an in-app Weave message about a slow run, click **Open the run**. See [Being told when a run ends](/guides/ai-assistant/weave-findings/#being-told-when-a-run-ends).
+
+The dialog is titled **Run History** followed by the workflow's name. Its **Insight** and **Runs** buttons switch between this view and the table of past runs. A step's own run history, opened from the Inspector, shows only the table.
+
+### Read the Headline and the Attention List
+
+The headline gives the run's outcome in one line: **Took** *time*, **Running for** *time* while it runs, **Stopped after** *time* for a latest run that was stopped, or **Failed in** the workflow where it failed. A sentence under it says what stands out, such as the steps that ran slower than usual, time spent waiting, or that every step with history ran within its usual range. Below that come the start time and the number of workflows and steps, and, when some steps have too little history to judge, how many. When anything needs a look, a count marked **to look at** appears beside the headline.
+
+A strip of recent runs sits beside the headline. Click a run in the strip to open it. A failed run is marked, and so is a run that ran fewer steps than most recent runs, because it can't be compared with a full run.
+
+**What needs attention** lists, in this order, failures first, then time beyond the usual, then waiting. Click an item to select it in the view.
+
+### Flow, Timeline, and Table
+
+Choose a view from the **View** menu.
+
+| View | What it shows |
+|---|---|
+| **Flow** | Blocks whose height is time. Amber is time beyond a step's usual. Where a step called other workflows, a **Call overhead** slice is the step's own time outside those workflows. Where no step was running, a **Waiting** slice shows the gap; a workflow that ran in parallel doesn't draw one. |
+| **Timeline** | Clock time from the start of the run. A dashed outline is how long the block took in the compared run. |
+| **Table** | Everything in call order, with the columns **Name**, **This run**, **Usually**, **Extra**, **Compared run** and **Status**. |
+
+A workflow that called other workflows shows them inside it. Double-click a workflow block, or choose **Zoom in**, to work inside it, and use the trail above the view or **Zoom out** in the **Actions** menu to come back. When several on-pace steps sit together, **Flow** folds them into one **N on pace** block; click it, or choose **Show all blocks** in the **Actions** menu, to open them. **Fold on-pace blocks** folds them again.
+
+Select a block to see its detail panel, with whichever of **This run**, **Usually**, **History**, **Beyond the usual** and **Compared run** apply, and with **Show in its workflow**, **Show its steps** or **Zoom in**, **Open workflow** and **View run log**. **Open workflow** opens the workflow on the canvas and **View run log** opens its [log](/guides/workflows/viewing-workflow-log/).
+
+### What the Marks Mean
+
+| Mark | Meaning |
+|---|---|
+| **Failed** | A step ended in an error. The panel shows its message, unless your role can't see the step's name. |
+| **Slower than usual** | The step took longer than its usual range. |
+| **Slower throughout** | Every step in the workflow ran about the same amount slower, which points at something the whole workflow shares rather than at one step. Its steps show **Part of a shared slowdown**. |
+| **Has slow steps** | A workflow with **Slow steps inside** it. |
+| **On pace** | The step ran within its usual range. |
+| **Faster** | The step ran faster than its usual range. |
+| **Not enough history** | The step hasn't run often enough to have a usual range, so it isn't judged. |
+| **Error, continued** | The step failed but is set to [continue on error](/guides/workflows/continue-on-error/). |
+| **Skipped** | The step was passed over. |
+| **Running** | The step hasn't finished. |
+
+A step whose recent runs were already slow or vary a lot may not be flagged. A run at period end, compared with ordinary days, can show as slower throughout. An older stopped run shows as a short run, not as stopped.
+
+The panel can also explain a mark. **Waiting** is time when no step was running, so no step is to blame for it. On a step that ran slower than usual, **Rows written** compares its output with its usual count, and is left out when row-level security filters what you can read, and **Saved since its last run** says the step was saved after its previous run and before this one started; the record shows a save, not what changed. **Different work** counts the steps that didn't run and the steps that ran with none, measured against each step's history or, when you compare with another run, against that run. **Ran in parallel** means the parts of the workflow ran at the same time, so their times add up to more than the clock. **Caller not certain** means the history can't show which step called a workflow. **Name hidden** marks a step or workflow whose name your role can't see, shown as **Hidden step** or **Hidden workflow**.
+
+### Compare To
+
+**Compare to** sets what a run is measured against, and its button reads **Compare to: Usual**, **Compare to: Previous run** or **Compare to: Chosen run**. **Usual** uses each step's recent runs. **Usual + previous run** and **Usual + a chosen run** also add that run's time for each step, which the **Timeline** outlines and the **Table** shows under **Compared run**. The chosen run is picked from the recent runs.
+
+### One Workflow Inside a Larger Run
+
+When you open a workflow that another workflow called, Insight shows only that workflow's part of the run. **Open the whole run** switches the same dialog to the workflow that started the run.
+
+### Live Runs
+
+A run that is still going is read again every 30 seconds while the dialog is visible. Your zoom, selection and view stay as they are. Leaving Insight for **Runs** stops the updates, and returning to Insight reads the run again and resumes. The Refresh button, the circular arrows at the right of the toolbar, reloads the run from scratch, resets the zoom and selection, and folds on-pace blocks again.
+
+### For AI Assistants and the REST API
+
+The same profile is available outside the dialog:
+
+- REST: `GET /rest/v1/analyze/workflow/run-insight` with `project_id` and `workflow_id`. `run_id` picks the run (the latest when left out), and `baseline` is `typical`, `previous` or `run:<id>`.
+- MCP: `workflow_describe` with `include=['run_insight']`, and optional `run_id` and `baseline`.
+
+Each workflow and step comes back with its time, its place in the run, a verdict against its own history, and the reasons. A run that doesn't exist, or has no step rows, returns no profile and a warning instead of an error.
+
 ## Pause, Stop, and Resume
 
 While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running, along with the warehouse query an export was reading. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace. Stop also stops the workflow's queued or running connector (Singer) syncs, so a sync doesn't keep running after the workflow has stopped.
