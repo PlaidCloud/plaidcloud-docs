@@ -81,6 +81,10 @@ PlaidCloud는 SAP 공식 파트너이며, SAP PCM 모델 설계 및 구현 관�
 - 소스의 열이 로더 테이블과 일치하지 않는 경우: 로더 테이블 열이 없거나, 로더 테이블의 유형과 다르거나, 소스, 식 또는 상수가 없는 경우 — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* **대상 열을 스키마로 재설정**을 선택하면 로더 테이블을 기준으로 소스의 대상 열이 다시 채워집니다.
 - 두 소스의 이름이 같은 경우. 각 소스는 자신의 이름으로 된 파일로 내보내지므로 하나가 다른 하나를 덮어쓰게 됩니다 — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
+## 소스가 없거나 비어 있는 경우
+
+소스 테이블이 없거나, 매핑된 열이 없을 때 열이 없어도 단계는 실패하지 않습니다. 해당 소스는 이름을 명시한 경고와 함께 건너뛰며 나머지 소스는 계속 로드합니다. 로드할 내용이 있는 소스가 없으면 아무것도 로드하지 않으며, 단계는 성공하고 `No table had anything to load, so nothing was loaded on PCM Model "…"`를 기록합니다.
+
 
 ## 예제
 

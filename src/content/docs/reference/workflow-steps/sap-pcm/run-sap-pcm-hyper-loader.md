@@ -81,6 +81,11 @@ Each source on the **Load Steps** tab stages into the loader table chosen as its
 - Two sources share a name. Each source is exported to a file named after it, so one would overwrite the other — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
 
+## When a Source Is Missing or Empty
+
+The step doesn't fail when a source table doesn't exist, or has no columns when none are mapped. That source is skipped with a warning that names it, and the other sources are still loaded. When no source has anything to load, nothing is loaded: the step succeeds and logs `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
+
 ## Examples
 
 

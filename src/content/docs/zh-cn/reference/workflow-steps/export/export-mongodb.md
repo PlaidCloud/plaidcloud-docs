@@ -33,6 +33,14 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 插入模式每次运行步骤都会再次添加这些文档。替换或更新的模式则无论步骤运行多少次，集合都保持不变，因此当工作流可能对相同的行运行两次时，请使用其中之一。
 
+## 源缺失或为空时
+
+没有内容可写入时，步骤不会失败。它会成功，并记录一条指明集合或表的警告：
+
+- **源表不存在。** 警告为 `No table found for path "…", so nothing was written to collection …`，集合保持原样，即使已开启**写入前删除集合中的所有文档**也是如此。
+- **源表没有列。** 在未映射源列或目标列时，步骤会写入表中的所有列，因此这适用于没有列的表。警告为 `Table … has no columns; nothing was written to collection …`。
+- **源表没有行。** 警告为 `The table has no rows; nothing was written to …`。开启**写入前删除集合中的所有文档**时，集合会被清空，警告也会说明这一点：`… was emptied and nothing was written to it`。
+
 ## 相关内容
 
 - [导入 MongoDB](/zh-cn/reference/workflow-steps/import/import-mongodb/)

@@ -33,6 +33,14 @@ Schreibt jede Zeile einer Projekttabelle als Dokument in eine MongoDB-Collection
 
 Einfügen fügt die Dokumente bei jeder Ausführung des Schritts erneut hinzu. Die Modi, die ersetzen oder aktualisieren, lassen die Collection unabhängig davon, wie oft der Schritt läuft, gleich; verwenden Sie daher einen von ihnen, wenn ein Workflow möglicherweise zweimal über dieselben Zeilen läuft.
 
+## Wenn die Quelle fehlt oder leer ist
+
+Der Schritt schlägt nicht fehl, wenn es nichts zu schreiben gibt. Er ist erfolgreich und protokolliert eine Warnung, die die Collection oder Tabelle nennt:
+
+- **Die Quelltabelle existiert nicht.** Die Warnung lautet `No table found for path "…", so nothing was written to collection …`, und die Collection bleibt unverändert, auch wenn **Vor dem Schreiben alle Dokumente der Sammlung löschen** aktiviert ist.
+- **Die Quelltabelle hat keine Spalten.** Sind keine Quell- oder Zielspalten zugeordnet, schreibt der Schritt jede Spalte der Tabelle; das gilt hier also für eine Tabelle ohne Spalten. Die Warnung lautet `Table … has no columns; nothing was written to collection …`.
+- **Die Quelltabelle hat keine Zeilen.** Die Warnung lautet `The table has no rows; nothing was written to …`. Ist **Vor dem Schreiben alle Dokumente der Sammlung löschen** aktiviert, wird die Collection geleert, und die Warnung sagt das: `… was emptied and nothing was written to it`.
+
 ## Verwandte Themen
 
 - [MongoDB importieren](/de/reference/workflow-steps/import/import-mongodb/)

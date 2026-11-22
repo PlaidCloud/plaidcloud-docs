@@ -38,4 +38,4 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 数据映射器未列出目标列时（即**列**选项卡上的右侧表为空），大多数导出步骤会按步骤运行时源表的实际状态，以表中的列顺序写入源表的所有列。因此，只配置了一半的步骤会将整个表导出到目标位置，而不是运行失败，所以在对外部目标运行导出之前，请检查数据映射器。
 
-如果未映射任何列且源表没有列，CSV、JSON、SQL、Excel、PDF、Google 表格或 Kafka 的导出不会写入任何内容，并以警告结束。在多表导出（如 XML、Parquet、ORC、Avro 或 Excel Sheets）中，该表会被跳过并给出指明该表的警告。
+如果未映射任何列且源表没有列，CSV、JSON、SQL、Excel、PDF、Google 表格或 Kafka 的导出不会写入任何内容，并以警告结束。在多表导出（如 XML、Parquet、ORC、Avro 或 Excel Sheets）中，该表会被跳过并给出指明该表的警告。导出 MongoDB、Export External Database Tables、Tableau Hyper Export、空间文件导出和 Run SAP PCM Hyper Loader 也是如此：它们会成功并给出指明源或目标的警告，外部表会保留其之前的行。

@@ -81,6 +81,10 @@ Chaque source de l'onglet **Étapes de chargement** est transférée vers la tab
 - Les colonnes d'une source ne correspondent pas à sa table de chargement : une colonne de la table de chargement est absente, son type diffère de celui de la table de chargement, ou elle n'a ni source, ni expression, ni constante — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* **Réinitialiser les colonnes cibles selon le schéma** remplit à nouveau les colonnes cibles d'une source à partir de sa table de chargement.
 - Deux sources portent le même nom. Chaque source est exportée vers un fichier portant son nom, de sorte que l'une écraserait l'autre — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
+## Lorsqu'une source est manquante ou vide
+
+L'étape n'échoue pas lorsqu'une table source n'existe pas, ou n'a aucune colonne lorsqu'aucune n'est mappée. Cette source est ignorée avec un avertissement qui la nomme, et les autres sources sont tout de même chargées. Lorsqu'aucune source n'a rien à charger, rien n'est chargé : l'étape réussit et consigne `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
 
 ## Exemples
 

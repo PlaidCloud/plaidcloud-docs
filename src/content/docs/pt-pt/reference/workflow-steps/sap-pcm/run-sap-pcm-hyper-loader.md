@@ -82,6 +82,10 @@ Cada origem do separador **Load Steps** é preparada na tabela de carregamento e
 - As colunas de uma origem não correspondem à respetiva tabela de carregamento: falta uma coluna da tabela de carregamento, tem um tipo diferente do da tabela de carregamento, ou não tem origem, expressão nem constante — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* **Reset Target Columns to Schema** volta a preencher as colunas de destino de uma origem a partir da respetiva tabela de carregamento.
 - Duas origens partilham um nome. Cada origem é exportada para um ficheiro com o seu nome, pelo que uma substituiria a outra — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
+## Quando uma origem está em falta ou vazia
+
+O passo não falha quando uma tabela de origem não existe, ou não tem colunas quando nenhuma está mapeada. Essa origem é ignorada, com um aviso que a indica, e as outras origens continuam a ser carregadas. Quando nenhuma origem tem algo para carregar, não é carregado nada: o passo termina com êxito e regista `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
 
 ## Exemplos
 

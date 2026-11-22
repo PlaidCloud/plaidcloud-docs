@@ -81,6 +81,10 @@ PlaidCloud は SAP の正式なパートナーであり、SAP PCM のモデル�
 - ソースの列がローダーテーブルと一致しない場合。ローダーテーブルの列がない、ローダーテーブルの列と型が異なる、またはソース、式、定数のいずれもない場合です — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* **ターゲット列をスキーマにリセット**を使用すると、ソースのターゲット列がローダーテーブルから再設定されます。
 - 2 つのソースが同じ名前を共有している場合。各ソースは自身の名前を付けたファイルにエクスポートされるため、一方がもう一方を上書きしてしまいます — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
+## ソースが存在しない、または空の場合
+
+ソーステーブルが存在しない、または列がマッピングされていないときに列がない場合でも、ステップは失敗しません。そのソースは、名前を示す警告とともにスキップされ、他のソースは引き続きロードされます。ロードするものがあるソースが 1 つもない場合は、何もロードされません。ステップは成功し、`No table had anything to load, so nothing was loaded on PCM Model "…"` をログに記録します。
+
 
 ## 例
 

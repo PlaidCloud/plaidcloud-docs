@@ -32,6 +32,14 @@ Writes each row of a project table to a MongoDB collection as a document. The co
 
 Insert adds the documents again each time the step runs. The modes that replace or update leave the collection the same however many times the step runs, so use one of them when a workflow may run twice over the same rows.
 
+## When the Source Is Missing or Empty
+
+The step doesn't fail when there is nothing to write. It succeeds and logs a warning that names the collection or table:
+
+- **The source table doesn't exist.** The warning is `No table found for path "…", so nothing was written to collection …`, and the collection is left as it was, even when **Delete every document in the collection before writing** is on.
+- **The source table has no columns.** With no source or target columns mapped, the step writes every column the table has, so this applies to a table with none. The warning is `Table … has no columns; nothing was written to collection …`.
+- **The source table has no rows.** The warning is `The table has no rows; nothing was written to …`. With **Delete every document in the collection before writing** on, the collection is emptied and the warning says so: `… was emptied and nothing was written to it`.
+
 ## Related
 
 - [Import MongoDB](/reference/workflow-steps/import/import-mongodb/)

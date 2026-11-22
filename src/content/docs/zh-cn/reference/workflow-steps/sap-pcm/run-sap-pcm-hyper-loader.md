@@ -82,6 +82,11 @@ PlaidCloud 是 SAP 官方合作伙伴，也是 SAP PCM 模型设计与实施相�
 - 两个源同名。每个源都会导出为以其名称命名的文件，因此其中一个会覆盖另一个——*Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
 
+## 源缺失或为空时
+
+源表不存在，或在未映射列时没有列，步骤不会失败。该源会被跳过，并记录一条指明它的警告，其他源仍会被加载。当没有任何源有内容可加载时，不会加载任何内容：步骤会成功，并记录 `No table had anything to load, so nothing was loaded on PCM Model "…"`。
+
+
 ## 示例
 
 

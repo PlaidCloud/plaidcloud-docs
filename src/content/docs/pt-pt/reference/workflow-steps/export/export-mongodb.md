@@ -33,6 +33,14 @@ Escreve cada linha de uma tabela de projeto numa coleção MongoDB como um docum
 
 A inserção volta a adicionar os documentos de cada vez que o passo é executado. Os modos que substituem ou atualizam deixam a coleção igual independentemente do número de vezes que o passo é executado, pelo que deve usar um deles quando um fluxo de trabalho possa ser executado duas vezes sobre as mesmas linhas.
 
+## Quando a origem está em falta ou vazia
+
+O passo não falha quando não há nada para escrever. Termina com êxito e regista um aviso que indica a coleção ou a tabela:
+
+- **A tabela de origem não existe.** O aviso é `No table found for path "…", so nothing was written to collection …` e a coleção fica como estava, mesmo com **Eliminar todos os documentos da coleção antes de escrever** ativado.
+- **A tabela de origem não tem colunas.** Sem colunas de origem nem de destino mapeadas, o passo escreve todas as colunas da tabela, pelo que isto se aplica a uma tabela sem nenhuma. O aviso é `Table … has no columns; nothing was written to collection …`.
+- **A tabela de origem não tem linhas.** O aviso é `The table has no rows; nothing was written to …`. Com **Eliminar todos os documentos da coleção antes de escrever** ativado, a coleção é esvaziada e o aviso di-lo: `… was emptied and nothing was written to it`.
+
 ## Relacionado
 
 - [Importar MongoDB](/pt-pt/reference/workflow-steps/import/import-mongodb/)

@@ -82,6 +82,11 @@ Jede Quelle auf der Registerkarte **Ladeschritte** wird in die Ladertabelle gela
 - Zwei Quellen denselben Namen haben. Jede Quelle wird in eine nach ihr benannte Datei exportiert, sodass eine die andere überschreiben würde — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
 
+## Wenn eine Quelle fehlt oder leer ist
+
+Der Schritt schlägt nicht fehl, wenn eine Quelltabelle nicht existiert oder keine Spalten hat, während keine zugeordnet sind. Diese Quelle wird mit einer Warnung übersprungen, die sie nennt, und die übrigen Quellen werden weiterhin geladen. Hat keine Quelle etwas zu laden, wird nichts geladen: Der Schritt ist erfolgreich und protokolliert `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
+
 ## Beispiele
 
 

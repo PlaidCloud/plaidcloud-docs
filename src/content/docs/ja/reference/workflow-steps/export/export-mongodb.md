@@ -33,6 +33,14 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 挿入では、ステップを実行するたびにドキュメントが再び追加されます。置換または更新のモードでは、ステップを何回実行しても、コレクションの状態は同じです。ワークフローが同じ行に対して2回実行される可能性がある場合は、これらのモードのいずれかを使用してください。
 
+## ソースが存在しない、または空の場合
+
+書き込むものがなくても、ステップは失敗しません。成功し、コレクション名またはテーブル名を示す警告をログに記録します。
+
+- **ソーステーブルが存在しない場合。** 警告は `No table found for path "…", so nothing was written to collection …` です。**書き込み前にコレクション内のすべてのドキュメントを削除**がオンの場合でも、コレクションはそのまま残ります。
+- **ソーステーブルに列がない場合。** ソース列もターゲット列もマッピングされていない場合、ステップはテーブルのすべての列を書き込むため、これは列のないテーブルに該当します。警告は `Table … has no columns; nothing was written to collection …` です。
+- **ソーステーブルに行がない場合。** 警告は `The table has no rows; nothing was written to …` です。**書き込み前にコレクション内のすべてのドキュメントを削除**がオンの場合は、コレクションが空になり、警告にもその旨が示されます: `… was emptied and nothing was written to it`。
+
 ## 関連項目
 
 - [MongoDBのインポート](/ja/reference/workflow-steps/import/import-mongodb/)
