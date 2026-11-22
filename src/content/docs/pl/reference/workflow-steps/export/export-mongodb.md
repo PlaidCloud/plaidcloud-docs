@@ -33,6 +33,14 @@ Zapisuje każdy wiersz tabeli projektu w kolekcji MongoDB jako dokument. Kolekcj
 
 Wstawianie dodaje dokumenty ponownie przy każdym uruchomieniu kroku. Tryby zastępujące lub aktualizujące zostawiają kolekcję taką samą bez względu na to, ile razy krok zostanie uruchomiony, więc użyj jednego z nich, gdy przepływ pracy może zostać uruchomiony dwa razy na tych samych wierszach.
 
+## Gdy źródło nie istnieje lub jest puste
+
+Krok nie kończy się błędem, gdy nie ma czego zapisać. Kończy się powodzeniem i zapisuje ostrzeżenie z nazwą kolekcji lub tabeli:
+
+- **Tabela źródłowa nie istnieje.** Ostrzeżenie ma postać `No table found for path "…", so nothing was written to collection …`, a kolekcja pozostaje bez zmian, nawet gdy opcja **Przed zapisem usuń wszystkie dokumenty z kolekcji** jest włączona.
+- **Tabela źródłowa nie ma kolumn.** Gdy nie zmapowano kolumn źródłowych ani docelowych, krok zapisuje każdą kolumnę tabeli, więc dotyczy to tabeli bez kolumn. Ostrzeżenie ma postać `Table … has no columns; nothing was written to collection …`.
+- **Tabela źródłowa nie ma wierszy.** Ostrzeżenie ma postać `The table has no rows; nothing was written to …`. Gdy opcja **Przed zapisem usuń wszystkie dokumenty z kolekcji** jest włączona, kolekcja zostaje opróżniona, a ostrzeżenie o tym informuje: `… was emptied and nothing was written to it`.
+
 ## Powiązane
 
 - [Importuj MongoDB](/pl/reference/workflow-steps/import/import-mongodb/)

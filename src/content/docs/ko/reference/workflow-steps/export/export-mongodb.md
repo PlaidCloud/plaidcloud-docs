@@ -33,6 +33,14 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 삽입은 단계를 실행할 때마다 문서를 다시 추가합니다. 교체 또는 업데이트 모드는 단계를 몇 번 실행해도 컬렉션이 동일하게 유지되므로, 워크플로가 같은 행에 대해 두 번 실행될 수 있는 경우에는 이들 중 하나를 사용하십시오.
 
+## 소스가 없거나 비어 있는 경우
+
+기록할 내용이 없어도 단계는 실패하지 않습니다. 성공하며 컬렉션 또는 테이블을 명시한 경고를 기록합니다.
+
+- **소스 테이블이 없습니다.** 경고는 `No table found for path "…", so nothing was written to collection …`이며, **쓰기 전에 컬렉션의 모든 문서 삭제**를 켜 두었더라도 컬렉션은 그대로 유지됩니다.
+- **소스 테이블에 열이 없습니다.** 소스 열과 대상 열을 매핑하지 않으면 단계는 테이블의 모든 열을 기록하므로, 이는 열이 없는 테이블에 해당합니다. 경고는 `Table … has no columns; nothing was written to collection …`입니다.
+- **소스 테이블에 행이 없습니다.** 경고는 `The table has no rows; nothing was written to …`입니다. **쓰기 전에 컬렉션의 모든 문서 삭제**를 켜 두면 컬렉션이 비워지며, 경고에도 그 사실이 표시됩니다: `… was emptied and nothing was written to it`.
+
 ## 관련 항목
 
 - [MongoDB 가져오기](/ko/reference/workflow-steps/import/import-mongodb/)

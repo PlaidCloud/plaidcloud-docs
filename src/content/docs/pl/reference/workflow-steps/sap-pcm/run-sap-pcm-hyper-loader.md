@@ -81,6 +81,10 @@ Każde źródło na karcie **Kroki ładowania** jest przygotowywane w tabeli ła
 - Kolumny źródła nie pasują do jego tabeli ładowania: brakuje kolumny tabeli ładowania, ma ona inny typ niż w tabeli ładowania albo nie ma źródła, wyrażenia ani stałej — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* Opcja **Zresetuj kolumny docelowe do schematu** ponownie wypełnia kolumny docelowe źródła na podstawie jego tabeli ładowania.
 - Dwa źródła mają tę samą nazwę. Każde źródło jest eksportowane do pliku nazwanego jego nazwą, więc jedno nadpisałoby drugie — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
+## Gdy źródło nie istnieje lub jest puste
+
+Krok nie kończy się błędem, gdy tabela źródłowa nie istnieje lub nie ma kolumn, gdy żadne nie są zmapowane. Takie źródło jest pomijane z ostrzeżeniem z jego nazwą, a pozostałe źródła są nadal ładowane. Gdy żadne źródło nie ma niczego do załadowania, nic nie jest ładowane: krok kończy się powodzeniem i zapisuje `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
 
 ## Przykłady
 

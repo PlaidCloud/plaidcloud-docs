@@ -82,6 +82,11 @@ Cada origen de la pestaña **Pasos de carga** se almacena temporalmente en la ta
 - Dos orígenes tienen el mismo nombre. Cada origen se exporta a un archivo con su nombre, de modo que uno sobrescribiría al otro — *El nombre de origen 'activity_aliases' se usa más de una vez; cada origen necesita el suyo, o uno sobrescribe al otro.*
 
 
+## Cuando un origen no existe o está vacío
+
+El paso no falla cuando una tabla de origen no existe, o no tiene columnas cuando no hay ninguna asignada. Ese origen se omite con una advertencia que lo nombra, y los demás orígenes se cargan igualmente. Cuando ningún origen tiene algo que cargar, no se carga nada: el paso termina correctamente y registra `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
+
 ## Ejemplos
 
 

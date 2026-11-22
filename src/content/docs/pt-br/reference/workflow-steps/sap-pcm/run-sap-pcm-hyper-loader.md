@@ -81,6 +81,10 @@ Cada origem na guia **Etapas de carga** é carregada na tabela de carga escolhid
 - As colunas de uma origem não correspondem à tabela de carga: falta uma coluna da tabela de carga, ela tem um tipo diferente do da tabela de carga ou não tem origem, expressão nem constante — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* **Redefinir colunas de destino para o esquema** preenche novamente as colunas de destino de uma origem a partir da tabela de carga.
 - Duas origens têm o mesmo nome. Cada origem é exportada para um arquivo com o nome dela, então uma sobrescreveria a outra — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
+## Quando uma origem está ausente ou vazia
+
+A etapa não falha quando uma tabela de origem não existe, ou não tem colunas quando nenhuma está mapeada. Essa origem é ignorada com um aviso que a nomeia, e as demais origens continuam sendo carregadas. Quando nenhuma origem tem algo para carregar, nada é carregado: a etapa é concluída com sucesso e registra `No table had anything to load, so nothing was loaded on PCM Model "…"`.
+
 
 ## Exemplos
 

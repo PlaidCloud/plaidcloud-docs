@@ -33,6 +33,14 @@ Grava cada linha de uma tabela de projeto em uma coleção do MongoDB como um do
 
 Inserir adiciona os documentos novamente a cada execução da etapa. Os modos que substituem ou atualizam deixam a coleção igual, não importa quantas vezes a etapa seja executada; use um deles quando um fluxo de trabalho puder ser executado duas vezes sobre as mesmas linhas.
 
+## Quando a origem está ausente ou vazia
+
+A etapa não falha quando não há nada para gravar. Ela é concluída com sucesso e registra um aviso que nomeia a coleção ou a tabela:
+
+- **A tabela de origem não existe.** O aviso é `No table found for path "…", so nothing was written to collection …`, e a coleção permanece como estava, mesmo com **Excluir todos os documentos da coleção antes de gravar** ativado.
+- **A tabela de origem não tem colunas.** Sem colunas de origem ou de destino mapeadas, a etapa grava todas as colunas da tabela, então isso se aplica a uma tabela que não tem nenhuma. O aviso é `Table … has no columns; nothing was written to collection …`.
+- **A tabela de origem não tem linhas.** O aviso é `The table has no rows; nothing was written to …`. Com **Excluir todos os documentos da coleção antes de gravar** ativado, a coleção é esvaziada e o aviso informa isso: `… was emptied and nothing was written to it`.
+
 ## Relacionados
 
 - [Importar MongoDB](/pt-br/reference/workflow-steps/import/import-mongodb/)

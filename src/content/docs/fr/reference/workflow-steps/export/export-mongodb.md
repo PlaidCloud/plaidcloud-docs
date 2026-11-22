@@ -33,6 +33,14 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 L'insertion ajoute de nouveau les documents à chaque exécution de l'étape. Les modes qui remplacent ou mettent à jour laissent la collection identique quel que soit le nombre d'exécutions de l'étape ; utilisez l'un d'eux lorsqu'un workflow peut s'exécuter deux fois sur les mêmes lignes.
 
+## Lorsque la source est manquante ou vide
+
+L'étape n'échoue pas lorsqu'il n'y a rien à écrire. Elle réussit et consigne un avertissement qui nomme la collection ou la table :
+
+- **La table source n'existe pas.** L'avertissement est `No table found for path "…", so nothing was written to collection …`, et la collection reste telle quelle, même lorsque **Supprimer tous les documents de la collection avant l'écriture** est activé.
+- **La table source n'a aucune colonne.** Lorsqu'aucune colonne source ou cible n'est mappée, l'étape écrit toutes les colonnes de la table ; cela s'applique donc à une table qui n'en a aucune. L'avertissement est `Table … has no columns; nothing was written to collection …`.
+- **La table source n'a aucune ligne.** L'avertissement est `The table has no rows; nothing was written to …`. Lorsque **Supprimer tous les documents de la collection avant l'écriture** est activé, la collection est vidée et l'avertissement l'indique : `… was emptied and nothing was written to it`.
+
 ## Voir aussi
 
 - [Importer depuis MongoDB](/fr/reference/workflow-steps/import/import-mongodb/)

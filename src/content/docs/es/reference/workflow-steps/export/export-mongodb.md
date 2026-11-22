@@ -33,6 +33,14 @@ Escribe cada fila de una tabla de proyecto en una colección de MongoDB como un 
 
 Insertar vuelve a agregar los documentos cada vez que se ejecuta el paso. Los modos que reemplazan o actualizan dejan la colección igual sin importar cuántas veces se ejecute el paso, así que use uno de ellos cuando un flujo de trabajo pueda ejecutarse dos veces sobre las mismas filas.
 
+## Cuando el origen no existe o está vacío
+
+El paso no falla cuando no hay nada que escribir. Termina correctamente y registra una advertencia que nombra la colección o la tabla:
+
+- **La tabla de origen no existe.** La advertencia es `No table found for path "…", so nothing was written to collection …` y la colección queda como estaba, incluso cuando **Eliminar todos los documentos de la colección antes de escribir** está activado.
+- **La tabla de origen no tiene columnas.** Sin columnas de origen ni de destino asignadas, el paso escribe todas las columnas que tiene la tabla, por lo que esto se aplica a una tabla sin ninguna. La advertencia es `Table … has no columns; nothing was written to collection …`.
+- **La tabla de origen no tiene filas.** La advertencia es `The table has no rows; nothing was written to …`. Con **Eliminar todos los documentos de la colección antes de escribir** activado, la colección se vacía y la advertencia lo indica: `… was emptied and nothing was written to it`.
+
 ## Relacionado
 
 - [Importar MongoDB](/es/reference/workflow-steps/import/import-mongodb/)
