@@ -64,7 +64,7 @@ In Tableau Desktop:
 
 Tableau reads an OData feed into an extract. To refresh it on Tableau Cloud, publish the data source with its credentials embedded. Tableau Cloud connects from its own addresses, which must be in the workspace's **Allowed CIDRs**, or the list must be blank.
 
-Tableau extracts each OData table whole, sending no filter. For a table larger than the row cap, use [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
+For a table larger than the row cap, use [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
 
 ## Keep Each Read Under the Row Cap
 
@@ -74,16 +74,26 @@ One request returns at most 1,000,000 rows. A read that would return more fails 
 
 To stay under the cap:
 
-- **Filter in Power Query.** A filter on a column becomes the feed's `$filter`, so only the rows that pass are sent.
+- **Filter in Power Query on a value or a range.** A filter that keeps the rows equal to a value, or between two numbers or dates, is sent to the feed, so only the rows that pass are read.
 - **Use incremental refresh in Power BI.** Each refresh then reads one date range at a time; see [below](#use-incremental-refresh-in-power-bi).
 
-A filter helps only when Power BI or Excel can hand it to the feed. When a step before it can't be passed on as a query option, they read the whole table and apply the step themselves, and a large table then meets the cap.
+### What Power BI and Excel Send to the Feed
+
+Power Query, in Power BI and in Excel, hands some steps to the feed and does the rest itself:
+
+- **Done by the feed:** filters on a value, a range of numbers or a range of dates; choosing columns; sorting; and keeping the top rows.
+- **Done by Power Query:** a text filter such as **Contains** (`Text.Contains`), and counting rows (`Table.RowCount`). Power Query reads the whole table and works on it locally, so on a large table filter on a value or a range instead.
+- **After a step the feed can't do,** such as an added column, Power Query reads the whole table and finishes the query itself, without an error. Put your filters before any such step.
+
+Each refresh also reads a sample of 1,000 rows before it reads the table.
 
 ### Tables Served in Pages
 
-On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI and Excel follow on their own. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row. A read sorted with `$orderby` is never paged.
+On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI and Excel follow on their own. Pages differ in size: each holds at least half the row cap and never more than the cap, and the last holds whatever is left. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row. A read sorted with `$orderby` is never paged.
 
 A paged read must fetch each page within 15 minutes of the one before, and finish within 6 hours of the first. Otherwise, or if the version of the table it is reading is no longer kept, as when the table is replaced, the refresh fails with a message that asks you to refresh again.
+
+A table on Lakehouse v1 (Databend) is never paged: one request returns it, up to the row cap.
 
 ## Use Incremental Refresh in Power BI
 
@@ -134,7 +144,7 @@ Write a date as `2024-01-31`, a timestamp as `2024-01-31T09:00:00Z` (one with an
 
 `cast`, `isof`, `time`, durations, geography functions and arithmetic on dates and times aren't supported.
 
-On Lakehouse v2 (StarRocks), `tolower` changes only the letters A to Z, so `tolower(Name) eq 'élan'` doesn't match `Élan`.
+This is what the feed answers when a tool sends it. Power BI and Excel send only some of it; see [What Power BI and Excel Send to the Feed](#what-power-bi-and-excel-send-to-the-feed).
 
 ## What the Feed Serves
 
@@ -145,14 +155,14 @@ Each table the client may read is an entity set, and each of its columns a prope
 Names come from the table's and the column's names:
 
 - A name made of the letters A to Z, digits and underscores, starting with a letter or an underscore, is used as it is.
-- In any other name, each run of other characters, such as spaces or punctuation, becomes one underscore, and none is left at either end. Letters beyond A to Z are kept, but a name that doesn't start with A to Z or an underscore gets an underscore in front. So `Sales 2024 (EMEA)` becomes `Sales_2024_EMEA`, and `2024 Sales` becomes `_2024_Sales`.
+- In any other name, each run of other characters, such as spaces or punctuation, becomes one underscore, and none is left at either end. Letters beyond A to Z are kept, but a name that doesn't start with A to Z or an underscore gets an underscore in front. So `Sales 2024 (EMEA)` becomes `Sales_2024_EMEA`, `2024 Sales` becomes `_2024_Sales`, and a column `Cost Center Name` becomes `Cost_Center_Name`.
 - A table's name is cut to 125 characters and a column's to 128.
 
 Names are compared ignoring case, as Power BI compares them. When two names would be the same, such as `Sales` and `SALES`, or `Sales 2024` and `Sales_2024`, each of them gets an underscore and a short code made from its own table or column, such as `Sales_1a2b3c4d`. The code stays the same from one refresh to the next. But when a rename makes one table's name collide with another's, both take a code, and a report that reads either by its plain name finds nothing; rename one of the tables to clear it.
 
 ### Keys
 
-Each entity set's key is the table's update keys, when it has them. Otherwise it is the table's first column that isn't a floating-point number or binary, or failing that its first column. The key needn't be unique or filled in: Power BI and Excel load a table with repeated or empty key values.
+Each entity set's key is the table's update keys, when it has them and none of them is a floating-point number or binary. Otherwise it is the table's first column that is neither, or failing that its first column. The key needn't be unique or filled in: Power BI and Excel load a table with repeated or empty key values.
 
 ### Types
 
@@ -174,7 +184,7 @@ The feed sends decimals and 64-bit whole numbers exactly, digit for digit. Power
 
 ## When a Read Fails
 
-Sign-in messages are listed in [Connect BI Tools](/integrations/bi-tools/#when-a-tool-cant-sign-in). Once signed in:
+Sign-in messages are listed in [Connect BI Tools](/integrations/bi-tools/#when-a-tool-cant-sign-in-or-sees-no-tables). Once signed in:
 
 | Message | What to do |
 | --- | --- |

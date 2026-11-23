@@ -29,6 +29,8 @@ Each tool signs in with a BI feed client, a client ID and secret that you create
 
 Both read the same tables, with the same Row Access, using the same client. OData returns at most 1,000,000 rows to one request, so a large table is read with a filter or with incremental refresh; Flight SQL has no row cap.
 
+OData and Flight SQL name tables and columns differently. OData turns spaces and punctuation in a name into underscores, so a column `FULL YEAR` is `FULL_YEAR`. Flight SQL keeps the name the project gives it, so in SQL you quote it: `"FULL YEAR"`.
+
 ## Turn on External Access
 
 The BI feed is available only when the workspace has lakehouse external access on. A workspace admin turns it on in the control plane: edit the workspace, and on its **Lakehouse** tab tick **Enable External Database Access**. See [Workspace Configuration](/administration/control-plane/workspace-configuration/#lakehouse).
@@ -54,7 +56,7 @@ Power BI Service refreshes from Microsoft's shared cloud addresses, which are to
 
 The same window shows the feed's addresses, with a placeholder where a project's ID goes. Each project's **Access & sharing** page shows that project's own addresses, ready to copy.
 
-In **Registered Systems (oAuth Clients)**, a BI feed client shows **BI / external data feed** in the **Type** column. It has no configuration file to download, and its secret can't be read again. If the secret is lost or may have been seen by someone else, choose **Regenerate secret** on the client's row. The new secret is shown once, as at creation, and the old one stops working at once, so every tool that uses it fails until you give it the new one.
+In **Registered Systems (oAuth Clients)**, a BI feed client shows **BI / external data feed** in the **Type** column. Unlike an API client, it has no configuration to copy, and its secret can't be read again. If the secret is lost or may have been seen by someone else, choose **Regenerate secret** on the client's row. The new secret is shown once, as at creation, and the old one stops working at once, so every tool that uses it fails until you give it the new one.
 
 To stop a client reading anything, edit it and clear **Enabled**, or delete it.
 
@@ -67,9 +69,13 @@ A new client reads nothing until you add it to a project.
 3. Choose the **BI feed client** and its **Role**: **Explorer** or **Manager**.
 4. Choose **Add**.
 
-To add a client you need to be able to change the project's access, as its Architect or a workspace admin does, and you can add only clients you own. If you have none, the window says so and offers **Open Registered Systems**.
+<Aside type="caution" title="A Client Sees Only the Tables Shown to Its Role">
+A Manager client sees a table only when the table's **Manager** box is ticked, and an Explorer client only when its **Explorer** box is ticked. No client reads a table with both boxes clear, so on a project where every table has both clear, the tool signs in but lists no tables. An Architect ticks the boxes on the project's **Tables** tab; see [Mark Table for Viewing Roles](/guides/projects/managing-tables-and-views/#mark-table-for-viewing-roles).
+</Aside>
 
-The role decides which of the project's tables the client sees: the ones the project shows to that role. See [Setting Different Viewing Roles](/guides/projects/managing-projects/#setting-different-viewing-roles). A client is never an Architect.
+A client can't be an Architect. An Architect sees every table, whatever its boxes, so the client's role and that role's box on each table are how you choose which tables go into the feed.
+
+To add a client you need to be able to change the project's access, as its Architect or a workspace admin does, and you can add only clients you own. If you have none, the window says so and offers **Open Registered Systems**.
 
 The card lists the clients that read the project, each with its role: all of them for the project's Architect or a workspace admin, and only your own for anyone else. It also shows the project's **Feed URL**, for OData, and **JDBC URL**, for Flight SQL. **Remove** on a client's row takes it off the project. The project's Architect or a workspace admin can remove any client, and an owner can remove their own.
 
@@ -77,13 +83,13 @@ The card lists the clients that read the project, each with its role: all of the
 
 A BI feed client reads as its owner, the person who created it:
 
-- **Tables:** the project's tables its role shows. Views aren't included.
+- **Tables:** the project's tables shown to its role, as [above](#add-the-client-to-a-project). Views aren't included.
 - **Rows:** only the rows the owner's [Row Access](/administration/access/managing-security-groups-and-assignments/#managing-row-access) allows. This holds even when the owner is the project's Architect: through the feed, the owner's security groups decide the rows.
 - **While the owner can:** the owner must still be able to open the project and read its tables. If they lose access to the project, or their account is disabled, the client stops working.
 - **Read-only:** nothing a client sends can change data.
 
 <Aside type="caution">
-Anyone with the client ID and secret reads the project as the owner. Treat the secret as a password: keep it in the tool's own credential settings, and regenerate it if it may have been seen by someone else. The secret works only with the BI feed, not with the PlaidCloud API.
+Anyone with the client ID and secret reads the project as the owner. Treat the secret as a password: keep it in the tool's own credential settings, and regenerate it if it may have been seen by someone else. The secret works only with the BI feed: the REST API, JSON-RPC and the MCP server refuse it.
 </Aside>
 
 ## Connection Details
@@ -98,18 +104,19 @@ Copy the addresses from the project's **BI feed clients** card rather than typin
 | Password | The client secret | The client secret |
 | Project | Part of the address | The `project_id` connection property |
 
-## When a Tool Can't Sign In
+## When a Tool Can't Sign In or Sees No Tables
 
 If the tool can't reach the feed at all, check that the workspace has **Enable External Database Access** on and that the address the tool connects from is in **Allowed CIDRs**. Once it connects, these messages say what's wrong:
 
-| Message | What to do |
+| What the tool shows | What to do |
 | --- | --- |
+| It signs in, but lists no tables. | The client sees only the tables shown to its role. Tick the **Manager** or **Explorer** box, whichever is the client's role, on each table it should read; see [Add the Client to a Project](#add-the-client-to-a-project). |
 | Sign in with the client id and secret of a BI feed client. | The tool sent no user name and password. Choose basic (user name and password) authentication. |
 | The client id or secret is wrong, or the client is not a BI feed client. | Check the client ID and secret. The same message answers a client that was disabled or deleted, an API client, and a client whose owner's account is disabled. |
 | This client may not read this project. | Add the client to the project on **Access & sharing**. If it is there, its owner may no longer be able to open the project. |
-| Too many requests. Try again later. | Too many sign-in attempts came from one address in a short time. Wait, then try again with the right secret. Over Flight SQL the message says how many seconds to wait. |
+| Too many requests. Try again later. (OData)<br />Too many attempts. Try again in … seconds. (Flight SQL) | Too many sign-in attempts came from one address in a short time. Wait, then try again with the right secret. |
 | PlaidCloud could not check these credentials just now. Try again shortly. | A passing problem on PlaidCloud's side. Try again. |
-| The gateway is busy. Try again shortly. | The feed is serving as many reads as it can at once. Try again. Over Flight SQL the message says how many seconds to wait. |
+| The gateway is busy. Try again shortly. (OData)<br />The gateway is busy. Try again in 30 seconds. (Flight SQL) | The feed is serving as many reads as it can at once. Try again. |
 
 ## Next Steps
 
