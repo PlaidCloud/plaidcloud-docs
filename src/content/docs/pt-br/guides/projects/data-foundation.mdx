@@ -147,7 +147,7 @@ Os arquivos complementam a conexão do ERP com dados que um sistema não tem, co
    - **Formato de data**: exibido quando o arquivo tem datas. Altere-o se o formato detectado estiver errado: `YYYY-MM-DD`, `DD.MM.YYYY`, `DD/MM/YYYY` ou `MM/DD/YYYY`.
    - Uma grade com **Coluna no arquivo**, **Tipo**, **Exemplos** e **Vai para**. Altere **Vai para** para enviar uma coluna a outro campo ou para **Não carregar**.
 
-4. Responda às perguntas que o arquivo levantar, como **Which company is this file for?**, **Which currency are the amounts in?**, **Are these amounts year-to-date or for the month?**, **Are the amounts shown in thousands or millions?** ou **Are revenues shown as negative numbers?** Cada uma só é feita quando o arquivo ainda não informa isso.
+4. Responda às perguntas que o arquivo levantar, como **Para qual empresa é este arquivo?**, **Em que moeda estão os valores?**, **Esses valores são acumulados do ano ou do mês?**, **Os valores estão em milhares ou em milhões?**, **As receitas são mostradas como números negativos?** ou, para um arquivo de contratos, **Cada linha é um período de contrato?** (consulte [Registros de contratos](#registros-de-contratos)). Cada uma só é feita quando o arquivo ainda não informa isso, exceto **Cada linha é um período de contrato?**, que todo arquivo proposto como de contratos faz.
 
 5. Verifique para onde vai cada coluna e clique em **Confirmar mapeamento**. Enquanto isso é processado, a nota abaixo do botão explica o motivo da espera. Em um projeto que ainda tem os dados de exemplo, o primeiro arquivo que você confirma também remove o exemplo, o que pode levar alguns minutos.
 
@@ -170,8 +170,17 @@ Quando o PlaidCloud não consegue decidir sozinho o dataset, o separador decimal
 Os arquivos aceitos são arquivos de texto CSV, TSV e TXT, arquivos Excel `.xlsx` (lidos a partir da primeira planilha) e arquivos Parquet.
 
 <Aside type="note">
-Um arquivo ausente ou vazio nunca interrompe uma carga. Ao adicioná-lo, você é avisado de que ainda não há nada para mapear, e a carga termina com um aviso que informa o caminho, deixando aquele dataset vazio. Adicione o arquivo novamente quando ele existir.
+Um arquivo ausente ou vazio nunca interrompe uma carga. Ao adicioná-lo, você é avisado de que ainda não há nada para mapear, e a carga termina com um aviso que informa o caminho. O dataset mantém as linhas que o arquivo lhe deu por último, se houver. Adicione o arquivo novamente quando ele existir.
 </Aside>
+
+### Registros de contratos
+
+Um arquivo de contratos pode ser um registro de períodos de contrato ou os contratos em um fim de mês, por isso confirmar um pergunta **Cada linha é um período de contrato?**. A resposta proposta é **Sim, cada linha é um período de contrato** quando o arquivo tem uma data de início e nenhuma coluna de fim de mês. Um arquivo que você já confirmou mantém a resposta quando é adicionado novamente.
+
+- **Sim, cada linha é um período de contrato**: cada linha é um período de um contrato, com a data de início, a data de término e o valor anual. Cada carga copia cada linha para todo fim de mês entre a data de início e a data de término, ou adiante enquanto a data de término estiver em branco, até o mês da carga ou o último mês do calendário da entidade, se for anterior. Um contrato assinado que começa depois conta a partir do início. Toda cópia é `Active`, exceto a cópia do mês da carga, que mantém o status da própria linha. Uma linha sem número de linha é numerada dentro do contrato dela.
+- **Não, o arquivo contém os contratos no fim de um mês**: o arquivo é a cópia dos contratos de um fim de mês, como qualquer outro arquivo de contratos.
+
+Uma linha sem data de início, uma linha cujo status diz que terminou mas que não tem data de término e uma linha que termina antes do último dia do primeiro mês dela não são períodos de contrato, e por isso são retidas. Consulte [Linhas retidas](#linhas-retidas). Os códigos de cliente e de produto de um registro são adicionados aos clientes e aos produtos, nomeados pelo código, a menos que outra origem dê um nome ao mesmo código. Os códigos de entidade dele só são adicionados quando nenhuma outra origem nomeia entidades.
 
 ## Carregar seus dados
 
@@ -207,6 +216,7 @@ As linhas retidas são registradas com a origem, a entidade e o motivo, e a carg
 | Com um código mapeado para dois códigos | O mapa de códigos dá duas respostas para o código. |
 | Com um código que o próprio cadastro não tem | A lista de contas, produtos ou clientes do próprio sistema não tem o código. |
 | Totais de relatório ou linhas em branco | As linhas de total ou em branco de um arquivo. |
+| Sem data de início, terminada sem data de término, ou terminando antes do último dia do primeiro mês, portanto não é um período de contrato | Uma linha de um registro de contratos que não é um período de contrato. Consulte [Registros de contratos](#registros-de-contratos). |
 
 As contas estatísticas vão para os direcionadores de alocação, e não para o razão, e aparecem como movidas, não como um problema.
 
@@ -428,6 +438,7 @@ As métricas **Consolidated income**, **Consolidated result** e **IC difference*
 - **Balanço patrimonial**: o saldo de cada conta é o saldo de abertura mais a movimentação até o mês. Os saldos ficam pela taxa de fechamento do mês exibido, e o patrimônio líquido pela taxa histórica, ou pelo tipo de taxa da própria conta quando ela tem um. Uma conta de patrimônio líquido sem taxa histórica fica pela taxa de fechamento. O resultado de exercícios fiscais anteriores fica em lucros acumulados, e o deste ano em lucros do exercício corrente, cada um pelas taxas médias dos próprios meses.
 - A diferença de conversão é uma linha no patrimônio líquido para cada entidade, calculada como o patrimônio líquido e o resultado dela pela taxa de fechamento menos o valor convertido. É o que faz um balanço patrimonial convertido fechar, nunca um valor de ajuste. Quando uma entidade em outra moeda não tem taxa de fechamento para um mês, o balanço patrimonial dela não é convertido nesse mês e não fecha, e a consolidação aparece em âmbar, citando a entidade e o mês. Carregue a taxa e depois execute **Aplicar alterações**.
 - **Fluxo de caixa**: calculado a partir da movimentação de cada conta do balanço patrimonial no mês, pela função da conta, à taxa média do mês. Uma linha de efeito das taxas de câmbio contém a parte da variação do caixa, a taxas de fechamento, que decorre da variação das taxas. Uma conta do balanço patrimonial sem função fica na linha de outras variações.
+- As **Funções das contas** respondidas em **Perguntas** posicionam as contas nas linhas. **Comissões** é uma linha própria das despesas operacionais. **Notas conversíveis e SAFEs** é uma linha do passivo, e a variação dela fica em financiamento no fluxo de caixa; uma conta do patrimônio líquido com essa função permanece no patrimônio líquido. Uma conta de despesa com nome de comissão recebe a sugestão **Comissões**; uma conta do passivo ou do patrimônio líquido com nome de nota conversível, de SAFE ou de um simple agreement, **Notas conversíveis e SAFEs**; e uma conta com nome de empréstimo de acionista, empréstimo de sócio ou empréstimo de uma pessoa, **Empréstimos**, mesmo quando o nome dela também diz a pagar. Uma conta de despesa com nome de prestador de serviços recebe a sugestão **Pessoal**.
 
 O balanço patrimonial termina com uma linha de verificação, ativos menos passivos e patrimônio líquido, e o fluxo de caixa com a variação do caixa menos a movimentação das contas de caixa. As duas são zero quando a demonstração está correta. Consulte [Os números são confiáveis?](/pt-br/guides/projects/data-foundation-proof/) para ver as garantias que as comprovam.
 
@@ -461,7 +472,7 @@ Se o projeto limita quem vê quais linhas por uma coluna que as tabelas do grupo
 
 ## Manter atualizado
 
-Quando uma carga termina e nenhuma pergunta está pendente, a próxima etapa em **Resumo** é **Manter atualizado** até que **Atualizar**, em **Configurações do projeto**, seja **Diário**, **Semanal** ou **Mensal**. Há duas formas de agendar o **Carregar**:
+Quando uma carga termina e nenhuma pergunta que retém linhas está pendente, a próxima etapa em **Resumo** é **Manter atualizado** até que **Atualizar**, em **Configurações do projeto**, seja **Diário**, **Semanal** ou **Mensal**. Há duas formas de agendar o **Carregar**:
 
 - **Ações ▾ > Atualizar toda noite**, em **Resumo**, executa **Carregar** todas as noites às 02:00 UTC.
 - Em um projeto com mais de uma entidade, clique em **Alterar** no cartão **O grupo** de **Resumo** para abrir **Configurações do projeto**. Em **Atualizar**, escolha **Diário**, **Semanal** ou **Mensal** e defina **Horário da atualização (UTC)**, escrito como horas e minutos, como `02:00`. Para **Semanal**, **Dia da atualização** vai de 1 (segunda-feira) a 7 (domingo); para **Mensal**, é o dia do mês. Clique em **Salvar**. **Sob demanda** remove o agendamento.
@@ -482,6 +493,26 @@ Os **Nomes de negócio** dão aos códigos do seu modelo os nomes que a sua empr
 4. Clique em **Salvar**. A caixa de diálogo fecha quando tudo nela está salvo; um nome recusado é informado abaixo da grade, e a caixa de diálogo permanece aberta.
 
 Salvar substitui a lista inteira. Uma linha com nome vazio remove aquele nome, e **Remover selecionados** remove as linhas que você marcar. Nomear o mesmo código duas vezes é recusado. Os nomes de negócio também são gravados na descrição do caminho de análise para que o assistente use as suas palavras, e essa descrição tem um limite de tamanho: se um nome a deixar longa demais, nada é salvo e você é avisado.
+
+## Classes de receita e funções das equipes
+
+As classes de receita são os tipos de receita que a sua empresa vende, como SaaS ou BPO, e a função de uma equipe diz para que serve o custo dela. O painel [CFM-Executive - Growth and efficiency](/pt-br/guides/projects/data-foundation-dashboards/#crescimento-e-eficiência) lê ambas.
+
+**Classes de receita** em **Configurações do projeto** lista as classes, cada uma com um nome e um tipo: **Assinatura**, **Suporte e manutenção**, **Serviço gerenciado**, **Implementação**, **Consultoria e serviços profissionais** ou **Outro**. Os três primeiros tipos são recorrentes. Um projeto começa com uma classe de cada tipo, com o nome dele. Em um projeto com mais de uma entidade, clique em **Alterar** no cartão **O grupo** de **Resumo** para abrir **Configurações do projeto**. Clique em **Adicionar** para uma nova classe, renomeie uma classe ou mude o tipo dela, ou clique em **Remover**, e depois clique em **Salvar**.
+
+- Toda classe precisa de um nome, com no máximo 60 caracteres, e duas classes não podem ter o mesmo nome. Um nome não pode conter aspas simples, barra invertida nem chaves, e "Shared", "Not yet classed" e "Intercompany removed" são reservados para os relatórios.
+- Renomear uma classe ou mudar o tipo dela mantém todas as respostas dadas com ela. Os painéis mostram a alteração após o próximo **Carregar** ou **Aplicar alterações**.
+- Remover uma classe pergunta de novo sobre cada conta e cada produto respondido com ela.
+
+**Perguntas** pergunta sobre a classe e a função em **Classes de receita das contas**, **Classes de receita dos produtos** e **Funções das equipes**:
+
+- **Qual é a classe de receita da conta …?** para cada conta de receita e de custo da receita em que o razão lança e que não tem classe, uma pergunta por conta, nunca uma para uma conta pai e as contas dela em conjunto. Uma conta de custo da receita também pode ser **Compartilhado por todas as classes**: o custo dela é distribuído pelas classes conforme a participação de cada classe na receita dos 12 meses até cada mês.
+- **Qual é a classe de receita do produto …?** para cada produto de um contrato que não tem classe. A classe de um produto divide a receita recorrente por classe; toda linha de contrato conta na receita recorrente anual, qualquer que seja a classe.
+- **Qual é a função do departamento … de …?** para cada departamento em que o razão lança, ou **Qual é a função do centro de lucro … de …?** para cada centro de lucro quando o sistema dele não tem departamentos, como uma Class do QuickBooks Online. A resposta é **Custo da receita**, **Vendas e marketing**, **Pesquisa e desenvolvimento** ou **Geral e administrativo**, e as equipes de cada sistema são perguntadas separadamente.
+
+A sugestão vem do nome: uma conta ou um produto com nome de assinaturas, SaaS ou manutenção, por exemplo, recebe a sugestão de uma classe desse tipo; uma palavra depois de "non-" não conta, então "Non-recurring" não sugere nenhuma classe recorrente. Uma conta de receita cujo nome não a coloca em nenhuma classe recebe a sugestão de uma classe do tipo **Outro**, ou de outra classe que não é recorrente, e uma conta de custo da receita, **Compartilhado por todas as classes**. Um produto só recebe sugestão quando o nome dele o coloca em uma classe. Uma equipe recebe a sugestão de uma função pelo nome, como **Vendas e marketing** para uma equipe de vendas ou de marketing, ou então **Geral e administrativo**.
+
+Essas perguntas não retêm nada: não deixam o projeto âmbar e nunca são a próxima etapa em **Resumo**. Enquanto uma conta não é respondida, a receita dela é "Not yet classed" e não conta como recorrente; um produto ainda não respondido continua contando na receita recorrente anual, como "Not yet classed". O painel nomeia o que ainda não foi respondido abaixo dos números que isso afeta.
 
 ## Explicar um número
 
@@ -615,6 +646,8 @@ Se o acesso às linhas mostrar apenas algumas entidades para você, **Resumo** m
 
 **Perguntas** lista tudo o que aguarda sua resposta, agrupado por assunto, com quantas perguntas cada assunto tem. Quando você adiciona um sistema, responde a uma pergunta por assunto, como se ele usa os mesmos códigos de um sistema já conectado, e não a uma por código. Uma pergunta que retém linhas dos valores informa quantas são e o valor delas. **Weave suggests:** traz a resposta do Weave e as evidências que a sustentam: clique em **Usar esta resposta** ou escolha outra na lista e clique em **Responder**. **Aceitar todas as sugeridas** responde a todas as perguntas que têm uma sugestão. Uma resposta é aplicada no próximo **Carregar** ou **Aplicar alterações**. A linha **Perguntas** aparece apenas enquanto houver uma pergunta pendente.
 
+Uma pergunta sobre uma classe de receita ou sobre a função de uma equipe não retém nada. Consulte [Classes de receita e funções das equipes](#classes-de-receita-e-funções-das-equipes).
+
 Quando você altera as origens, uma barra acima de todas as páginas mostra **Você alterou suas origens. Clique em Aplicar alterações para usá-las.** Ela tem **Mostrar o que mudou** e **Aplicar alterações** e é o único lugar para aplicar uma alteração. O resultado de um **Carregar** ou **Aplicar alterações** aparece acima da página que estiver aberta, então você o vê em todas as páginas.
 
 Enquanto uma carga é executada, as páginas se atualizam sozinhas e continuam lendo mesmo que uma leitura falhe. Se não for possível ler o status, aparece **Não foi possível ler o status do Foundation.** com **Tentar novamente**, que lê o status de novo; as páginas também tentam novamente uma vez por conta própria antes de mostrar a mensagem, e a mensagem desaparece quando o servidor responde.
@@ -629,10 +662,10 @@ O Data Foundation padroniza cada origem, seja ERP ou arquivo, nas mesmas tabelas
 | Mapa de códigos | `cfm_code_map` | O mapeamento de um código como a origem o registra, como um código de entidade, conta ou departamento, para o código canônico. Consulte [Mapeamento de entidades](#mapeamento-de-entidades) e [Mapear códigos entre origens](#mapear-códigos-entre-origens). |
 | Taxas de câmbio | `cfm_fx_rate` | Taxas mensais médias, de fechamento e históricas por par de moedas. Consulte [Taxas de câmbio](#taxas-de-câmbio). |
 | Calendário fiscal | `cfm_fiscal_calendar` | Uma linha por período fiscal de cada entidade, com datas de início e fim e se está fechado. |
-| Plano de contas | `cfm_account` | Contas com pai, tipo (`Revenue`, `COGS`, `Opex`, `NonOperating`, `Asset`, `Liability`, `Equity`), demonstrativo, saldo normal, tipo de taxa e função da conta. A função, como caixa, contas a receber, contas a pagar ou lucros acumulados, posiciona a conta na linha da demonstração e do fluxo de caixa. |
-| Departamentos | `cfm_department` | Departamentos e centros de custo com pai e centro de lucro. |
-| Centros de lucro | `cfm_profit_center` | Centros de lucro com pai. |
-| Produtos | `cfm_product` | Cadastro de produtos com pai, família, grupo, unidade de medida e custo-padrão. |
+| Plano de contas | `cfm_account` | Contas com pai, tipo (`Revenue`, `COGS`, `Opex`, `NonOperating`, `Asset`, `Liability`, `Equity`), demonstrativo, saldo normal, tipo de taxa, função da conta e classe de receita. A função, como caixa, contas a receber, contas a pagar ou lucros acumulados, posiciona a conta na linha da demonstração e do fluxo de caixa. |
+| Departamentos | `cfm_department` | Departamentos e centros de custo com pai, centro de lucro e função. |
+| Centros de lucro | `cfm_profit_center` | Centros de lucro com pai e função. |
+| Produtos | `cfm_product` | Cadastro de produtos com pai, família, grupo, unidade de medida, custo-padrão e classe de receita. |
 | Clientes | `cfm_customer` | Cadastro de clientes com pai, grupo, região e país. Os nomes dos clientes não são mascarados. |
 | Valores de segmento | `cfm_segment` | Valores de segmento com nome e pai. Consulte [Hierarquias](#hierarquias). |
 | Razão geral | `cfm_gl_journal` | Linhas de lançamento na moeda da transação, na moeda local e na moeda de relatório. |
@@ -661,7 +694,7 @@ O modelo também contém os razões auxiliares e os respectivos cadastros, preen
 | `cfm_order_line` | Linhas de pedidos de venda, uma cópia por fim de mês. |
 | `cfm_asset` | Registro do ativo imobilizado. |
 | `cfm_asset_movement` | Movimentações de ativos por livro e período: adição, depreciação, baixa e transferência. |
-| `cfm_contract` | Contratos e assinaturas, uma cópia por fim de mês. |
+| `cfm_contract` | Contratos e assinaturas, uma cópia por fim de mês. Um [registro de contratos](#registros-de-contratos) é copiado para todo fim de mês que cada período abrange. |
 | `cfm_deferred_revenue_movement` | Movimentações de receita diferida por contrato e período. |
 | `cfm_bank_balance` | Contas bancárias e os respectivos saldos contábeis de fim de mês. |
 | `cfm_inventory_movement` | Movimentações de estoque: entradas, saídas, produção, transferências, ajustes e baixas. |

@@ -16,7 +16,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Data Foundation: Common Finance Model](/ja/guides/projects/data-foundation/) — 複数のERPシステムやインスタンスのERPデータを直接接続経由で1つのCommon Finance Modelに取り込み、レポート、メトリック、AIアシスタントのすべてがそのモデルを参照
 - [Data Foundationを始める](/ja/guides/projects/data-foundation-getting-started/) — 新規プロジェクトから、読み込み・チェック・引き渡しが済んだモデルまでの手順
 - [Data Foundationの検証と月次締め](/ja/guides/projects/data-foundation-proof/) — すべてのロードを支える5つの保証、各システムのデータの鮮度、月の締め、プロジェクトに対応が必要なことを知らせる通知
-- [Data Foundationのダッシュボード、メトリック、分析パス](/ja/guides/projects/data-foundation-dashboards/) — すべてのData Foundationプロジェクトに付属する17のダッシュボード、その閲覧者、Weaveが回答に使うメトリックと分析パス
+- [Data Foundationのダッシュボード、メトリック、分析パス](/ja/guides/projects/data-foundation-dashboards/) — すべてのData Foundationプロジェクトに付属する18のダッシュボード、その閲覧者、Weaveが回答に使うメトリックと分析パス
 - [MCP接続のAIエージェントでData Foundationを使う](/ja/integrations/ai-coding-agents/data-foundation/) — AIエージェントまたはREST APIで、プロジェクトの現状を読み取り、財務諸表の数値を説明し、月末のコメントを下書きし、プロジェクトからの質問に回答
 - [Cost to Serve](/ja/guides/projects/cost-to-serve/) — 営業費用を活動別に顧客へ配分し、顧客対応コストを差し引いた後のマージンを確認
 - [Operational Transfer Pricing](/ja/guides/projects/operational-transfer-pricing/) — 各エンティティの利益水準をポリシーの範囲と照らして検証し、真の調整額を確認
