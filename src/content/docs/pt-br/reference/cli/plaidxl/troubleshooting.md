@@ -30,6 +30,8 @@ Para mudar para outro espaço de trabalho do qual você faz parte, abra o menu d
 
 O PlaidXL mostra o que sua conta pode ver no PlaidCloud. Se um projeto estiver ausente, peça ao proprietário que conceda acesso a você. Se uma tabela estiver ausente, verifique se ela existe no projeto selecionado e se foi carregada com dados — uma tabela que nunca foi gravada exibe **Unable to get table metadata** quando você a seleciona.
 
+Se o projeto da própria pasta de trabalho foi excluído, ou não é mais compartilhado com você, o painel de tarefas diz isso brevemente ao abrir: **The project this workbook is linked to is no longer available to you. Choose a project.** Escolha outro projeto e depois recalcule as fórmulas do PlaidXL.
+
 As pastas nas listas de projetos, tabelas e dimensões começam recolhidas. Digite parte do nome na caixa de filtro no topo da lista para encontrar um item dentro de uma pasta.
 
 ## Uma tabela aparece em vermelho
@@ -59,7 +61,7 @@ Se uma extração exibir **This PlaidCloud workspace needs an update for PlaidXL
 | `#VALUE!` de `CELL` ou `CELLS` | Passe o mouse sobre a célula para ler o motivo informado pelo PlaidCloud, como uma coluna desconhecida, um nó que não existe ou não tem membros, ou um problema no cálculo do valor. Confira os nomes com o PlaidCloud. |
 | `CELL` retorna um total inesperado | Um nó é consolidado apenas em uma coluna vinculada à sua dimensão; em qualquer outra coluna, ele precisa corresponder exatamente a um valor. Confira a coluna e o nó de cada filtro. |
 | Os valores não mudam depois que os dados ou o projeto mudam | Clique em **Recalculate PlaidXL formulas** no menu **Atualizar** da faixa de opções. |
-| `MEASURE_TYPE` retorna um erro | Use um destes valores: `sum`, `mean`, `median`, `min`, `max`, `std` ou `var`, em minúsculas. |
+| `MEASURE_TYPE` retorna um erro | Use um destes valores: `sum`, `mean`, `median`, `min`, `max`, `std` ou `var`. A mensagem os lista pelos nomes que o painel de tarefas mostra, como **Média** para `mean`. |
 
 ## As fórmulas retornam dados de outro projeto
 
@@ -67,7 +69,7 @@ As funções do PlaidXL leem do projeto vinculado à pasta de trabalho. Abra o p
 
 ## Tabelas de outro espaço de trabalho são ignoradas
 
-Depois que você muda de espaço de trabalho, **Refresh All Tables** informa que tabelas ou dimensões de outro espaço de trabalho nesta pasta de trabalho não foram atualizadas, e elas não aparecem em **On this sheet**. Extraia cada tabela novamente no espaço de trabalho atual para vinculá-la.
+Depois que você muda de espaço de trabalho, **Refresh all tables** informa que tabelas ou dimensões de outro espaço de trabalho nesta pasta de trabalho não foram atualizadas, e elas não aparecem em **On this sheet**. Extraia cada tabela novamente no espaço de trabalho atual para vinculá-la.
 
 ## Um valor digitado não é gravado
 

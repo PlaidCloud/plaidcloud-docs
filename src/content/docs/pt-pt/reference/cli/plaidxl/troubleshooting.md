@@ -30,6 +30,8 @@ Para passar para outra área de trabalho a que pertença, abra o menu da conta e
 
 O PlaidXL mostra o que a sua conta consegue ver no PlaidCloud. Se faltar um projeto, peça ao respetivo proprietário que lhe dê acesso. Se faltar uma tabela, verifique se existe no projeto selecionado e se foi carregada com dados — uma tabela que nunca foi escrita mostra **Unable to get table metadata** quando a seleciona.
 
+Se o projeto do próprio livro tiver sido eliminado, ou já não for partilhado consigo, o painel de tarefas indica-o brevemente ao abrir: **The project this workbook is linked to is no longer available to you. Choose a project.** Escolha outro projeto e, em seguida, recalcule as fórmulas do PlaidXL.
+
 As pastas nas listas de projetos, tabelas e dimensões começam recolhidas. Escreva parte do nome na caixa de filtro, no topo da lista, para encontrar um item dentro de uma pasta.
 
 ## Uma tabela aparece a vermelho
@@ -59,7 +61,7 @@ Se uma extração indicar **This PlaidCloud workspace needs an update for PlaidX
 | `#VALUE!` de `CELL` ou `CELLS` | Passe o rato sobre a célula para ler o motivo indicado pelo PlaidCloud, como uma coluna desconhecida, um nó que não existe ou que não tem membros, ou um problema no cálculo do valor. Confirme os nomes no PlaidCloud. |
 | `CELL` devolve um total inesperado | Um nó só é agregado numa coluna associada à sua dimensão; em qualquer outra coluna tem de corresponder exatamente a um valor. Verifique a coluna e o nó de cada filtro. |
 | Os valores não mudam depois de os dados ou o projeto mudarem | Clique em **Recalculate PlaidXL formulas** no menu **Atualizar** do friso. |
-| `MEASURE_TYPE` devolve um erro | Utilize um de `sum`, `mean`, `median`, `min`, `max`, `std` ou `var`, em minúsculas. |
+| `MEASURE_TYPE` devolve um erro | Utilize um de `sum`, `mean`, `median`, `min`, `max`, `std` ou `var`. A mensagem lista-os pelos nomes que o painel de tarefas mostra, como **Média** para `mean`. |
 
 ## As fórmulas devolvem dados de outro projeto
 
@@ -67,7 +69,7 @@ As funções do PlaidXL leem do projeto associado ao livro. Abra o painel de tar
 
 ## As tabelas de outra área de trabalho são ignoradas
 
-Depois de mudar de área de trabalho, **Refresh All Tables** indica que as tabelas ou dimensões de outra área de trabalho neste livro não foram atualizadas, e não são listadas em **On this sheet**. Extraia cada tabela novamente na área de trabalho atual para a associar.
+Depois de mudar de área de trabalho, **Refresh all tables** indica que as tabelas ou dimensões de outra área de trabalho neste livro não foram atualizadas, e não são listadas em **On this sheet**. Extraia cada tabela novamente na área de trabalho atual para a associar.
 
 ## Um valor escrito não é gravado
 

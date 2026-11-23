@@ -30,6 +30,8 @@ Aby przejść do innego obszaru roboczego, do którego należysz, otwórz menu k
 
 PlaidXL pokazuje to, co Twoje konto widzi w PlaidCloud. Jeśli brakuje projektu, poproś jego właściciela o udzielenie dostępu. Jeśli brakuje tabeli, sprawdź, czy istnieje w wybranym projekcie i czy załadowano do niej dane — tabela, do której nigdy nic nie zapisano, po wybraniu pokazuje **Unable to get table metadata**.
 
+Jeśli projekt powiązany ze skoroszytem został usunięty lub nie jest już Ci udostępniony, okienko zadań na chwilę po otwarciu informuje o tym: **The project this workbook is linked to is no longer available to you. Choose a project.** Wybierz inny projekt, a następnie przelicz formuły PlaidXL.
+
 Foldery na listach projektów, tabel i wymiarów są początkowo zwinięte. Wpisz fragment nazwy w polu filtra na górze listy, aby znaleźć element wewnątrz folderu.
 
 ## Tabela jest pokazana na czerwono
@@ -59,7 +61,7 @@ Jeśli pobieranie kończy się komunikatem **This PlaidCloud workspace needs an 
 | `#VALUE!` z `CELL` lub `CELLS` | Najedź kursorem na komórkę, aby przeczytać przyczynę podaną przez PlaidCloud, taką jak nieznana kolumna, węzeł, który nie istnieje lub nie ma elementów, albo problem z obliczeniem wartości. Porównaj nazwy z PlaidCloud. |
 | `CELL` zwraca nieoczekiwaną sumę | Węzeł jest agregowany tylko w kolumnie powiązanej z jego wymiarem; w każdej innej kolumnie musi dokładnie pasować do wartości. Sprawdź kolumnę i węzeł każdego filtra. |
 | Wartości nie zmieniają się po zmianie danych lub projektu | Kliknij **Recalculate PlaidXL formulas** w menu **Odśwież** na wstążce. |
-| `MEASURE_TYPE` zwraca błąd | Użyj jednej z wartości `sum`, `mean`, `median`, `min`, `max`, `std` lub `var`, małymi literami. |
+| `MEASURE_TYPE` zwraca błąd | Użyj jednej z wartości `sum`, `mean`, `median`, `min`, `max`, `std` lub `var`. Komunikat wymienia je pod nazwami pokazywanymi w okienku zadań, na przykład **Średnia** dla `mean`. |
 
 ## Formuły zwracają dane z innego projektu
 
@@ -67,7 +69,7 @@ Funkcje PlaidXL odczytują dane z projektu powiązanego ze skoroszytem. Otwórz 
 
 ## Tabele z innego obszaru roboczego są pomijane
 
-Po zmianie obszaru roboczego **Refresh All Tables** informuje, że tabele lub wymiary z innego obszaru roboczego w tym skoroszycie nie zostały odświeżone, i nie są one wyświetlane w sekcji **On this sheet**. Pobierz każdą tabelę ponownie w bieżącym obszarze roboczym, aby ją powiązać.
+Po zmianie obszaru roboczego **Refresh all tables** informuje, że tabele lub wymiary z innego obszaru roboczego w tym skoroszycie nie zostały odświeżone, i nie są one wyświetlane w sekcji **On this sheet**. Pobierz każdą tabelę ponownie w bieżącym obszarze roboczym, aby ją powiązać.
 
 ## Wpisana wartość nie jest zapisywana
 

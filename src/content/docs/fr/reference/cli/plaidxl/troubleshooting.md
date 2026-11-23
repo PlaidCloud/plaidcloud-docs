@@ -30,6 +30,8 @@ Pour passer à un autre espace de travail auquel vous appartenez, ouvrez le menu
 
 PlaidXL affiche ce que votre compte peut voir dans PlaidCloud. Si un projet est introuvable, demandez à son propriétaire de vous y donner accès. Si une table est introuvable, vérifiez qu'elle existe dans le projet sélectionné et qu'elle a été chargée avec des données : une table qui n'a jamais été alimentée affiche **Unable to get table metadata** lorsque vous la sélectionnez.
 
+Si le projet du classeur a été supprimé, ou n'est plus partagé avec vous, le volet des tâches l'indique brièvement à son ouverture : **The project this workbook is linked to is no longer available to you. Choose a project.** Choisissez un autre projet, puis recalculez les formules PlaidXL.
+
 Les dossiers des listes de projets, de tables et de dimensions sont repliés au départ. Saisissez une partie du nom dans la zone de filtre en haut de la liste pour trouver un élément situé dans un dossier.
 
 ## Une table s'affiche en rouge
@@ -59,7 +61,7 @@ Si une extraction affiche **This PlaidCloud workspace needs an update for PlaidX
 | `#VALUE!` provenant de `CELL` ou de `CELLS` | Survolez la cellule pour lire la raison donnée par PlaidCloud, par exemple une colonne inconnue, un nœud inexistant ou sans membres, ou un problème de calcul de la valeur. Vérifiez les noms par rapport à PlaidCloud. |
 | `CELL` renvoie un total inattendu | Un nœud ne se cumule que sur une colonne liée à sa dimension ; sur toute autre colonne, il doit correspondre exactement à une valeur. Vérifiez la colonne et le nœud de chaque filtre. |
 | Les valeurs ne changent pas après une modification des données ou du projet | Cliquez sur **Recalculate PlaidXL formulas** dans le menu **Actualiser** du ruban. |
-| `MEASURE_TYPE` renvoie une erreur | Utilisez l'une des valeurs `sum`, `mean`, `median`, `min`, `max`, `std` ou `var`, en minuscules. |
+| `MEASURE_TYPE` renvoie une erreur | Utilisez l'une des valeurs `sum`, `mean`, `median`, `min`, `max`, `std` ou `var`. Le message les indique sous les noms qu'affiche le volet des tâches, par exemple **Moyenne** pour `mean`. |
 
 ## Les formules renvoient les données d'un autre projet
 
@@ -67,7 +69,7 @@ Les fonctions PlaidXL lisent le projet lié au classeur. Ouvrez le volet des tâ
 
 ## Les tables d'un autre espace de travail sont ignorées
 
-Après un changement d'espace de travail, **Refresh All Tables** indique que des tables ou des dimensions d'un autre espace de travail de ce classeur n'ont pas été actualisées, et elles ne figurent plus sous **On this sheet**. Extrayez de nouveau chaque table dans l'espace de travail actuel pour la lier.
+Après un changement d'espace de travail, **Refresh all tables** indique que des tables ou des dimensions d'un autre espace de travail de ce classeur n'ont pas été actualisées, et elles ne figurent plus sous **On this sheet**. Extrayez de nouveau chaque table dans l'espace de travail actuel pour la lier.
 
 ## Une valeur saisie n'est pas écrite
 
