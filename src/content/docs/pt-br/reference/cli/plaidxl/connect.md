@@ -12,7 +12,7 @@ O PlaidXL conecta você como você mesmo, usando o mesmo login que você usa no 
 ## Entrar
 
 1. Abra o painel de tarefas: **PlaidCloud → Open PlaidXL** ou **Conta** no grupo **Conectar**.
-2. Em **Enter your email**, digite o endereço de e-mail que você usa no PlaidCloud e clique em **Sign In**. O PlaidXL lembra o endereço para a próxima vez.
+2. Em **Enter your email**, digite o endereço de e-mail que você usa no PlaidCloud e clique em **Sign in**. O PlaidXL lembra o endereço para a próxima vez.
 3. Se o seu e-mail pertence a mais de um espaço de trabalho, escolha um em **Select a workspace** e clique em **Sign In**. O PlaidXL lembra sua escolha. Se você pertence a um único espaço de trabalho, o PlaidXL o seleciona para você. Se nenhum espaço de trabalho estiver vinculado ao e-mail, o painel informa; confira o endereço e tente novamente.
 4. O Excel pergunta se deve permitir uma janela pop-up. Permita.
 5. No pop-up, entre da maneira habitual:

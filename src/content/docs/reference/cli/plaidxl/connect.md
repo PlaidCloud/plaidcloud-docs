@@ -11,7 +11,7 @@ PlaidXL signs you in as yourself, using the same sign-in you use for PlaidCloud 
 ## Sign In
 
 1. Open the task pane: **PlaidCloud → Open PlaidXL**, or **Account** in the **Connect** group.
-2. Under **Enter your email**, type the email address you use for PlaidCloud and click **Sign In**. PlaidXL remembers the address for next time.
+2. Under **Enter your email**, type the email address you use for PlaidCloud and click **Sign in**. PlaidXL remembers the address for next time.
 3. If your email belongs to more than one workspace, choose one from **Select a workspace** and click **Sign In**. PlaidXL remembers your choice. If you belong to one workspace, PlaidXL picks it for you. If no workspace is linked to the email, the pane says so; check the address and try again.
 4. Excel asks whether to allow a pop-up window. Allow it.
 5. In the pop-up, sign in the way you normally do:

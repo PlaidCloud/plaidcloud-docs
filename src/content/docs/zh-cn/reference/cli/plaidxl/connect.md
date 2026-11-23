@@ -12,7 +12,7 @@ PlaidXL 以您本人的身份登录，使用的登录方式与在浏览器中登
 ## 登录
 
 1. 打开任务窗格：**PlaidCloud → Open PlaidXL**，或单击**连接**组中的**账户**。
-2. 在**Enter your email**下，输入用于 PlaidCloud 的电子邮件地址，然后单击 **Sign In**。PlaidXL 会记住该地址，供下次使用。
+2. 在**Enter your email**下，输入用于 PlaidCloud 的电子邮件地址，然后单击 **Sign in**。PlaidXL 会记住该地址，供下次使用。
 3. 如果您的电子邮件属于多个工作区，请从**Select a workspace**中选择一个，然后单击 **Sign In**。PlaidXL 会记住您的选择。如果您只属于一个工作区，PlaidXL 会自动选择。如果该电子邮件未关联任何工作区，窗格会给出提示；请检查地址后重试。
 4. Excel 会询问是否允许弹出窗口。请允许。
 5. 在弹出窗口中，按平时的方式登录：

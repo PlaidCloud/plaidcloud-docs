@@ -12,7 +12,7 @@ PlaidXL le hace iniciar sesión como usted mismo, con el mismo inicio de sesión
 ## Iniciar sesión
 
 1. Abra el panel de tareas: **PlaidCloud → Open PlaidXL**, o **Cuenta** en el grupo **Conectar**.
-2. En **Enter your email**, escriba la dirección de correo electrónico que utiliza para PlaidCloud y haga clic en **Sign In**. PlaidXL recuerda la dirección para la próxima vez.
+2. En **Enter your email**, escriba la dirección de correo electrónico que utiliza para PlaidCloud y haga clic en **Sign in**. PlaidXL recuerda la dirección para la próxima vez.
 3. Si su correo electrónico pertenece a más de un espacio de trabajo, elija uno en **Select a workspace** y haga clic en **Sign In**. PlaidXL recuerda su elección. Si pertenece a un solo espacio de trabajo, PlaidXL lo selecciona por usted. Si no hay ningún espacio de trabajo vinculado al correo electrónico, el panel lo indica; compruebe la dirección e inténtelo de nuevo.
 4. Excel le pregunta si desea permitir una ventana emergente. Permítala.
 5. En la ventana emergente, inicie sesión de la forma habitual:
