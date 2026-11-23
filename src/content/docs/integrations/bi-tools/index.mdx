@@ -1,0 +1,117 @@
+---
+title: Connect BI Tools
+description: Read a project's tables from Power BI, Excel, Tableau, Python and DBeaver through a read-only OData feed or Arrow Flight SQL, as the client's owner may read them, with Row Access applied.
+sidebar:
+  label: Overview
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Power BI, Excel, Tableau, Python, DBeaver and other tools can read a project's tables directly through PlaidCloud's BI feed. The feed is read-only and offers two ways in:
+
+- **OData**, a feed that Power BI, Excel and Tableau read with the OData connector they already have.
+- **Arrow Flight SQL**, which takes your own SQL statement and returns the result as Arrow, for Python, DBeaver and Tableau Desktop.
+
+Each tool signs in with a BI feed client, a client ID and secret that you create and add to a project. The client reads the project as you, its owner, may read it.
+
+## Which Connection Should I Use?
+
+| Tool | Connect with |
+| --- | --- |
+| Power BI Desktop | [OData](/integrations/bi-tools/odata/#power-bi-desktop) |
+| Power BI Service | [OData](/integrations/bi-tools/odata/#power-bi-service) |
+| Excel | [OData](/integrations/bi-tools/odata/#excel) |
+| Tableau Cloud | [OData](/integrations/bi-tools/odata/#tableau) |
+| Tableau Desktop and Tableau Server | [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server), through the Arrow Flight SQL JDBC driver |
+| Python, with pandas, polars or DuckDB | [Flight SQL](/integrations/bi-tools/flight-sql/#python), through ADBC |
+| DBeaver | [Flight SQL](/integrations/bi-tools/flight-sql/#dbeaver) |
+
+Both read the same tables, with the same Row Access, using the same client. OData returns at most 1,000,000 rows to one request, so a large table is read with a filter or with incremental refresh; Flight SQL has no row cap.
+
+## Turn on External Access
+
+The BI feed is available only when the workspace has lakehouse external access on. A workspace admin turns it on in the control plane: edit the workspace, and on its **Lakehouse** tab tick **Enable External Database Access**. See [Workspace Configuration](/administration/control-plane/workspace-configuration/#lakehouse).
+
+**Allowed CIDRs** on the same tab decides which addresses can reach the BI feed:
+
+- List the address ranges your tools connect from, such as your offices or VPN, in CIDR form, separated by commas.
+- A service that refreshes in the cloud, such as Tableau Cloud, connects from its own addresses, which must be on the list too.
+- Leave the list blank and the feed accepts connections from any address, protected by the client's secret alone.
+- **Denied CIDRs** doesn't apply to the BI feed.
+
+<Aside type="note">
+Power BI Service refreshes from Microsoft's shared cloud addresses, which are too many to list. To refresh from Power BI Service, leave **Allowed CIDRs** blank and rely on the client's secret.
+</Aside>
+
+## Create a BI Feed Client
+
+1. In Analyze, open **Tools** and choose **Registered Systems (oAuth Clients)**.
+2. Choose **Register a New System (oAuth Client)**.
+3. Enter a **Name**, and under **Type** choose **BI / external data feed**.
+4. Choose **Create**.
+5. The **BI feed client secret** window shows the **Client ID** and **Client secret**. Copy both now: the secret is not shown again.
+
+The same window shows the feed's addresses, with a placeholder where a project's ID goes. Each project's **Access & sharing** page shows that project's own addresses, ready to copy.
+
+In **Registered Systems (oAuth Clients)**, a BI feed client shows **BI / external data feed** in the **Type** column. It has no configuration file to download, and its secret can't be read again. If the secret is lost or may have been seen by someone else, choose **Regenerate secret** on the client's row. The new secret is shown once, as at creation, and the old one stops working at once, so every tool that uses it fails until you give it the new one.
+
+To stop a client reading anything, edit it and clear **Enabled**, or delete it.
+
+## Add the Client to a Project
+
+A new client reads nothing until you add it to a project.
+
+1. Open the project's [Home](/guides/projects/project-home/#access--sharing) and choose **Access & sharing**.
+2. On the **BI feed clients** card, choose **Add client ›**.
+3. Choose the **BI feed client** and its **Role**: **Explorer** or **Manager**.
+4. Choose **Add**.
+
+To add a client you need to be able to change the project's access, as its Architect or a workspace admin does, and you can add only clients you own. If you have none, the window says so and offers **Open Registered Systems**.
+
+The role decides which of the project's tables the client sees: the ones the project shows to that role. See [Setting Different Viewing Roles](/guides/projects/managing-projects/#setting-different-viewing-roles). A client is never an Architect.
+
+The card lists the clients that read the project, each with its role: all of them for the project's Architect or a workspace admin, and only your own for anyone else. It also shows the project's **Feed URL**, for OData, and **JDBC URL**, for Flight SQL. **Remove** on a client's row takes it off the project. The project's Architect or a workspace admin can remove any client, and an owner can remove their own.
+
+## What a Client Reads
+
+A BI feed client reads as its owner, the person who created it:
+
+- **Tables:** the project's tables its role shows. Views aren't included.
+- **Rows:** only the rows the owner's [Row Access](/administration/access/managing-security-groups-and-assignments/#managing-row-access) allows. This holds even when the owner is the project's Architect: through the feed, the owner's security groups decide the rows.
+- **While the owner can:** the owner must still be able to open the project and read its tables. If they lose access to the project, or their account is disabled, the client stops working.
+- **Read-only:** nothing a client sends can change data.
+
+<Aside type="caution">
+Anyone with the client ID and secret reads the project as the owner. Treat the secret as a password: keep it in the tool's own credential settings, and regenerate it if it may have been seen by someone else. The secret works only with the BI feed, not with the PlaidCloud API.
+</Aside>
+
+## Connection Details
+
+Copy the addresses from the project's **BI feed clients** card rather than typing them. In the table, `<workspace host>` is the address you open PlaidCloud at.
+
+| | OData | Flight SQL |
+| --- | --- | --- |
+| Address | `https://odata.<workspace host>/v1/projects/<project id>/` | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| User name | The client ID | The client ID |
+| Password | The client secret | The client secret |
+| Project | Part of the address | The `project_id` connection property |
+
+## When a Tool Can't Sign In
+
+If the tool can't reach the feed at all, check that the workspace has **Enable External Database Access** on and that the address the tool connects from is in **Allowed CIDRs**. Once it connects, these messages say what's wrong:
+
+| Message | What to do |
+| --- | --- |
+| Sign in with the client id and secret of a BI feed client. | The tool sent no user name and password. Choose basic (user name and password) authentication. |
+| The client id or secret is wrong, or the client is not a BI feed client. | Check the client ID and secret. The same message answers a client that was disabled or deleted, an API client, and a client whose owner's account is disabled. |
+| This client may not read this project. | Add the client to the project on **Access & sharing**. If it is there, its owner may no longer be able to open the project. |
+| Too many requests. Try again later. | Too many sign-in attempts came from one address in a short time. Wait, then try again with the right secret. Over Flight SQL the message says how many seconds to wait. |
+| PlaidCloud could not check these credentials just now. Try again shortly. | A passing problem on PlaidCloud's side. Try again. |
+| The gateway is busy. Try again shortly. | The feed is serving as many reads as it can at once. Try again. Over Flight SQL the message says how many seconds to wait. |
+
+## Next Steps
+
+- [Connect with OData](/integrations/bi-tools/odata/): Power BI, Excel and Tableau, incremental refresh, and what the feed serves.
+- [Connect with Arrow Flight SQL](/integrations/bi-tools/flight-sql/): Python, DBeaver and Tableau Desktop, and the SQL you can send.

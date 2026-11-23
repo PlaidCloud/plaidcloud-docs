@@ -1,0 +1,118 @@
+---
+title: Connect With Arrow Flight SQL
+description: Query a project's tables with your own SQL from Python, DBeaver and Tableau Desktop over Arrow Flight SQL, with the client owner's Row Access applied to every table a statement reads.
+sidebar:
+  label: Arrow Flight SQL (Python, DBeaver, Tableau Desktop)
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL takes a SQL statement and streams back its result as Arrow. It suits Python data tools, SQL clients such as DBeaver, and Tableau Desktop. You send one read-only statement over the project's tables, and PlaidCloud filters every table it reads to the rows the client's owner may see before it runs. Before you connect, create a BI feed client and add it to the project; see [Connect BI Tools](/integrations/bi-tools/).
+
+## Connection Details
+
+| Setting | Value |
+| --- | --- |
+| Endpoint | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| User name | The client ID |
+| Password | The client secret |
+| Project | `project_id`: part of the JDBC URL, or the ADBC option `adbc.flight.sql.rpc.call_header.project_id` |
+
+The project's **JDBC URL** is on the **BI feed clients** card of its **Access & sharing** page, ready to copy. The connection is always encrypted, on port 443.
+
+A connection reads one project. To read another, connect again with that project's ID.
+
+## Python
+
+Install the ADBC Flight SQL driver with `pip install adbc-driver-flightsql pyarrow`, then connect with the client's ID and secret, here read from environment variables:
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+The feed runs no transactions, so connect with `autocommit=True`. `sales` is an Arrow table:
+
+- **pandas:** `sales.to_pandas()`
+- **polars:** `polars.from_arrow(sales)`
+- **DuckDB:** query it by its name, as in `duckdb.sql("SELECT * FROM sales")`
+
+For a large result, `cursor.fetch_record_batch()` reads it a batch at a time instead of all at once.
+
+## DBeaver
+
+1. Create a connection with DBeaver's Arrow Flight SQL driver. If your DBeaver has none, add the Apache Arrow Flight SQL JDBC driver (`org.apache.arrow:flight-sql-jdbc-driver`) in the driver manager, with the class `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver`.
+2. Set the URL to the project's **JDBC URL**, the user name to the client ID and the password to the secret.
+3. Connect. The project's tables are in the `plaid` schema.
+
+## Tableau Desktop and Tableau Server
+
+1. Download the Apache Arrow Flight SQL JDBC driver (`flight-sql-jdbc-driver`, a `.jar` file) and put it in Tableau's drivers folder: `C:\Program Files\Tableau\Drivers` on Windows, or `~/Library/Tableau/Drivers` on a Mac. Then restart Tableau.
+2. Under **Connect**, choose **To a Server** > **Other Databases (JDBC)**.
+3. Enter the project's **JDBC URL** as the **URL**, choose **PostgreSQL** as the **Dialect**, enter the client ID and secret as **Username** and **Password**, and choose **Sign In**.
+4. The project's tables are in the `plaid` schema.
+
+To refresh a published workbook or data source, Tableau Server needs the same driver installed in its own drivers folder.
+
+## The SQL You Can Send
+
+The feed reads PostgreSQL-style SQL and accepts one read-only statement at a time:
+
+- **One statement:** a `SELECT`, a `WITH … SELECT`, or a `UNION`, `INTERSECT` or `EXCEPT` of them. A recursive `WITH` is refused.
+- **The project's tables, by name:** write a table's name on its own, or in the `plaid` schema, as in `plaid."Sales"`. Any other schema or catalog is refused.
+- **Quoting:** a name without quotes matches whatever its case, as `sales` matches `Sales`. A quoted name must match exactly; quote a name with spaces or punctuation, as in `"Sales 2024"`.
+- **The usual clauses:** joins, subqueries, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, `OFFSET`, `FETCH`, `DISTINCT`, `CASE`, `CAST` and window functions.
+- **Functions:** the common text, number, date, aggregate and window functions, including `UPPER`, `LOWER`, `TRIM`, `SUBSTRING`, `REPLACE`, `CONCAT`, `ROUND`, `ABS`, `COALESCE`, `NULLIF`, `EXTRACT`, `DATE_TRUNC`, `CURRENT_DATE`, `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `ROW_NUMBER`, `RANK`, `LAG` and `LEAD`.
+- **Parameters:** `?` markers, each given a number, text, true or false, a date, a timestamp, or NULL.
+- **Length:** up to 65,536 characters, with its parameters written in.
+
+Empty values sort the way the project's warehouse sorts them. Write `NULLS FIRST` or `NULLS LAST` when the order matters.
+
+A column named `user`, `system_user`, `current_role`, `current_database`, `sysdate` or `systimestamp` must be quoted, as in `"user"`: without quotes, a warehouse reads that word as information about the session.
+
+The feed refuses anything that writes or locks (`INSERT`, `UPDATE`, `DELETE`, `MERGE`, `SELECT … INTO`), `VALUES`, `UNNEST`, `LATERAL`, reading files, time travel, `TABLESAMPLE`, `PIVOT`, and any function outside its list. A refusal starts with "Nothing was run:" and names what it refused, so you can rewrite that part.
+
+<Aside type="note">
+Every table a statement reads, whether directly, in a join, a subquery or a `WITH`, is filtered to the rows the client's owner may read before the rest of the statement sees it.
+</Aside>
+
+## What Clients See
+
+- **Schema:** one schema, `plaid`, with no catalog.
+- **Tables:** the project's tables the client may read, by their names in the project. Two names that differ only in case each get an underscore and a short code made from their table. Views aren't included.
+- **Columns:** by their names in the table.
+- **Keys:** a table's update keys are its primary key. Tables have no foreign keys.
+
+Timestamps arrive in UTC.
+
+## Limits and Messages
+
+There's no row cap: a result streams until it ends. Sign-in messages are listed in [Connect BI Tools](/integrations/bi-tools/#when-a-tool-cant-sign-in). These are particular to Flight SQL:
+
+| Message | What to do |
+| --- | --- |
+| Name the project to read with the project_id connection property … | Add `project_id` to the JDBC URL, or set the ADBC option `adbc.flight.sql.rpc.call_header.project_id`. |
+| This session reads another project. Connect again to read this one. | A connection reads one project. Open another connection for the other project. |
+| This session has ended. Connect again. | A connection's session ends after 8 hours unused, and 24 hours after it began. Connect again. |
+| This client was disabled or its secret has changed since this session began. Connect again. | Connect again with the current secret. |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | One statement can run for an hour at most. Filter or aggregate it to return less. |
+| Nothing was run: … | The statement holds something the feed doesn't accept; see [The SQL You Can Send](#the-sql-you-can-send). |
+| The warehouse could not run the statement: … | The project's warehouse refused the statement, for the reason given. |
