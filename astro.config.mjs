@@ -238,6 +238,18 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Certifications',
+					translations: { de: 'Zertifizierungen', es: 'Certificaciones', fr: 'Certifications', 'pt-BR': 'Certificações', 'pt-PT': 'Certificações', pl: 'Certyfikaty', ja: '認定', ko: '인증', 'zh-CN': '认证' },
+					collapsed: true,
+					items: [
+						'guides/certification',
+						'guides/certification/foundations',
+						'guides/certification/data-engineering',
+						'guides/certification/modeling',
+						'guides/certification/analytics',
+					],
+				},
+				{
 					label: 'Basics',
 					translations: { de: 'Grundlagen', es: 'Conceptos básicos', fr: 'Notions de base', 'pt-BR': 'Noções básicas', 'pt-PT': 'Noções básicas', pl: 'Podstawy', ja: '基本', ko: '기본 사항', 'zh-CN': '基础知识' },
 					collapsed: true,
