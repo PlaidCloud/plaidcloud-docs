@@ -30,6 +30,8 @@ Um zu einem anderen Workspace zu wechseln, dem Sie angehören, öffnen Sie das K
 
 PlaidXL zeigt, was Ihr Konto in PlaidCloud sehen kann. Wenn ein Projekt fehlt, bitten Sie dessen Eigentümer, Ihnen Zugriff zu geben. Wenn eine Tabelle fehlt, prüfen Sie, ob sie im ausgewählten Projekt existiert und mit Daten geladen wurde — bei einer Tabelle, in die nie geschrieben wurde, erscheint beim Auswählen **Unable to get table metadata**.
 
+Wurde das eigene Projekt der Arbeitsmappe gelöscht oder wird es nicht mehr mit Ihnen geteilt, weist der Aufgabenbereich beim Öffnen kurz darauf hin: **The project this workbook is linked to is no longer available to you. Choose a project.** Wählen Sie ein anderes Projekt aus und berechnen Sie dann die PlaidXL-Formeln neu.
+
 Ordner in den Listen der Projekte, Tabellen und Dimensionen sind zunächst eingeklappt. Geben Sie einen Teil des Namens in das Filterfeld oben in der Liste ein, um ein Element in einem Ordner zu finden.
 
 ## Eine Tabelle wird rot angezeigt
@@ -59,7 +61,7 @@ Wenn ein Abruf **This PlaidCloud workspace needs an update for PlaidXL** meldet,
 | `#VALUE!` von `CELL` oder `CELLS` | Zeigen Sie mit der Maus auf die Zelle, um den von PlaidCloud genannten Grund zu lesen, etwa eine unbekannte Spalte, einen Knoten, der nicht existiert oder keine Mitglieder hat, oder ein Problem bei der Berechnung des Werts. Gleichen Sie die Namen mit PlaidCloud ab. |
 | `CELL` liefert eine unerwartete Summe | Ein Knoten wird nur in einer Spalte aufsummiert, die mit seiner Dimension verknüpft ist; in jeder anderen Spalte muss er exakt mit einem Wert übereinstimmen. Prüfen Sie Spalte und Knoten jedes Filters. |
 | Werte ändern sich nicht, nachdem sich die Daten oder das Projekt geändert haben | Klicken Sie im Menü **Aktualisieren** des Menübands auf **Recalculate PlaidXL formulas**. |
-| `MEASURE_TYPE` liefert einen Fehler | Verwenden Sie einen der Werte `sum`, `mean`, `median`, `min`, `max`, `std` oder `var`, in Kleinbuchstaben. |
+| `MEASURE_TYPE` liefert einen Fehler | Verwenden Sie einen der Werte `sum`, `mean`, `median`, `min`, `max`, `std` oder `var`. Die Meldung listet sie mit den Namen auf, die der Aufgabenbereich anzeigt, etwa **Durchschnitt** für `mean`. |
 
 ## Formeln geben Daten eines anderen Projekts zurück
 
@@ -67,7 +69,7 @@ PlaidXL-Funktionen lesen aus dem Projekt, das mit der Arbeitsmappe verknüpft is
 
 ## Tabellen aus einem anderen Workspace werden übersprungen
 
-Nachdem Sie den Workspace gewechselt haben, meldet **Refresh All Tables**, dass Tabellen oder Dimensionen aus einem anderen Workspace in dieser Arbeitsmappe nicht aktualisiert wurden, und sie werden unter **On this sheet** nicht aufgeführt. Rufen Sie jede Tabelle im aktuellen Workspace erneut ab, um sie zu verknüpfen.
+Nachdem Sie den Workspace gewechselt haben, meldet **Refresh all tables**, dass Tabellen oder Dimensionen aus einem anderen Workspace in dieser Arbeitsmappe nicht aktualisiert wurden, und sie werden unter **On this sheet** nicht aufgeführt. Rufen Sie jede Tabelle im aktuellen Workspace erneut ab, um sie zu verknüpfen.
 
 ## Ein eingegebener Wert wird nicht geschrieben
 

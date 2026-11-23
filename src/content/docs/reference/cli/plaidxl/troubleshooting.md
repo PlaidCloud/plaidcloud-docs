@@ -29,6 +29,8 @@ To move to another workspace you belong to, open the account menu and choose **S
 
 PlaidXL shows what your account can see in PlaidCloud. If a project is missing, ask its owner to give you access. If a table is missing, check that it exists in the selected project and has been loaded with data — a table that's never been written shows **Unable to get table metadata** when you select it.
 
+If the workbook's own project was deleted, or is no longer shared with you, the task pane briefly says so when it opens: **The project this workbook is linked to is no longer available to you. Choose a project.** Pick another project, then recalculate the PlaidXL formulas.
+
 Folders in the project, table and dimension lists start collapsed. Type part of the name in the filter box at the top of the list to find an item inside a folder.
 
 ## A Table Shows in Red
@@ -58,7 +60,7 @@ If a pull says **This PlaidCloud workspace needs an update for PlaidXL**, ask yo
 | `#VALUE!` from `CELL` or `CELLS` | Hover over the cell to read the reason PlaidCloud gave, such as an unknown column, a node that doesn't exist or has no members, or a problem computing the value. Check the names against PlaidCloud. |
 | `CELL` returns an unexpected total | A node rolls up only on a column linked to its dimension; on any other column it must match a value exactly. Check each filter's column and node. |
 | Values don't change after the data or project changes | Click **Recalculate PlaidXL formulas** in the ribbon's **Refresh** menu. |
-| `MEASURE_TYPE` returns an error | Use one of `sum`, `mean`, `median`, `min`, `max`, `std` or `var`, in lowercase. |
+| `MEASURE_TYPE` returns an error | Use one of `sum`, `mean`, `median`, `min`, `max`, `std` or `var`. The message lists them by the names the task pane shows, such as **Average** for `mean`. |
 
 ## Formulas Return Another Project's Data
 
@@ -66,7 +68,7 @@ PlaidXL functions read from the project linked to the workbook. Open the task pa
 
 ## Tables From Another Workspace Are Skipped
 
-After you switch workspace, **Refresh All Tables** says that tables or dimensions from another workspace in this workbook were not refreshed, and they aren't listed under **On this sheet**. Retrieve each table again in the current workspace to link it.
+After you switch workspace, **Refresh all tables** says that tables or dimensions from another workspace in this workbook were not refreshed, and they aren't listed under **On this sheet**. Retrieve each table again in the current workspace to link it.
 
 ## A Typed Value Isn't Written
 

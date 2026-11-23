@@ -12,7 +12,7 @@ PlaidXL meldet Sie als Sie selbst an, mit derselben Anmeldung, die Sie für Plai
 ## Anmelden
 
 1. Öffnen Sie den Aufgabenbereich: **PlaidCloud → Open PlaidXL** oder **Konto** in der Gruppe **Verbinden**.
-2. Geben Sie unter **Enter your email** die E-Mail-Adresse ein, die Sie für PlaidCloud verwenden, und klicken Sie auf **Sign In**. PlaidXL merkt sich die Adresse für das nächste Mal.
+2. Geben Sie unter **Enter your email** die E-Mail-Adresse ein, die Sie für PlaidCloud verwenden, und klicken Sie auf **Sign in**. PlaidXL merkt sich die Adresse für das nächste Mal.
 3. Wenn Ihre E-Mail-Adresse zu mehreren Workspaces gehört, wählen Sie unter **Select a workspace** einen aus und klicken Sie auf **Sign In**. PlaidXL merkt sich Ihre Auswahl. Wenn Sie zu einem einzigen Workspace gehören, wählt PlaidXL ihn für Sie aus. Wenn der E-Mail-Adresse kein Workspace zugeordnet ist, weist der Aufgabenbereich darauf hin; prüfen Sie die Adresse und versuchen Sie es erneut.
 4. Excel fragt, ob ein Pop-up-Fenster zugelassen werden soll. Lassen Sie es zu.
 5. Melden Sie sich im Pop-up so an, wie Sie es gewohnt sind:

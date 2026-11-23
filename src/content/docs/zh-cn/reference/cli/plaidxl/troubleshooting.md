@@ -30,6 +30,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 PlaidXL 显示的是您的账户在 PlaidCloud 中能看到的内容。如果缺少项目，请让其所有者授予您访问权限。如果缺少表，请确认它存在于所选项目中并已加载数据：从未写入过数据的表在您选中时会显示 **Unable to get table metadata**。
 
+如果工作簿自己的项目已被删除，或不再与您共享，任务窗格在打开时会短暂提示：**The project this workbook is linked to is no longer available to you. Choose a project.** 请选择另一个项目，然后重新计算 PlaidXL 公式。
+
 项目、表和维度列表中的文件夹默认折叠。在列表顶部的筛选框中输入名称的一部分，即可找到文件夹内的项目。
 
 ## 表显示为红色
@@ -59,7 +61,7 @@ Excel 处理宽表最慢。请清除不需要的列的复选框，并使用 **�
 | `CELL` 或 `CELLS` 返回 `#VALUE!` | 将鼠标悬停在单元格上可查看 PlaidCloud 给出的原因，例如未知的列、不存在或没有成员的节点，或计算值时出现的问题。请对照 PlaidCloud 检查名称。 |
 | `CELL` 返回意外的合计 | 节点只会在与其维度链接的列上汇总；在任何其他列上，它必须与某个值完全匹配。请检查每个筛选器的列和节点。 |
 | 数据或项目更改后值没有变化 | 单击功能区 **刷新** 菜单中的 **Recalculate PlaidXL formulas**。 |
-| `MEASURE_TYPE` 返回错误 | 请使用小写的 `sum`、`mean`、`median`、`min`、`max`、`std` 或 `var` 之一。 |
+| `MEASURE_TYPE` 返回错误 | 请使用 `sum`、`mean`、`median`、`min`、`max`、`std` 或 `var` 之一。消息会按任务窗格显示的名称列出它们，例如 `mean` 对应 **平均值**。 |
 
 ## 公式返回了另一个项目的数据
 
@@ -67,7 +69,7 @@ PlaidXL 函数从链接到工作簿的项目读取数据。请在该工作簿中
 
 ## 来自另一个工作区的表被跳过
 
-切换工作区后，**Refresh All Tables** 会提示此工作簿中来自另一个工作区的表或维度未被刷新，并且它们不会列在 **On this sheet** 下。请在当前工作区中重新检索每个表以建立链接。
+切换工作区后，**Refresh all tables** 会提示此工作簿中来自另一个工作区的表或维度未被刷新，并且它们不会列在 **On this sheet** 下。请在当前工作区中重新检索每个表以建立链接。
 
 ## 键入的值未写入
 

@@ -12,7 +12,7 @@ PlaidXL loguje Cię jako Ciebie, przy użyciu tego samego logowania, którego u�
 ## Logowanie
 
 1. Otwórz okienko zadań: **PlaidCloud → Open PlaidXL** albo **Konto** w grupie **Połącz**.
-2. W polu **Enter your email** wpisz adres e-mail używany w PlaidCloud i kliknij **Sign In**. PlaidXL zapamiętuje adres na następny raz.
+2. W polu **Enter your email** wpisz adres e-mail używany w PlaidCloud i kliknij **Sign in**. PlaidXL zapamiętuje adres na następny raz.
 3. Jeśli Twój adres e-mail należy do więcej niż jednego obszaru roboczego, wybierz jeden z listy **Select a workspace** i kliknij **Sign In**. PlaidXL zapamiętuje Twój wybór. Jeśli należysz do jednego obszaru roboczego, PlaidXL wybiera go automatycznie. Jeśli do adresu e-mail nie jest przypisany żaden obszar roboczy, okienko poinformuje o tym; sprawdź adres i spróbuj ponownie.
 4. Excel pyta, czy zezwolić na wyskakujące okno. Zezwól.
 5. W wyskakującym oknie zaloguj się w zwykły sposób:

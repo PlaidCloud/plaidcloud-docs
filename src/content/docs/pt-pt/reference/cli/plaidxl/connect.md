@@ -12,7 +12,7 @@ O PlaidXL inicia sessão em seu nome, com o mesmo início de sessão que utiliza
 ## Iniciar sessão
 
 1. Abra o painel de tarefas: **PlaidCloud → Open PlaidXL** ou **Conta** no grupo **Ligar**.
-2. Em **Enter your email**, escreva o endereço de email que utiliza no PlaidCloud e clique em **Sign In**. O PlaidXL memoriza o endereço para a vez seguinte.
+2. Em **Enter your email**, escreva o endereço de email que utiliza no PlaidCloud e clique em **Sign in**. O PlaidXL memoriza o endereço para a vez seguinte.
 3. Se o seu email pertencer a mais do que uma área de trabalho, escolha uma em **Select a workspace** e clique em **Sign In**. O PlaidXL memoriza a sua escolha. Se pertencer a uma única área de trabalho, o PlaidXL seleciona-a por si. Se nenhuma área de trabalho estiver associada ao email, o painel indica-o; verifique o endereço e tente novamente.
 4. O Excel pergunta se pretende permitir uma janela de pop-up. Permita-a.
 5. No pop-up, inicie sessão da forma habitual:

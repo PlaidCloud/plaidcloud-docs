@@ -16,7 +16,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Data Foundation: Common Finance Model](/ko/guides/projects/data-foundation/) — 여러 ERP 시스템과 인스턴스의 ERP 데이터를 직접 연결로 가져와, 보고서, 지표, AI 에이전트가 모두 읽는 하나의 Common Finance Model로 통합합니다
 - [Data Foundation 시작하기](/ko/guides/projects/data-foundation-getting-started/) — 새 프로젝트에서 데이터가 로드되고 검사를 마쳐 인계된 모델까지의 단계입니다
 - [Data Foundation 검증과 월말 마감](/ko/guides/projects/data-foundation-proof/) — 모든 로드를 뒷받침하는 다섯 가지 보증, 각 시스템의 최신 상태, 월 마감, 프로젝트에 조치가 필요함을 알리는 알림을 다룹니다
-- [Data Foundation 대시보드, 지표 및 분석 경로](/ko/guides/projects/data-foundation-dashboards/) — 모든 Data Foundation 프로젝트에 제공되는 17개 대시보드, 이를 볼 수 있는 사용자, Weave가 답변에 사용하는 지표와 분석 경로를 다룹니다
+- [Data Foundation 대시보드, 지표 및 분석 경로](/ko/guides/projects/data-foundation-dashboards/) — 모든 Data Foundation 프로젝트에 제공되는 18개 대시보드, 이를 볼 수 있는 사용자, Weave가 답변에 사용하는 지표와 분석 경로를 다룹니다
 - [MCP로 연결된 AI 에이전트와 Data Foundation 사용](/ko/integrations/ai-coding-agents/data-foundation/) — AI 에이전트나 REST API로 프로젝트의 현재 상태를 확인하고, 재무제표 수치를 설명하고, 월말 코멘터리 초안을 작성하고, 프로젝트의 질문에 답하게 합니다
 - [Cost to Serve](/ko/guides/projects/cost-to-serve/) — 영업 비용을 활동별로 고객에게 배분하고, 고객 서비스 비용을 뺀 이후의 마진을 확인합니다
 - [Operational Transfer Pricing](/ko/guides/projects/operational-transfer-pricing/) — 각 엔터티의 이익 수준을 정책 범위와 대조해 검사하고 조정액을 확인합니다

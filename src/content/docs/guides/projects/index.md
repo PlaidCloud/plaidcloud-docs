@@ -15,7 +15,7 @@ Most teams start with one project per analytical area: a project for headcount c
 - [Data Foundation: The Common Finance Model](/guides/projects/data-foundation/) — bring ERP data from multiple ERP systems and instances, through their direct connections, into one Common Finance Model that reports, metrics and AI assistants all read
 - [Get started with Data Foundation](/guides/projects/data-foundation-getting-started/) — the steps from a new project to a loaded, checked, handed-over model
 - [Data Foundation proof and month-end close](/guides/projects/data-foundation-proof/) — the five assurances behind every load, how fresh each system is, closing a month, and the notifications that say a project needs attention
-- [Data Foundation dashboards, metrics and analysis paths](/guides/projects/data-foundation-dashboards/) — the seventeen dashboards every Data Foundation project gets, who sees them, and the metrics and analysis paths Weave answers with
+- [Data Foundation dashboards, metrics and analysis paths](/guides/projects/data-foundation-dashboards/) — the eighteen dashboards every Data Foundation project gets, who sees them, and the metrics and analysis paths Weave answers with
 - [Data Foundation with an MCP-connected AI agent](/integrations/ai-coding-agents/data-foundation/) — have an AI agent, or the REST API, read where a project stands, explain a figure of its statements, draft the month-end commentary and answer its questions
 - [Cost to Serve](/guides/projects/cost-to-serve/) — spread operating expense to customers by activity and see margin after the cost of serving them
 - [Operational Transfer Pricing](/guides/projects/operational-transfer-pricing/) — test each entity's profit level against your policy ranges and see the true-up
