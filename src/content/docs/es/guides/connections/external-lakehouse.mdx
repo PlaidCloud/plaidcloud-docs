@@ -1,6 +1,6 @@
 ---
 title: Use su propio almacén de datos
-description: Conecte usted mismo su propio almacén de datos de Snowflake o Databricks, almacene allí las tablas de un espacio de trabajo y ejecute sus flujos de trabajo, inicie sesión con su propia identidad en el almacén de datos, administre varios almacenes de datos y consulte el costo de cada ejecución.
+description: Conecte usted mismo su propio almacén de datos de Snowflake o Databricks, almacene allí las tablas de un espacio de trabajo y ejecute sus flujos de trabajo, inicie sesión con su propia identidad en el almacén de datos, administre varios almacenes de datos, acceda a uno mediante una conexión privada directa y consulte el costo de cada ejecución.
 sidebar:
   order: 2
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/external-lakehouse.mdx
@@ -53,7 +53,7 @@ El cuadro de diálogo genera un script de configuración a partir de los nombres
 
 El script también configura lo siguiente.
 
-- **Acceso de red.** PlaidCloud se conecta desde la dirección `130.211.116.97/32`. El script de Snowflake crea una política de red que permite solo esa dirección para el usuario de servicio. En Databricks, si su espacio de trabajo ya aplica listas de acceso por IP, el script incluye la instrucción que la permite; agregue esa dirección a cualquier política de red o lista de acceso por IP que proteja su cuenta.
+- **Acceso de red.** El script enumera las direcciones desde las que se conecta PlaidCloud: la del plano de control, `130.211.116.97/32`, y la de su propio espacio de trabajo cuando es distinta. El script de Snowflake crea una política de red que permite solo esas direcciones para el usuario de servicio. En Databricks, si su espacio de trabajo ya aplica listas de acceso por IP, el script incluye la instrucción que las permite; agréguelas a cualquier política de red o lista de acceso por IP que proteja su cuenta.
 - **Las políticas se conservan.** En Snowflake, al rol se le conceden los privilegios para aplicar políticas y etiquetas de acceso a filas, de enmascaramiento, de proyección, de agregación y de combinación, de modo que sus políticas se conservan cuando PlaidCloud reescribe una tabla. En Databricks, conceda al service principal `EXECUTE` sobre cualquier función de filtro de filas o de máscara de columnas que utilice.
 - **Costos de ejecución.** El rol de Snowflake recibe el rol de base de datos `SNOWFLAKE.GOVERNANCE_VIEWER`, que permite a PlaidCloud leer los créditos atribuidos a cada ejecución y que también cubre [Última lectura](/es/guides/projects/managing-tables-and-views/#última-lectura). Databricks recibe acceso de lectura al historial de consultas y a los tamaños de los warehouses en el catálogo `system`.
 - **Última lectura.** En Databricks, el script también concede `USE SCHEMA` sobre `system.access` y `SELECT` sobre `system.access.table_lineage`, que necesita la información de Última lectura de la tabla. Consulte [Costo del warehouse por ejecución](#costo-del-warehouse-por-ejecución).
@@ -62,6 +62,7 @@ El script también configura lo siguiente.
 
 | Campo | Motor | Qué escribir |
 |---|---|---|
+| Nombre | Ambos | Cómo llama PlaidCloud al almacén de datos. Sigue a la dirección, por ejemplo `Snowflake — myorg-myaccount`, hasta que escriba el suyo. |
 | URL de la cuenta | Snowflake | El host de su cuenta, por ejemplo `myorg-myaccount.snowflakecomputing.com`. |
 | Clave privada | Snowflake | La clave privada del usuario de servicio (PEM). Un par de claves nunca caduca. |
 | URL del espacio de trabajo | Databricks | El host de su espacio de trabajo, por ejemplo `adb-1234567890123456.7.azuredatabricks.net`. |
@@ -69,16 +70,16 @@ El script también configura lo siguiente.
 | ID de aplicación | Databricks | El ID de aplicación (cliente) del service principal. |
 | Secreto de OAuth | Databricks | El secreto de OAuth del service principal. PlaidCloud lo renueva por usted. |
 
-En **Avanzado**, puede usar en su lugar un token de acceso programático de Snowflake o un token de acceso personal de Databricks. Los tokens caducan: PlaidCloud deja de acceder a su almacén de datos en esa fecha hasta que agregue uno nuevo. Catorce días antes y después de esa fecha, un banner le indica la fecha y ofrece **Renovar**. Un par de claves o un secreto de OAuth evita la caducidad.
+En **Avanzado**, puede usar en su lugar un token de acceso programático de Snowflake o un token de acceso personal de Databricks. Los tokens caducan: PlaidCloud deja de acceder a su almacén de datos en esa fecha hasta que agregue uno nuevo. Catorce días antes y después de esa fecha, un banner le indica la fecha y ofrece **Rotar**, que abre [Administrar almacenes de datos](#administrar-almacenes-de-datos) en ese almacén de datos y solicita el token nuevo. Un par de claves o un secreto de OAuth evita la caducidad.
 
-La dirección debe ser la URL pública de su cuenta, que termina en `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` o `.gcp.databricks.com`. No se admiten puntos de conexión privados ni personalizados.
+La dirección debe ser la URL pública de su cuenta, que termina en `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` o `.gcp.databricks.com`. No se admiten aquí puntos de conexión privados ni personalizados; para acceder a su almacén de datos de forma privada, [solicite una conexión directa](#conexiones-directas) después de asociarlo.
 
 ### 3. Compruébelo y luego úselo
 
 - **Probar conexión** prueba la dirección, el inicio de sesión y todos los privilegios que necesita PlaidCloud, y no almacena nada.
-- **Usar como mi almacén de datos** ejecuta la misma comprobación y asocia el almacén de datos. Si lo abre desde cualquier lugar que no sea **Agregar almacén de datos**, también lo establece como predeterminado y espera mientras el espacio de trabajo cambia a él. Esto suele tardar unos minutos y puede cerrar la ventana. Los proyectos nuevos del espacio de trabajo usarán entonces su almacén de datos. Si lo abre desde **Agregar almacén de datos**, el predeterminado no cambia; elija **Establecer como predeterminado** en [Administrar almacenes de datos](#administrar-almacenes-de-datos) cuando quiera que los proyectos nuevos lo usen.
+- **Usar como mi almacén de datos** ejecuta la misma comprobación y asocia el almacén de datos. Si lo abre desde cualquier lugar que no sea **Agregar almacén de datos**, también lo establece como predeterminado y espera mientras el espacio de trabajo cambia a él. Esto suele tardar unos minutos y puede cerrar la ventana. Los proyectos nuevos del espacio de trabajo usarán entonces su almacén de datos, y la ventana ofrece **Ejecutar un ejemplo** (consulte [Ejecutar un ejemplo](#ejecutar-un-ejemplo)). Si lo abre desde **Agregar almacén de datos**, el predeterminado no cambia; elija **Establecer como predeterminado** en [Administrar almacenes de datos](#administrar-almacenes-de-datos) cuando quiera que los proyectos nuevos lo usen.
 
-Una comprobación que falla explica el problema y la solución en lenguaje sencillo. Los privilegios requeridos que faltan se muestran como instrucciones `GRANT` listas para ejecutar, con un botón **Copiar**, un botón **Copiar todo** y **Mostrar el script de configuración**. **Copiar para el soporte** copia el texto de error del propio almacén de datos para el soporte de PlaidCloud.
+Una comprobación que falla explica el problema y la solución en lenguaje sencillo. Los privilegios requeridos que faltan se muestran como instrucciones `GRANT` listas para ejecutar, cada una con un botón **Copiar** y una casilla **Hecho** que se marca una vez ejecutada, además de un botón **Copiar todo** y **Mostrar el script de configuración**. **Copiar para el soporte** copia el texto de error del propio almacén de datos para el soporte de PlaidCloud.
 
 La comprobación también muestra, por separado, concesiones bajo **Recomendado — habilita «Última lectura»**, cada una con **Copiar**. Permiten que la información de [Última lectura](/es/guides/projects/managing-tables-and-views/#última-lectura) de la tabla lea el historial de su almacén de datos. Nunca le impiden usar el almacén de datos: sin ellas se conecta sin problemas y Última lectura muestra **Read history incomplete**.
 
@@ -90,7 +91,7 @@ La comprobación también muestra, por separado, concesiones bajo **Recomendado 
 | El usuario de servicio no puede usar un objeto | Conceda a su rol el privilegio sobre ese objeto. El script de configuración incluye todas las concesiones. |
 | Su almacén de datos está suspendido o no existe | Compruebe el nombre del almacén de datos y que pueda iniciarse por sí solo (`AUTO_RESUME` en Snowflake, un SQL warehouse en ejecución en Databricks). |
 | Su almacén de datos agotó su cuota de créditos | Aumente la cuota del monitor de recursos o el presupuesto, o espere a que se restablezca. |
-| Una política de red bloquea a PlaidCloud | Permita `130.211.116.97/32` en la política, como hace el script de configuración. |
+| Una política de red bloquea a PlaidCloud | Permita en la política las direcciones que enumera el script de configuración, como hace el propio script. |
 | El token o la clave caducó o ya no es válido | Cree un token nuevo o cambie a un par de claves. |
 | Unity Catalog denegó el acceso al service principal | Conceda `USE CATALOG`, `CREATE SCHEMA` y `USE SCHEMA` sobre el catálogo. |
 | PlaidCloud no pudo iniciar sesión | Compruebe el usuario o service principal y su clave, token o secreto. |
@@ -113,6 +114,8 @@ Una sola vez, en su propia cuenta, un administrador de la cuenta registra PlaidC
 1. En **Quickest: sign in with Snowflake** (o Databricks), escriba la **URL de la cuenta** (o **URL del espacio de trabajo**) y el **ID de cliente**.
 2. En Snowflake, escriba la **Base de datos** y el **Rol de datos para PlaidCloud**. **Almacén de datos** es opcional y de forma predeterminada es el suyo. En Databricks, escriba la **Ruta HTTP del SQL warehouse**. **Catálogo** es opcional y de forma predeterminada es el suyo.
 3. Elija **Sign in with Snowflake** o **Sign in with Databricks**, inicie sesión en su cuenta del proveedor y apruebe.
+
+De vuelta en PlaidCloud, el almacén de datos se comprueba una vez más. Cuando la comprobación se supera, se abre **Sus almacenes de datos** con el nuevo almacén de datos seleccionado. Cuando falta algo, la ventana permanece abierta y enumera lo que hay que corregir, con las concesiones que faltan para copiar.
 
 PlaidCloud crea en su cuenta su propia identidad de servicio, dedicada a este almacén de datos. Los flujos de trabajo, las programaciones y cualquier otra ejecución sin una persona detrás se ejecutan con esa identidad.
 
@@ -196,17 +199,98 @@ Un envío prepara cada lote como un archivo Parquet en el volumen y lo carga con
 
 ## Administrar almacenes de datos
 
-Un administrador del espacio de trabajo abre el menú de usuario y elige **Administrar almacenes de datos**. La ventana **Sus almacenes de datos** muestra el **Nombre**, el **Tipo**, el **Predeterminado**, los **Proyectos** y el **Estado** de cada almacén de datos.
+Un administrador del espacio de trabajo abre el menú de usuario y elige **Administrar almacenes de datos**. La ventana **Sus almacenes de datos** muestra el **Nombre**, el **Motor**, el **Estado**, el **Predeterminado** y los **Proyectos** de cada almacén de datos. Mientras el espacio de trabajo no tiene ningún almacén de datos de Snowflake ni de Databricks, una tarjeta sobre la lista dice **Está usando el almacén de datos de PlaidCloud: traiga el suyo**.
 
-| Botón | Qué hace |
+**Agregar almacén de datos** en la barra de herramientas abre el mismo flujo que la conexión, con el título **Agregar un almacén de datos**. Se agrega su almacén de datos y el predeterminado para los proyectos nuevos no cambia.
+
+Para cualquier otra cosa, seleccione un almacén de datos y elija en el ⋯ al inicio de su fila, en su menú contextual o en **Acciones**. Cada opción aparece solo donde corresponde.
+
+| Acción | Qué hace |
 |---|---|
-| **Agregar almacén de datos** | Abre el mismo flujo que la conexión, con el título **Agregar un almacén de datos**. Se agrega su almacén de datos y el predeterminado para los proyectos nuevos no cambia. |
-| **Establecer como predeterminado** | Los proyectos nuevos usan este almacén de datos una vez que el espacio de trabajo cambia a él, lo que suele tardar unos minutos. Los proyectos ya creados permanecen en el almacén de datos en el que se crearon. |
+| **Detalles** | Abre [Detalles del almacén de datos](#detalles-del-almacén-de-datos). |
+| **Establecer como predeterminado** | Los proyectos nuevos usan este almacén de datos una vez que el espacio de trabajo cambia a él, lo que suele tardar unos minutos. Los proyectos ya creados permanecen en el almacén de datos en el que se crearon. Solo un almacén de datos **Activo** puede convertirse en el predeterminado. |
+| **Cambiar nombre…** | Cambia el nombre del almacén de datos. |
+| **Renovar inicio de sesión…** | Para un almacén de datos asociado mediante inicio de sesión: vuelve a iniciar su sesión en Snowflake o Databricks. |
+| **Rotar credencial…** | Para un par de claves, un token o un secreto de OAuth: pegue el nuevo. PlaidCloud lo comprueba primero con su almacén de datos y reemplaza el actual solo si la comprobación se supera. |
+| **Desactivar…** | Pone en pausa el almacén de datos. La confirmación indica cuántos proyectos lo usan; quedan en pausa hasta que se habilite de nuevo y conservan sus datos. El almacén de datos predeterminado no se puede desactivar. |
+| **Habilitar** | Vuelve a activar un almacén de datos deshabilitado. |
 | **Quitar** | Desconecta el almacén de datos. Solo funciona cuando el almacén de datos no es el predeterminado y ningún proyecto lo usa; de lo contrario, le indica el motivo. |
 
-<Aside type="note">Un almacén de datos recién agregado puede tardar varios minutos en aparecer en su espacio de trabajo. Cada espacio de trabajo se ejecuta aislado de los demás y recoge los cambios de configuración por sí mismo, así que hasta que llegue el cambio el almacén de datos no aparece en la lista y los proyectos aún no pueden usarlo. Si sigue sin aparecer después de una hora, comuníquese con el soporte de PlaidCloud.</Aside>
+El **Estado** indica en qué situación se encuentra cada almacén de datos.
+
+| Estado | Significado |
+|---|---|
+| **Aprovisionamiento** | PlaidCloud aún está configurando el almacén de datos. |
+| **Cambiando…** | Un cambio está guardado y en camino a su espacio de trabajo. |
+| **Activo** | Listo para usar. |
+| **Deshabilitado** | Los proyectos que lo usan quedan en pausa hasta que se habilite de nuevo. |
+| **Atención** | Su última comprobación falló, o su token de acceso personal caduca en un plazo de 14 días. [Detalles del almacén de datos](#detalles-del-almacén-de-datos) explica el motivo. |
+
+<Aside type="note">Un cambio, como un almacén de datos nuevo, un nuevo predeterminado, un nombre nuevo o la desactivación de uno, tarda unos minutos en llegar a su espacio de trabajo. Cada espacio de trabajo se ejecuta aislado de los demás y recoge los cambios de configuración por sí mismo, así que hasta que llegue el cambio el almacén de datos muestra **Cambiando…**, y los proyectos aún no pueden usar un almacén de datos nuevo. La lista vuelve a comprobar cada pocos segundos durante un máximo de 10 minutos y luego muestra **Aún se está aplicando: actualice más tarde.** Si el cambio sigue sin llegar después de una hora, comuníquese con el soporte de PlaidCloud.</Aside>
 
 Cuando quita un almacén de datos, PlaidCloud revoca su credencial en su cuenta y elimina su copia. En Snowflake esto incluye todos los inicios de sesión y la identidad de servicio. En Databricks incluye el secreto del service principal, pero no los inicios de sesión de las personas (consulte [Comportamientos de Databricks que conviene conocer](#comportamientos-de-databricks-que-conviene-conocer)). Sus datos permanecen en su almacén de datos. Si no se puede revocar la credencial, PlaidCloud le indica que la revoque usted mismo en su cuenta.
+
+### Ejecutar un ejemplo
+
+Cuando **Sus almacenes de datos** se abre sobre un almacén de datos concreto, como ocurre después de asociarlo mediante inicio de sesión, y ese almacén de datos es el predeterminado y está **Activo**, dice **Su almacén de datos está listo. Ejecute un ejemplo para verlo en acción.** **Ejecutar un ejemplo** primero pregunta **¿Quitar los datos de muestra?**: elimina de forma permanente el proyecto de ejemplo precargado, que se ejecutó en el almacén de datos anterior, y no toca sus propios proyectos ni datos. A continuación carga un ejemplo nuevo y lo ejecuta en su almacén de datos; puede seguirlo en Flujos de trabajo. Un proyecto de ejemplo que tenga cambios suyos no se reemplaza y no se ejecuta nada.
+
+## Detalles del almacén de datos
+
+Elija **Detalles** en un almacén de datos para abrir **Detalles del almacén de datos**.
+
+| Fila | Qué muestra |
+|---|---|
+| **Estado** | El estado del almacén de datos. Cuando no es **Activo**, **Motivo** lo explica: por ejemplo, el problema que encontró una comprobación fallida y su solución, o la fecha en que caduca un token. |
+| **Motor** | Snowflake o Databricks. |
+| **Host** | La dirección del almacén de datos, parcialmente enmascarada. |
+| **Cuenta** | Su cuenta de Snowflake o Databricks, cuando PlaidCloud la conoce. |
+| **Autenticación** | **Par de claves**, **Token de acceso personal**, **Entidad de servicio** o **Sesión iniciada con el proveedor**. |
+| **El token caduca** | Para un token de acceso personal: su fecha de caducidad, con **Rotar credencial…**. |
+| **Última comprobación** | Cuándo se comprobó el almacén de datos por última vez, y si la comprobación fue **Aceptar** o **Error**. |
+| **Proyectos** | Cuántos proyectos lo usan. |
+| **Conexión** | Cómo accede a él su espacio de trabajo. Consulte [Conexiones directas](#conexiones-directas). |
+
+**Comprobar ahora** vuelve a comprobar un almacén de datos de Snowflake o Databricks con la credencial que conserva PlaidCloud, registra el resultado como su **Última comprobación** y dice **Todo lo que PlaidCloud necesita está en su lugar.** o qué falla y cómo corregirlo. Cuando faltan concesiones, las enumera como instrucciones para ejecutar en su almacén de datos, cada una con **Copiar** y **Hecho**, como en [Compruébelo y luego úselo](#3-compruébelo-y-luego-úselo). Ejecútelas y luego elija **Comprobar ahora** de nuevo.
+
+Mientras un cambio está llegando o se está configurando una conexión directa, la ventana se mantiene actualizada por sí sola durante un máximo de 10 minutos después de abrirla o de solicitar una conexión. Pasado ese tiempo, actualice **Sus almacenes de datos** (F5) y elija **Detalles** de nuevo.
+
+## Conexiones directas
+
+La fila **Conexión** de [Detalles del almacén de datos](#detalles-del-almacén-de-datos) indica cómo accede su espacio de trabajo al almacén de datos. PlaidCloud deduce dónde se ejecuta el almacén de datos a partir de su dirección: una dirección de Snowflake con localizador de cuenta, como `xy12345.us-east-2.aws.snowflakecomputing.com`, indica su nube y su región, una dirección de Databricks indica solo su nube, y una dirección de Snowflake de cuenta de organización no indica ninguna de las dos.
+
+| Conexión | Significado |
+|---|---|
+| **Misma nube y región** | El almacén de datos se ejecuta en la misma nube y región que su espacio de trabajo. |
+| **Internet pública** | El almacén de datos se ejecuta en otra nube o región. Las consultas cruzan Internet pública, por lo que se aplican el tiempo de respuesta y las tarifas de salida de datos. |
+| **Privada: enlace directo** | Su espacio de trabajo accede al almacén de datos mediante un enlace privado, como AWS PrivateLink, Azure Private Link o Google Private Service Connect, y sus consultas no cruzan Internet pública. |
+| **No detectado** | PlaidCloud no pudo determinar dónde se ejecuta el almacén de datos. |
+
+Una conexión directa reemplaza la ruta pública entre su espacio de trabajo y el almacén de datos por una privada. Está pensada para un almacén de datos en la misma nube y región que su espacio de trabajo.
+
+### Solicitar una conexión directa
+
+**Solicitar conexión directa** aparece en **Detalles del almacén de datos** cuando el plan de su espacio de trabajo incluye conectividad privada, el almacén de datos es un almacén de datos de Snowflake o Databricks habilitado y no hay ninguna solicitud abierta para él. Solo un administrador del espacio de trabajo puede solicitar una. Después de elegirla, la fila **Conexión** sigue la solicitud.
+
+| Conexión | Significado |
+|---|---|
+| **Solicitado** | PlaidCloud recibió la solicitud y comenzará a configurarla. |
+| **Configurando** | PlaidCloud está configurando la conexión privada. |
+| **A la espera del administrador de su almacén de datos** | La conexión necesita algunos pasos en la cuenta de su almacén de datos antes de poder terminar. |
+| **Privada: enlace directo** | La conexión está comprobada y en uso. |
+| **Requiere atención** | La conexión privada no funciona. Revise los pasos o comuníquese con PlaidCloud. |
+
+Hasta que la conexión directa supere su comprobación, su espacio de trabajo sigue accediendo al almacén de datos como lo hacía antes. Mientras PlaidCloud la comprueba, la fila dice **Comprobando la conexión…**. Si PlaidCloud devuelve el almacén de datos a la ruta pública, la fila vuelve a mostrar cómo se accede al almacén de datos y se ofrece de nuevo **Solicitar conexión directa**.
+
+### Pasos en la cuenta de su almacén de datos
+
+Mientras se configura la conexión, o cuando requiere atención, **ver pasos** junto a la fila **Conexión** abre los pasos para el administrador de su almacén de datos, numerados, con el texto exacto que debe ejecutarse y **Copiar** cuando un paso lo tiene. Un paso que depende de PlaidCloud lo indica hasta que PlaidCloud lo completa. Avise a su contacto de PlaidCloud cuando los haya ejecutado.
+
+| Motor | Qué piden los pasos |
+|---|---|
+| Snowflake | Edición Business Critical o superior. Una instrucción, ejecutada como `ACCOUNTADMIN`, que autoriza el punto de conexión privado de PlaidCloud. Un cambio en la política de red que creó el script de configuración, realizado antes de que PlaidCloud cambie a la conexión privada: agrega una regla de red para el punto de conexión privado y traslada las direcciones públicas de PlaidCloud a una regla propia, porque una política con reglas de red ya no lee su lista de IP. Las instrucciones se pueden volver a ejecutar sin riesgo. |
+| Databricks | Un espacio de trabajo en el nivel que necesita la conectividad privada (Enterprise en AWS, Premium en Google Cloud, Premium con inyección de VNet en Azure). Registrar el punto de conexión de PlaidCloud para el espacio de trabajo en la consola de su cuenta o, en Azure, aprobar la conexión de punto de conexión privado pendiente de PlaidCloud en la pestaña Networking del espacio de trabajo. Permitir a PlaidCloud de forma privada en su configuración de acceso privado y mantener el acceso público activado para las direcciones de PlaidCloud. |
+
+<Aside type="note">El plano de control de PlaidCloud sigue accediendo a su almacén de datos en su dirección pública para iniciar sesión, configurar y desconectar. Mantenga activado el acceso público para las direcciones del script de configuración, como hacen los pasos.</Aside>
 
 ## Costo del warehouse por ejecución
 
@@ -283,7 +367,7 @@ Ninguno de los dos registros solicita un esquema: cada proyecto recibe el suyo, 
 
 El formulario de registro tiene un botón **Probar conexión** que abre una conexión real con los datos introducidos e informa del éxito o del motivo del fallo, sin guardar nada, de modo que las credenciales pueden verificarse antes de registrar el lakehouse. Una prueba de Snowflake necesita la clave privada PEM sin procesar y sin cifrar (una clave protegida con frase de contraseña se notifica como no admitida); una prueba de Databricks usa el PAT.
 
-Un almacén de datos registrado no se puede usar en el momento en que se guarda. Puede tardar varios minutos en aparecer en el espacio de trabajo, por el mismo motivo que un almacén de datos que usted mismo agrega (consulte **Administrar almacenes de datos**).
+Un almacén de datos registrado no se puede usar en el momento en que se guarda. Aparece como **Cambiando…** en **Sus almacenes de datos** durante unos minutos, por el mismo motivo que un almacén de datos que usted mismo agrega (consulte [Administrar almacenes de datos](#administrar-almacenes-de-datos)).
 
 <Aside type="note">Una conexión a un catálogo Iceberg/Lakekeeper se registra por separado y es opcional: no es necesaria para usar un almacén de datos de Snowflake o Databricks.</Aside>
 
