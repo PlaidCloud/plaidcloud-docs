@@ -1,6 +1,6 @@
 ---
 title: Eigenes Warehouse verwenden
-description: Verbinden Sie Ihr eigenes Snowflake- oder Databricks-Warehouse selbst, speichern Sie die Tabellen eines Workspace dort und führen Sie seine Workflows dort aus, melden Sie sich mit Ihrer eigenen Warehouse-Identität an, verwalten Sie mehrere Warehouses und sehen Sie, was jede Ausführung kostet.
+description: Verbinden Sie Ihr eigenes Snowflake- oder Databricks-Warehouse selbst, speichern Sie die Tabellen eines Workspace dort und führen Sie seine Workflows dort aus, melden Sie sich mit Ihrer eigenen Warehouse-Identität an, verwalten Sie mehrere Warehouses, erreichen Sie eines über eine direkte private Verbindung und sehen Sie, was jede Ausführung kostet.
 sidebar:
   order: 2
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/external-lakehouse.mdx
@@ -53,7 +53,7 @@ Der Dialog erstellt aus den von Ihnen gewählten Namen ein Einrichtungsskript un
 
 Das Skript richtet außerdem Folgendes ein.
 
-- **Netzwerkzugriff.** PlaidCloud verbindet sich von der Adresse `130.211.116.97/32`. Das Snowflake-Skript erstellt eine Netzwerkrichtlinie, die für den Service-Benutzer nur diese Adresse zulässt. Wenn Ihr Databricks-Workspace bereits IP-Zugriffslisten erzwingt, enthält das Skript die Anweisung, die diese Adresse zulässt; fügen Sie die Adresse zu jeder Netzwerkrichtlinie oder IP-Zugriffsliste hinzu, die Ihr Konto schützt.
+- **Netzwerkzugriff.** Das Skript listet die Adressen auf, von denen sich PlaidCloud verbindet: die der Control Plane, `130.211.116.97/32`, und die Ihres eigenen Workspace, wenn es eine andere ist. Das Snowflake-Skript erstellt eine Netzwerkrichtlinie, die für den Service-Benutzer nur diese Adressen zulässt. Wenn Ihr Databricks-Workspace bereits IP-Zugriffslisten erzwingt, enthält das Skript die Anweisung, die diese Adressen zulässt; fügen Sie sie zu jeder Netzwerkrichtlinie oder IP-Zugriffsliste hinzu, die Ihr Konto schützt.
 - **Richtlinien bleiben erhalten.** In Snowflake erhält die Rolle die Berechtigungen, Richtlinien und Tags für Zeilenzugriff, Maskierung, Projektion, Aggregation und Joins anzuwenden, sodass Ihre Richtlinien erhalten bleiben, wenn PlaidCloud eine Tabelle neu schreibt. In Databricks erteilen Sie dem Service Principal `EXECUTE` für jede Zeilenfilter- oder Spaltenmaskierungsfunktion, die Sie verwenden.
 - **Ausführungskosten.** Die Snowflake-Rolle erhält die Datenbankrolle `SNOWFLAKE.GOVERNANCE_VIEWER`, mit der PlaidCloud die einer Ausführung zugeordneten Credits lesen kann; sie deckt auch [Zuletzt gelesen](/de/guides/projects/managing-tables-and-views/#zuletzt-gelesen) ab. Databricks erhält Lesezugriff auf den Abfrageverlauf und die Warehouse-Größen im Katalog `system`.
 - **Zuletzt gelesen.** In Databricks erteilt das Skript außerdem `USE SCHEMA` für `system.access` und `SELECT` für `system.access.table_lineage`, die die Tabelleninformationen zu „Zuletzt gelesen“ benötigen. Siehe [Warehouse-Kosten pro Ausführung](#warehouse-kosten-pro-ausführung).
@@ -62,6 +62,7 @@ Das Skript richtet außerdem Folgendes ein.
 
 | Feld | Engine | Was Sie eingeben |
 |---|---|---|
+| Name | Beide | Wie PlaidCloud das Warehouse nennt. Er folgt der Adresse, zum Beispiel `Snowflake — myorg-myaccount`, bis Sie einen eigenen eingeben. |
 | Konto-URL | Snowflake | Der Host Ihres Kontos, zum Beispiel `myorg-myaccount.snowflakecomputing.com`. |
 | Privater Schlüssel | Snowflake | Der private Schlüssel (PEM) des Service-Benutzers. Ein Schlüsselpaar läuft nie ab. |
 | Workspace-URL | Databricks | Der Host Ihres Workspace, zum Beispiel `adb-1234567890123456.7.azuredatabricks.net`. |
@@ -69,16 +70,16 @@ Das Skript richtet außerdem Folgendes ein.
 | Anwendungs-ID | Databricks | Die Anwendungs-ID (Client-ID) des Service Principal. |
 | OAuth-Secret | Databricks | Das OAuth-Secret des Service Principal. PlaidCloud erneuert es für Sie. |
 
-Unter **Erweitert** können Sie stattdessen ein programmatisches Snowflake-Zugriffstoken oder ein persönliches Databricks-Zugriffstoken verwenden. Token laufen ab: Ab diesem Datum erreicht PlaidCloud Ihr Warehouse nicht mehr, bis Sie ein neues hinzufügen. Vierzehn Tage vorher und danach zeigt ein Banner das Datum an und bietet **Erneuern**. Ein Schlüsselpaar oder ein OAuth-Secret vermeidet den Ablauf.
+Unter **Erweitert** können Sie stattdessen ein programmatisches Snowflake-Zugriffstoken oder ein persönliches Databricks-Zugriffstoken verwenden. Token laufen ab: Ab diesem Datum erreicht PlaidCloud Ihr Warehouse nicht mehr, bis Sie ein neues hinzufügen. Vierzehn Tage vorher und danach zeigt ein Banner das Datum an und bietet **Rotieren**, was [Warehouses verwalten](#warehouses-verwalten) für dieses Warehouse öffnet und nach dem neuen Token fragt. Ein Schlüsselpaar oder ein OAuth-Secret vermeidet den Ablauf.
 
-Die Adresse muss die öffentliche URL Ihres Kontos sein und auf `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` oder `.gcp.databricks.com` enden. Private und benutzerdefinierte Endpunkte werden nicht unterstützt.
+Die Adresse muss die öffentliche URL Ihres Kontos sein und auf `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` oder `.gcp.databricks.com` enden. Private und benutzerdefinierte Endpunkte werden hier nicht unterstützt; um Ihr Warehouse privat zu erreichen, [fordern Sie eine direkte Verbindung an](#direkte-verbindungen), nachdem Sie es angehängt haben.
 
 ### 3. Prüfen und dann verwenden
 
 - **Verbindung testen** testet die Adresse, die Anmeldung und jede Berechtigung, die PlaidCloud benötigt, und speichert nichts.
-- **Als mein Warehouse verwenden** führt dieselbe Prüfung aus und hängt das Warehouse an. Wenn Sie es von einer anderen Stelle als **Warehouse hinzufügen** aus öffnen, legt es das Warehouse außerdem als Standard fest und wartet, während der Workspace darauf umschaltet. Das dauert normalerweise einige Minuten, und Sie können das Fenster schließen. Neue Projekte im Workspace verwenden dann Ihr Warehouse. Wenn Sie es über **Warehouse hinzufügen** öffnen, bleibt der Standard unverändert; wählen Sie **Als Standard festlegen** unter [Warehouses verwalten](#warehouses-verwalten), wenn neue Projekte es verwenden sollen.
+- **Als mein Warehouse verwenden** führt dieselbe Prüfung aus und hängt das Warehouse an. Wenn Sie es von einer anderen Stelle als **Warehouse hinzufügen** aus öffnen, legt es das Warehouse außerdem als Standard fest und wartet, während der Workspace darauf umschaltet. Das dauert normalerweise einige Minuten, und Sie können das Fenster schließen. Neue Projekte im Workspace verwenden dann Ihr Warehouse, und das Fenster bietet **Beispiel ausführen** (siehe [Beispiel ausführen](#beispiel-ausführen)). Wenn Sie es über **Warehouse hinzufügen** öffnen, bleibt der Standard unverändert; wählen Sie **Als Standard festlegen** unter [Warehouses verwalten](#warehouses-verwalten), wenn neue Projekte es verwenden sollen.
 
-Eine fehlgeschlagene Prüfung erklärt das Problem und die Lösung in verständlicher Sprache. Fehlende erforderliche Berechtigungen werden als sofort ausführbare `GRANT`-Anweisungen aufgelistet, mit einer Schaltfläche **Kopieren**, einer Schaltfläche **Alles kopieren** und **Einrichtungsskript anzeigen**. **Für den Support kopieren** kopiert den eigenen Fehlertext des Warehouse für den PlaidCloud-Support.
+Eine fehlgeschlagene Prüfung erklärt das Problem und die Lösung in verständlicher Sprache. Fehlende erforderliche Berechtigungen werden als sofort ausführbare `GRANT`-Anweisungen aufgelistet, jeweils mit einer Schaltfläche **Kopieren** und einem Feld **Fertig**, das Sie ankreuzen, sobald Sie sie ausgeführt haben, dazu eine Schaltfläche **Alles kopieren** und **Einrichtungsskript anzeigen**. **Für den Support kopieren** kopiert den eigenen Fehlertext des Warehouse für den PlaidCloud-Support.
 
 Die Prüfung listet außerdem separat Berechtigungen unter **Empfohlen — aktiviert „Zuletzt gelesen“** auf, jeweils mit **Kopieren**. Mit ihnen können die Tabelleninformationen zu [Zuletzt gelesen](/de/guides/projects/managing-tables-and-views/#zuletzt-gelesen) den Verlauf Ihres Warehouse lesen. Sie hindern Sie nie daran, das Warehouse zu verwenden: Ohne sie verbindet es sich problemlos, und „Zuletzt gelesen“ zeigt **Read history incomplete**.
 
@@ -90,7 +91,7 @@ Die Prüfung listet außerdem separat Berechtigungen unter **Empfohlen — aktiv
 | Der Service-Benutzer kann ein Objekt nicht verwenden | Erteilen Sie seiner Rolle die Berechtigung für dieses Objekt. Das Einrichtungsskript enthält jede Berechtigung. |
 | Ihr Warehouse ist angehalten oder existiert nicht | Prüfen Sie den Namen des Warehouse und ob es selbstständig starten kann (`AUTO_RESUME` in Snowflake, ein laufendes SQL Warehouse in Databricks). |
 | Ihr Warehouse hat sein Credit-Kontingent aufgebraucht | Erhöhen Sie das Kontingent des Resource Monitors oder das Budget, oder warten Sie auf den Reset. |
-| Eine Netzwerkrichtlinie blockiert PlaidCloud | Lassen Sie `130.211.116.97/32` in der Richtlinie zu, wie es das Einrichtungsskript tut. |
+| Eine Netzwerkrichtlinie blockiert PlaidCloud | Lassen Sie die Adressen, die das Einrichtungsskript auflistet, in der Richtlinie zu, wie es das Skript tut. |
 | Das Token oder der Schlüssel ist abgelaufen oder nicht mehr gültig | Erstellen Sie ein neues Token oder wechseln Sie zu einem Schlüsselpaar. |
 | Unity Catalog hat dem Service Principal den Zugriff verweigert | Erteilen Sie `USE CATALOG`, `CREATE SCHEMA` und `USE SCHEMA` für den Katalog. |
 | PlaidCloud konnte sich nicht anmelden | Prüfen Sie den Benutzer oder Service Principal und seinen Schlüssel, sein Token oder sein Secret. |
@@ -113,6 +114,8 @@ Einmalig registriert ein Kontoadministrator in Ihrem eigenen Konto PlaidCloud al
 1. Geben Sie unter **Quickest: sign in with Snowflake** (oder Databricks) die **Konto-URL** (oder **Workspace-URL**) und die **Client-ID** ein.
 2. Geben Sie in Snowflake die **Datenbank** und die **Datenrolle für PlaidCloud** ein. **Warehouse** ist optional und verwendet standardmäßig Ihres. Geben Sie in Databricks den **HTTP-Pfad des SQL Warehouse** ein. **Katalog** ist optional und verwendet standardmäßig Ihren.
 3. Wählen Sie **Sign in with Snowflake** oder **Sign in with Databricks**, melden Sie sich bei Ihrem Konto beim Anbieter an und genehmigen Sie.
+
+Zurück in PlaidCloud wird das Warehouse noch einmal geprüft. Besteht es die Prüfung, öffnet sich **Ihre Warehouses** mit dem neuen Warehouse als ausgewähltem. Fehlt etwas, bleibt das Fenster geöffnet und listet auf, was zu beheben ist, mit den fehlenden Berechtigungen zum Kopieren.
 
 PlaidCloud erstellt in Ihrem Konto eine eigene Dienstidentität, die diesem Warehouse zugeordnet ist. Workflows, Zeitpläne und alles andere ohne dahinterstehende Person laufen unter dieser Identität.
 
@@ -196,17 +199,98 @@ Eine Übertragung legt jeden Batch als Parquet-Datei im Volume ab und lädt ihn 
 
 ## Warehouses verwalten
 
-Ein Workspace-Administrator öffnet das Benutzermenü und wählt **Warehouses verwalten**. Das Fenster **Ihre Warehouses** listet für jedes Warehouse **Name**, **Typ**, **Standard**, **Projekte** und **Status** auf.
+Ein Workspace-Administrator öffnet das Benutzermenü und wählt **Warehouses verwalten**. Das Fenster **Ihre Warehouses** listet für jedes Warehouse **Name**, **Engine**, **Status**, **Standard** und **Projekte** auf. Solange der Workspace kein Snowflake- oder Databricks-Warehouse hat, steht über der Liste eine Karte mit dem Text **Sie nutzen das Warehouse von PlaidCloud – bringen Sie Ihr eigenes mit**.
 
-| Schaltfläche | Was sie bewirkt |
+**Warehouse hinzufügen** in der Symbolleiste öffnet denselben Ablauf wie beim Verbinden, mit dem Titel **Ein Warehouse hinzufügen**. Ihr Warehouse wird hinzugefügt, und der Standard für neue Projekte ändert sich nicht.
+
+Markieren Sie für alles andere ein Warehouse und wählen Sie über das ⋯ am Anfang seiner Zeile, über sein Rechtsklickmenü oder über **Aktionen** aus. Jede Auswahl erscheint nur dort, wo sie zutrifft.
+
+| Aktion | Was sie bewirkt |
 |---|---|
-| **Warehouse hinzufügen** | Öffnet denselben Ablauf wie beim Verbinden, mit dem Titel **Ein Warehouse hinzufügen**. Ihr Warehouse wird hinzugefügt, und der Standard für neue Projekte ändert sich nicht. |
-| **Als Standard festlegen** | Neue Projekte verwenden dieses Warehouse, sobald der Workspace darauf umgeschaltet hat, was normalerweise einige Minuten dauert. Bereits erstellte Projekte bleiben auf dem Warehouse, auf dem sie erstellt wurden. |
+| **Details** | Öffnet [Warehouse-Details](#warehouse-details). |
+| **Als Standard festlegen** | Neue Projekte verwenden dieses Warehouse, sobald der Workspace darauf umgeschaltet hat, was normalerweise einige Minuten dauert. Bereits erstellte Projekte bleiben auf dem Warehouse, auf dem sie erstellt wurden. Nur ein Warehouse mit dem Status **Aktiv** kann zum Standard werden. |
+| **Umbenennen…** | Ändert den Namen des Warehouse. |
+| **Anmeldung erneuern…** | Für ein per Anmeldung angehängtes Warehouse: meldet Sie erneut bei Snowflake oder Databricks an. |
+| **Anmeldedaten rotieren…** | Für ein Schlüsselpaar, ein Token oder ein OAuth-Secret: Fügen Sie das neue ein. PlaidCloud prüft es zuerst gegen Ihr Warehouse und ersetzt das aktuelle nur, wenn die Prüfung besteht. |
+| **Deaktivieren…** | Hält das Warehouse an. Die Bestätigung nennt, wie viele Projekte es verwenden; sie pausieren, bis es wieder aktiviert wird, und behalten ihre Daten. Das Standard-Warehouse kann nicht deaktiviert werden. |
+| **Aktivieren** | Schaltet ein deaktiviertes Warehouse wieder ein. |
 | **Entfernen** | Trennt das Warehouse. Funktioniert nur, wenn das Warehouse nicht der Standard ist und kein Projekt es verwendet; andernfalls nennt es Ihnen den Grund. |
 
-<Aside type="note">Ein neu hinzugefügtes Warehouse kann mehrere Minuten brauchen, bis es in Ihrem Workspace erscheint. Jeder Workspace läuft isoliert von den anderen und übernimmt Konfigurationsänderungen selbstständig; bis die Änderung eintrifft, ist das Warehouse nicht aufgelistet und Projekte können es noch nicht verwenden. Erscheint es nach einer Stunde immer noch nicht, wenden Sie sich an den PlaidCloud-Support.</Aside>
+**Status** zeigt, wo jedes Warehouse steht.
+
+| Status | Bedeutung |
+|---|---|
+| **Bereitstellung** | PlaidCloud richtet das Warehouse noch ein. |
+| **Wird gewechselt…** | Eine Änderung ist gespeichert und auf dem Weg zu Ihrem Workspace. |
+| **Aktiv** | Einsatzbereit. |
+| **Deaktiviert** | Projekte, die es verwenden, sind pausiert, bis es wieder aktiviert wird. |
+| **Achtung** | Die letzte Prüfung ist fehlgeschlagen, oder sein persönliches Zugriffstoken läuft innerhalb von 14 Tagen ab. [Warehouse-Details](#warehouse-details) nennt den Grund. |
+
+<Aside type="note">Eine Änderung, etwa ein neues Warehouse, ein neuer Standard, ein neuer Name oder das Deaktivieren eines Warehouse, braucht einige Minuten, bis sie Ihren Workspace erreicht. Jeder Workspace läuft isoliert von den anderen und übernimmt Konfigurationsänderungen selbstständig; bis die Änderung eintrifft, zeigt das Warehouse **Wird gewechselt…**, und ein neues Warehouse kann von Projekten noch nicht verwendet werden. Die Liste prüft bis zu 10 Minuten lang alle paar Sekunden erneut und zeigt dann **Noch nicht übernommen – aktualisieren Sie später.** Ist die Änderung nach einer Stunde immer noch nicht eingetroffen, wenden Sie sich an den PlaidCloud-Support.</Aside>
 
 Wenn Sie ein Warehouse entfernen, widerruft PlaidCloud seine Anmeldedaten in Ihrem Konto und löscht seine Kopie. In Snowflake umfasst das jede Anmeldung und die Dienstidentität. In Databricks umfasst es das Secret des Service Principal, aber nicht die Anmeldungen einzelner Personen (siehe [Databricks-Verhalten, das Sie kennen sollten](#databricks-verhalten-das-sie-kennen-sollten)). Ihre Daten bleiben in Ihrem Warehouse. Lassen sich die Anmeldedaten nicht widerrufen, weist PlaidCloud Sie an, sie selbst in Ihrem Konto zu widerrufen.
+
+### Beispiel ausführen
+
+Wenn sich **Ihre Warehouses** auf einem bestimmten Warehouse öffnet, wie nach dem Anhängen per Anmeldung, und dieses Warehouse der Standard und **Aktiv** ist, steht dort **Ihr Warehouse ist bereit. Führen Sie ein Beispiel aus, um es in Aktion zu sehen.** **Beispiel ausführen** fragt zuerst **Beispieldaten entfernen?**: Es löscht dauerhaft das mitgelieferte Beispielprojekt, das auf dem alten Warehouse lief, und lässt Ihre eigenen Projekte und Daten unberührt. Danach lädt es ein neues Beispiel und führt es auf Ihrem Warehouse aus; verfolgen Sie es unter Workflows. Ein Beispielprojekt mit Ihren eigenen Änderungen wird nicht ersetzt, und es läuft nichts.
+
+## Warehouse-Details
+
+Wählen Sie bei einem Warehouse **Details**, um **Warehouse-Details** zu öffnen.
+
+| Zeile | Was angezeigt wird |
+|---|---|
+| **Status** | Der Status des Warehouse. Ist er nicht **Aktiv**, liefert **Warum** die Erklärung: zum Beispiel das Problem, das eine fehlgeschlagene Prüfung gefunden hat, samt Lösung, oder das Datum, an dem ein Token abläuft. |
+| **Engine** | Snowflake oder Databricks. |
+| **Host** | Die Adresse des Warehouse, teilweise maskiert. |
+| **Konto** | Ihr Snowflake- oder Databricks-Konto, sofern PlaidCloud es kennt. |
+| **Authentifizierung** | **Schlüsselpaar**, **Persönliches Zugriffstoken**, **Dienstprinzipal** oder **Beim Anbieter angemeldet**. |
+| **Token läuft ab** | Bei einem persönlichen Zugriffstoken: sein Ablaufdatum, mit **Anmeldedaten rotieren…**. |
+| **Letzte Prüfung** | Wann das Warehouse zuletzt geprüft wurde und ob die Prüfung **OK** oder **Fehlgeschlagen** ergab. |
+| **Projekte** | Wie viele Projekte es verwenden. |
+| **Verbindung** | Wie Ihr Workspace es erreicht. Siehe [Direkte Verbindungen](#direkte-verbindungen). |
+
+**Jetzt prüfen** prüft ein Snowflake- oder Databricks-Warehouse erneut mit den Anmeldedaten, die PlaidCloud hält, speichert das Ergebnis als **Letzte Prüfung** und meldet **Alles, was PlaidCloud benötigt, ist vorhanden.** oder was fehlt und wie es zu beheben ist. Fehlen Berechtigungen, listet es sie als Anweisungen auf, die Sie in Ihrem Warehouse ausführen, jeweils mit **Kopieren** und **Fertig**, wie unter [Prüfen und dann verwenden](#3-prüfen-und-dann-verwenden). Führen Sie sie aus und wählen Sie dann erneut **Jetzt prüfen**.
+
+Solange eine Änderung übernommen wird oder eine direkte Verbindung eingerichtet wird, hält sich das Fenster nach dem Öffnen oder nach dem Anfordern einer Verbindung bis zu 10 Minuten lang selbst aktuell. Danach aktualisieren Sie **Ihre Warehouses** (F5) und wählen erneut **Details**.
+
+## Direkte Verbindungen
+
+Die Zeile **Verbindung** in [Warehouse-Details](#warehouse-details) zeigt, wie Ihr Workspace das Warehouse erreicht. PlaidCloud liest anhand seiner Adresse, wo das Warehouse läuft: Eine Snowflake-Adresse mit Account-Locator, etwa `xy12345.us-east-2.aws.snowflakecomputing.com`, nennt Cloud und Region, eine Databricks-Adresse nennt nur die Cloud, und eine Snowflake-Adresse mit Organisationskonto nennt keines von beiden.
+
+| Verbindung | Bedeutung |
+|---|---|
+| **Gleiche Cloud und Region** | Das Warehouse läuft in derselben Cloud und Region wie Ihr Workspace. |
+| **Öffentliches Internet** | Das Warehouse läuft in einer anderen Cloud oder Region. Abfragen laufen über das öffentliche Internet, daher fallen Antwortzeit und Egress-Gebühren an. |
+| **Privat – direkte Verbindung** | Ihr Workspace erreicht das Warehouse über eine private Verbindung, etwa AWS PrivateLink, Azure Private Link oder Google Private Service Connect, und seine Abfragen laufen nicht über das öffentliche Internet. |
+| **Nicht erkannt** | PlaidCloud konnte nicht feststellen, wo das Warehouse läuft. |
+
+Eine direkte Verbindung ersetzt den öffentlichen Pfad zwischen Ihrem Workspace und dem Warehouse durch einen privaten. Sie ist für ein Warehouse in derselben Cloud und Region wie Ihr Workspace gedacht.
+
+### Direkte Verbindung anfordern
+
+**Direkte Verbindung anfordern** erscheint in **Warehouse-Details**, wenn der Tarif Ihres Workspace private Konnektivität enthält, das Warehouse ein aktiviertes Snowflake- oder Databricks-Warehouse ist und keine Anforderung dafür offen ist. Nur ein Workspace-Administrator kann eine anfordern. Nachdem Sie es gewählt haben, folgt die Zeile **Verbindung** der Anforderung.
+
+| Verbindung | Bedeutung |
+|---|---|
+| **Angefordert** | PlaidCloud hat die Anforderung erhalten und beginnt mit der Einrichtung. |
+| **Wird eingerichtet** | PlaidCloud richtet die private Verbindung ein. |
+| **Warten auf Ihren Warehouse-Administrator** | Die Verbindung braucht einige Schritte in Ihrem Warehouse-Konto, bevor sie abgeschlossen werden kann. |
+| **Privat – direkte Verbindung** | Die Verbindung ist geprüft und in Verwendung. |
+| **Erfordert Aufmerksamkeit** | Die private Verbindung funktioniert nicht. Prüfen Sie die Schritte oder wenden Sie sich an PlaidCloud. |
+
+Bis die direkte Verbindung ihre Prüfung besteht, erreicht Ihr Workspace das Warehouse weiter auf dem bisherigen Weg. Während PlaidCloud sie prüft, zeigt die Zeile **Verbindung wird geprüft…**. Setzt PlaidCloud das Warehouse auf den öffentlichen Pfad zurück, zeigt die Zeile wieder, wie das Warehouse erreicht wird, und **Direkte Verbindung anfordern** wird wieder angeboten.
+
+### Schritte in Ihrem Warehouse-Konto
+
+Solange die Verbindung eingerichtet wird oder Aufmerksamkeit braucht, öffnet **Schritte anzeigen** neben der Zeile **Verbindung** die Schritte für Ihren Warehouse-Administrator, nummeriert, mit dem genauen auszuführenden Text und **Kopieren**, wo ein Schritt welchen hat. Ein Schritt, der auf PlaidCloud wartet, sagt das, bis PlaidCloud ihn ausfüllt. Geben Sie Ihrem PlaidCloud-Ansprechpartner Bescheid, sobald Sie sie ausgeführt haben.
+
+| Engine | Was die Schritte verlangen |
+|---|---|
+| Snowflake | Business-Critical-Edition oder höher. Eine als `ACCOUNTADMIN` ausgeführte Anweisung, die den privaten Endpunkt von PlaidCloud autorisiert. Eine Änderung an der vom Einrichtungsskript erstellten Netzwerkrichtlinie, die vorgenommen wird, bevor PlaidCloud umschaltet: Sie fügt eine Netzwerkregel für den privaten Endpunkt hinzu und verschiebt die öffentlichen Adressen von PlaidCloud in eine eigene Regel, weil eine Richtlinie mit Netzwerkregeln ihre IP-Liste nicht mehr liest. Die Anweisungen können gefahrlos erneut ausgeführt werden. |
+| Databricks | Ein Workspace in der Stufe, die private Konnektivität benötigt (Enterprise in AWS, Premium in Google Cloud, Premium mit VNet-Injection in Azure). Das Registrieren des Endpunkts von PlaidCloud für den Workspace in Ihrer Account-Konsole oder, in Azure, das Genehmigen der ausstehenden privaten Endpunktverbindung von PlaidCloud auf der Registerkarte „Networking“ des Workspace. Das private Zulassen von PlaidCloud in Ihren Einstellungen für privaten Zugriff, während der öffentliche Zugriff für die Adressen von PlaidCloud eingeschaltet bleibt. |
+
+<Aside type="note">Die Control Plane von PlaidCloud erreicht Ihr Warehouse zum Anmelden, Einrichten und Trennen weiterhin unter seiner öffentlichen Adresse. Lassen Sie den öffentlichen Zugriff für die Adressen aus dem Einrichtungsskript eingeschaltet, wie es die Schritte tun.</Aside>
 
 ## Warehouse-Kosten pro Ausführung
 
@@ -283,7 +367,7 @@ Keine der beiden Registrierungen fragt nach einem Schema – jedes Projekt erhä
 
 Das Registrierungsformular hat eine Schaltfläche **Verbindung testen**, die mit den eingegebenen Angaben eine Live-Verbindung öffnet und den Erfolg oder den Fehlergrund meldet, ohne etwas zu speichern – so lassen sich Anmeldedaten prüfen, bevor das Lakehouse registriert wird. Ein Snowflake-Test benötigt den unverschlüsselten privaten PEM-Schlüssel (ein durch eine Passphrase geschützter Schlüssel wird als nicht unterstützt gemeldet); ein Databricks-Test verwendet den PAT.
 
-Ein registriertes Warehouse ist nicht in dem Moment nutzbar, in dem es gespeichert wird. Es kann mehrere Minuten dauern, bis es im Workspace erscheint, aus demselben Grund wie bei einem Warehouse, das Sie selbst hinzufügen (siehe **Warehouses verwalten**).
+Ein registriertes Warehouse ist nicht in dem Moment nutzbar, in dem es gespeichert wird. Es zeigt im Fenster **Ihre Warehouses** einige Minuten lang **Wird gewechselt…**, aus demselben Grund wie bei einem Warehouse, das Sie selbst hinzufügen (siehe [Warehouses verwalten](#warehouses-verwalten)).
 
 <Aside type="note">Eine Iceberg-/Lakekeeper-Katalogverbindung wird separat registriert und ist optional – sie ist für die Nutzung eines Snowflake- oder Databricks-Warehouse nicht erforderlich.</Aside>
 
