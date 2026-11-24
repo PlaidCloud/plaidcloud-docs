@@ -69,11 +69,11 @@ Les labs Fondations et Praticien n'ont pas de limite de temps.
 
 ## Expiration
 
-Les badges expirent deux ans après leur obtention. Un badge expiré n'apparaît plus dans **Vos badges** ni pour les administrateurs, et son lab peut être démarré de nouveau.
+Les badges expirent deux ans après leur obtention. Un badge expiré n'apparaît plus dans **Vos badges** ni pour les administrateurs, et son lab peut être démarré de nouveau, sauf si vous détenez encore un badge supérieur sur le même parcours.
 
-## Principal
+## Master
 
-Principal est le seul badge qui ne s'obtient pas dans un lab. Il nécessite trois badges Expert non expirés et une implémentation en production, examinée par PlaidCloud.
+Master est le seul badge qui ne s'obtient pas dans un lab. Il nécessite trois badges Expert non expirés et une implémentation en production, examinée par PlaidCloud.
 
 **Demander l'examen Master**, sur la carte **Principal**, devient disponible dès que vous détenez trois badges Expert. Il ouvre **Aide et support** avec un nouveau ticket qui nomme déjà vos badges Expert. Ajoutez les détails de votre implémentation et envoyez-le. L'examen vérifie :
 
@@ -82,11 +82,11 @@ Principal est le seul badge qui ne s'obtient pas dans un lab. Il nécessite troi
 - qu'elle utilise les capacités d'au moins deux parcours ;
 - qu'un contact nommé la confirme.
 
-Le badge Principal expire lui aussi deux ans après son attribution.
+Le badge Master expire lui aussi deux ans après son attribution.
 
 ## Partager un badge
 
-Chaque badge a sa propre page de vérification publique, qui affiche le badge, le nom de votre profil dans l'espace de travail de certification, sa date d'émission, sa date d'expiration et s'il est toujours valide. Si PlaidCloud y a créé votre compte lorsque vous avez démarré un lab, ce nom correspond à la partie de votre adresse e-mail située avant le @ tant que vous ne le modifiez pas. La page n'affiche jamais votre adresse e-mail complète. La page n'existe que tant que le badge est public.
+Chaque badge a sa propre page de vérification publique, qui affiche le badge, votre nom, sa date d'émission, sa date d'expiration et s'il est toujours valide. Le nom est celui de votre profil dans l'espace de travail de certification au moment où vous rendez le badge public ; si PlaidCloud y a créé votre compte lorsque vous avez démarré un lab, il s'agit de la partie de votre adresse e-mail située avant le @. Pour afficher un nom modifié, rendez le badge privé puis de nouveau public. La page n'affiche jamais votre adresse e-mail complète. La page n'existe que tant que le badge est public.
 
 Dans l'espace de travail de certification, sous chaque badge de **Vos badges** :
 

@@ -69,11 +69,11 @@ Los laboratorios de Fundamentos y Profesional no tienen límite de tiempo.
 
 ## Caducidad
 
-Las insignias caducan dos años después de obtenerlas. Una insignia caducada deja de aparecer en **Sus insignias** y para los administradores, y su laboratorio se puede iniciar de nuevo.
+Las insignias caducan dos años después de obtenerlas. Una insignia caducada deja de aparecer en **Sus insignias** y para los administradores, y su laboratorio se puede iniciar de nuevo, a menos que aún tenga una insignia superior en la misma ruta.
 
-## Maestro
+## Master
 
-Maestro es la única insignia que no se obtiene en un laboratorio. Requiere tres insignias Experto que no hayan caducado y una implementación en producción, revisada por PlaidCloud.
+Master es la única insignia que no se obtiene en un laboratorio. Requiere tres insignias Experto que no hayan caducado y una implementación en producción, revisada por PlaidCloud.
 
 **Solicitar revisión Master**, en la tarjeta **Maestro**, queda disponible cuando tiene tres insignias Experto. Abre **Ayuda y soporte** con un ticket nuevo que ya nombra sus insignias Experto. Agregue los detalles de su implementación y envíelo. La revisión busca:
 
@@ -82,11 +82,11 @@ Maestro es la única insignia que no se obtiene en un laboratorio. Requiere tres
 - que use la capacidad de al menos dos rutas;
 - un contacto con nombre que lo confirme.
 
-La insignia Maestro también caduca dos años después de concederse.
+La insignia Master también caduca dos años después de concederse.
 
 ## Compartir una insignia
 
-Cada insignia tiene su propia página pública de verificación, que muestra la insignia, el nombre de su perfil en el espacio de trabajo de certificación, cuándo se emitió, cuándo caduca y si sigue siendo válida. Si PlaidCloud creó su cuenta allí cuando inició un laboratorio, ese nombre es la parte de su dirección de correo electrónico anterior a la @ hasta que lo cambie. La página nunca muestra su dirección de correo electrónico completa. La página existe solo mientras la insignia es pública.
+Cada insignia tiene su propia página pública de verificación, que muestra la insignia, su nombre, cuándo se emitió, cuándo caduca y si sigue siendo válida. El nombre es el de su perfil en el espacio de trabajo de certificación cuando hace pública la insignia; si PlaidCloud creó su cuenta allí cuando inició un laboratorio, es la parte de su dirección de correo electrónico anterior a la @. Para mostrar un nombre modificado, haga la insignia privada y luego pública de nuevo. La página nunca muestra su dirección de correo electrónico completa. La página existe solo mientras la insignia es pública.
 
 En el espacio de trabajo de certificación, bajo cada insignia en **Sus insignias**:
 

@@ -68,7 +68,7 @@ Foundations and Practitioner labs have no time limit.
 
 ## Expiry
 
-Badges expire two years after you earn them. An expired badge no longer shows in **Your badges** or to administrators, and its lab can be started again.
+Badges expire two years after you earn them. An expired badge no longer shows in **Your badges** or to administrators, and its lab can be started again unless you still hold a higher badge on the same track.
 
 ## Master
 
@@ -85,7 +85,7 @@ The Master badge also expires two years after it's granted.
 
 ## Share a Badge
 
-Each badge has its own public verification page, which shows the badge, the name on your profile in the certification workspace, when it was issued, when it expires and whether it's still valid. If PlaidCloud created your account there when you started a lab, that name is the part of your email address before the @ until you change it. The page never shows your whole email address. The page exists only while the badge is public.
+Each badge has its own public verification page, which shows the badge, your name, when it was issued, when it expires and whether it's still valid. The name is the one on your profile in the certification workspace when you make the badge public; if PlaidCloud created your account there when you started a lab, it's the part of your email address before the @. To show a changed name, make the badge private and then public again. The page never shows your whole email address. The page exists only while the badge is public.
 
 In the certification workspace, under each badge in **Your badges**:
 

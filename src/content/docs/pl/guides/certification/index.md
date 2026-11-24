@@ -51,7 +51,7 @@ Rozpoczęcie laboratorium, jego porzucenie i zdobycie odznaki wymagają zweryfik
    - Jeśli każde sprawdzenie zakończy się powodzeniem, odznaka jest Twoja, a projekt laboratorium zostaje usunięty.
    - Jeśli jakiekolwiek sprawdzenie zakończy się niepowodzeniem, **Ostatni wynik** wymienia każde sprawdzenie jako **Zaliczono** lub **Niepowodzenie**. Niezaliczone sprawdzenie mówi, co było nie tak, i ma link **Przewodnik ›** do przewodnika, który to omawia. Popraw projekt i prześlij ponownie.
 
-Możesz przesyłać tyle razy, ile chcesz, gdy laboratorium jest otwarte. Przesłanie, gdy przepływ pracy laboratorium już się uruchamia, niczego nie ocenia; poczekaj na zakończenie uruchomienia, a następnie prześlij ponownie.
+Możesz przesyłać tyle razy, ile chcesz, gdy laboratorium jest otwarte. Przesłanie, gdy przepływ pracy laboratorium już działa, niczego nie ocenia; poczekaj na zakończenie uruchomienia, a następnie prześlij ponownie.
 
 Jeśli każde sprawdzenie zakończy się powodzeniem, ale Twój adres e-mail nie jest zweryfikowany, odznaka nie zostanie przyznana. Zweryfikuj adres e-mail, a następnie prześlij ponownie.
 
@@ -69,7 +69,7 @@ Laboratoria Podstawy i Praktyk nie mają limitu czasu.
 
 ## Wygaśnięcie
 
-Odznaki wygasają dwa lata po ich zdobyciu. Wygasła odznaka nie jest już pokazywana w **Twoje odznaki** ani administratorom, a jej laboratorium można rozpocząć ponownie.
+Odznaki wygasają dwa lata po ich zdobyciu. Wygasła odznaka nie jest już pokazywana w **Twoje odznaki** ani administratorom, a jej laboratorium można rozpocząć ponownie, chyba że nadal masz wyższą odznakę na tej samej ścieżce.
 
 ## Master
 
@@ -86,7 +86,7 @@ Odznaka Master również wygasa dwa lata po jej przyznaniu.
 
 ## Udostępnianie odznaki
 
-Każda odznaka ma własną publiczną stronę weryfikacji, która pokazuje odznakę, imię i nazwisko z Twojego profilu w obszarze roboczym certyfikacji, datę wystawienia, datę wygaśnięcia oraz informację, czy nadal jest ważna. Jeśli PlaidCloud utworzył tam Twoje konto przy rozpoczęciu laboratorium, to imię i nazwisko jest częścią adresu e-mail przed znakiem @, dopóki go nie zmienisz. Strona nigdy nie pokazuje Twojego całego adresu e-mail. Strona istnieje tylko wtedy, gdy odznaka jest publiczna.
+Każda odznaka ma własną publiczną stronę weryfikacji, która pokazuje odznakę, Twoje imię i nazwisko, datę wystawienia, datę wygaśnięcia oraz informację, czy nadal jest ważna. Imię i nazwisko to te z Twojego profilu w obszarze roboczym certyfikacji w chwili, gdy udostępniasz odznakę publicznie; jeśli PlaidCloud utworzył tam Twoje konto przy rozpoczęciu laboratorium, jest to część adresu e-mail przed znakiem @. Aby pokazać zmienione imię i nazwisko, ustaw odznakę jako prywatną, a potem ponownie jako publiczną. Strona nigdy nie pokazuje Twojego całego adresu e-mail. Strona istnieje tylko wtedy, gdy odznaka jest publiczna.
 
 W obszarze roboczym certyfikacji, pod każdą odznaką w **Twoje odznaki**:
 

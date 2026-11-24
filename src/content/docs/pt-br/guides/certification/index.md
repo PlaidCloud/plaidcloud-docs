@@ -69,7 +69,7 @@ Os laboratórios Fundamentos e Profissional não têm limite de tempo.
 
 ## Expiração
 
-Os selos expiram dois anos depois de conquistados. Um selo expirado deixa de aparecer em **Seus selos** ou para os administradores, e seu laboratório pode ser iniciado novamente.
+Os selos expiram dois anos depois de conquistados. Um selo expirado deixa de aparecer em **Seus selos** ou para os administradores, e seu laboratório pode ser iniciado novamente, a menos que você ainda tenha um selo superior na mesma trilha.
 
 ## Master
 
@@ -86,7 +86,7 @@ O selo Master também expira dois anos depois de concedido.
 
 ## Compartilhar um selo
 
-Cada selo tem a própria página pública de verificação, que mostra o selo, o nome do seu perfil no espaço de trabalho de certificação, quando foi emitido, quando expira e se ainda é válido. Se o PlaidCloud criou sua conta lá quando você iniciou um laboratório, esse nome é a parte do seu endereço de e-mail antes do @ até você alterá-lo. A página nunca mostra seu endereço de e-mail inteiro. A página existe somente enquanto o selo é público.
+Cada selo tem a própria página pública de verificação, que mostra o selo, seu nome, quando foi emitido, quando expira e se ainda é válido. O nome é o do seu perfil no espaço de trabalho de certificação quando você torna o selo público; se o PlaidCloud criou sua conta lá quando você iniciou um laboratório, é a parte do seu endereço de e-mail antes do @. Para mostrar um nome alterado, torne o selo privado e depois público novamente. A página nunca mostra seu endereço de e-mail inteiro. A página existe somente enquanto o selo é público.
 
 No espaço de trabalho de certificação, sob cada selo em **Seus selos**:
 

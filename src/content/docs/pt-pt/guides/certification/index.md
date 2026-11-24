@@ -69,7 +69,7 @@ Os laboratórios de Fundamentos e de Profissional não têm limite de tempo.
 
 ## Expiração
 
-Os emblemas expiram dois anos depois de os obter. Um emblema expirado deixa de aparecer em **Os seus emblemas** ou para os administradores, e o respetivo laboratório pode ser iniciado novamente.
+Os emblemas expiram dois anos depois de os obter. Um emblema expirado deixa de aparecer em **Os seus emblemas** ou para os administradores, e o respetivo laboratório pode ser iniciado novamente, a menos que ainda tenha um emblema superior no mesmo percurso.
 
 ## Master
 
@@ -86,7 +86,7 @@ O emblema Master também expira dois anos depois de ser concedido.
 
 ## Partilhar um emblema
 
-Cada emblema tem a sua própria página pública de verificação, que mostra o emblema, o nome do seu perfil na área de trabalho de certificação, quando foi emitido, quando expira e se ainda é válido. Se o PlaidCloud criou aí a sua conta quando iniciou um laboratório, esse nome é a parte do seu endereço de correio eletrónico antes do @ até o alterar. A página nunca mostra o seu endereço de correio eletrónico completo. A página só existe enquanto o emblema for público.
+Cada emblema tem a sua própria página pública de verificação, que mostra o emblema, o seu nome, quando foi emitido, quando expira e se ainda é válido. O nome é o do seu perfil na área de trabalho de certificação quando torna o emblema público; se o PlaidCloud aí criou a sua conta quando iniciou um laboratório, é a parte do seu endereço de correio eletrónico antes do @. Para mostrar um nome alterado, torne o emblema privado e depois público novamente. A página nunca mostra o seu endereço de correio eletrónico completo. A página só existe enquanto o emblema for público.
 
 Na área de trabalho de certificação, sob cada emblema em **Os seus emblemas**:
 

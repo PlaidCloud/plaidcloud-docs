@@ -27,24 +27,24 @@ Auf jedem Pfad wird Ihr Experten-Abzeichen anstelle Ihres Praktiker-Abzeichens a
 
 - einem Banner mit Ihrem Ziel, wenn ein Workspace-Administrator eines festgelegt hat, das angibt, ob Sie dieses Abzeichen bereits besitzen;
 - **Ihre Abzeichen**, mit dem Datum, an dem Sie jedes Abzeichen erworben haben, und dem Datum, an dem es abläuft;
-- **Labs**, einem Raster aus jedem Pfad gegenüber **Grundlagen**, **Praktiker** und **Experte**. Jede Zelle zeigt **Lab starten**, **Erworben** für ein Abzeichen, das Sie besitzen, oder, im Zertifizierungsarbeitsbereich, das Datum, an dem das Lab nach einer [Wartezeit](#die-wartezeit-von-7-tagen) wieder verfügbar ist. Die Zeile Ihres Ziels ist mit **Ihr Ziel** markiert, und ein Ziel Grundlagen oder Master markiert **Alle Pfade**;
+- **Labs**, einem Raster aus jedem Pfad gegenüber **Grundlagen**, **Praktiker** und **Experte**. Jede Zelle zeigt **Lab starten**, **Erworben** für ein Abzeichen, das Sie besitzen, oder, im Zertifizierungs-Workspace, das Datum, an dem das Lab nach einer [Wartezeit](#die-wartezeit-von-7-tagen) wieder verfügbar ist. Die Zeile Ihres Ziels ist mit **Ihr Ziel** markiert, und ein Ziel Grundlagen oder Master markiert **Alle Pfade**;
 - **Master**, mit der Anzahl der drei Experten-Abzeichen, die Sie besitzen.
 
 **Zurück zur Startseite** schließt den Bereich.
 
-## Der Zertifizierungsarbeitsbereich
+## Der Zertifizierungs-Workspace
 
-Labs laufen nur im Zertifizierungsarbeitsbereich von PlaidCloud. In jedem anderen Workspace fügt **Lab starten** Sie mit derselben E-Mail-Adresse dem Zertifizierungsarbeitsbereich als Mitglied hinzu, das bauen darf, und öffnet ihn in einem neuen Tab auf seinem eigenen Bereich **Zertifizierungen**. Wählen Sie dort erneut **Lab starten**, um das Lab zu starten.
+Labs laufen nur im Zertifizierungs-Workspace von PlaidCloud. In jedem anderen Workspace fügt **Lab starten** Sie mit derselben E-Mail-Adresse dem Zertifizierungs-Workspace als Mitglied hinzu, das bauen darf, und öffnet ihn in einem neuen Tab auf seinem eigenen Bereich **Zertifizierungen**. Wählen Sie dort erneut **Lab starten**, um das Lab zu starten.
 
-Beim ersten Mal sendet Ihnen PlaidCloud eine E-Mail, um ein Passwort für den Zertifizierungsarbeitsbereich festzulegen. Prüfen Sie Ihren Posteingang.
+Beim ersten Mal sendet Ihnen PlaidCloud eine E-Mail, um ein Passwort für den Zertifizierungs-Workspace festzulegen. Prüfen Sie Ihren Posteingang.
 
-Wenn Sie keinem PlaidCloud-Workspace angehören, wenden Sie sich an PlaidCloud, und wir laden Sie in den Zertifizierungsarbeitsbereich ein.
+Wenn Sie keinem PlaidCloud-Workspace angehören, wenden Sie sich an PlaidCloud, und wir laden Sie in den Zertifizierungs-Workspace ein.
 
 Ein Lab zu starten, abzubrechen und ein Abzeichen zu erwerben erfordert jeweils eine verifizierte E-Mail-Adresse, weil Ihre Abzeichen dazu gehören.
 
 ## So funktioniert ein Lab
 
-1. Wählen Sie im Zertifizierungsarbeitsbereich **Lab starten**. PlaidCloud erstellt das Projekt des Labs für Sie; nur Sie können es öffnen.
+1. Wählen Sie im Zertifizierungs-Workspace **Lab starten**. PlaidCloud erstellt das Projekt des Labs für Sie; nur Sie können es öffnen.
 2. Der Bereich zeigt das Lab: seinen Titel, wann Sie es gestartet haben, **Ihre Aufgabe** sowie **Zur Bewertung einreichen**, **Projekt öffnen** und **Abbrechen**. Solange ein Lab geöffnet ist, zeigt der Bereich es anstelle Ihrer Abzeichen und des Rasters.
 3. Wählen Sie **Projekt öffnen** und erledigen Sie die Aufgabe.
 4. Wählen Sie **Zur Bewertung einreichen**. Die Bewertung führt den Workflow des Labs aus und prüft dann, was diese Ausführung erzeugt hat; sie kann also so lange dauern wie die Ausführung.
@@ -69,7 +69,7 @@ Labs für Grundlagen und Praktiker haben kein Zeitlimit.
 
 ## Ablauf
 
-Abzeichen laufen zwei Jahre nach dem Erwerb ab. Ein abgelaufenes Abzeichen wird weder unter **Ihre Abzeichen** noch für Administratoren angezeigt, und sein Lab kann erneut gestartet werden.
+Abzeichen laufen zwei Jahre nach dem Erwerb ab. Ein abgelaufenes Abzeichen wird weder unter **Ihre Abzeichen** noch für Administratoren angezeigt, und sein Lab kann erneut gestartet werden, sofern Sie nicht weiterhin ein höheres Abzeichen auf demselben Pfad besitzen.
 
 ## Master
 
@@ -86,15 +86,15 @@ Auch das Master-Abzeichen läuft zwei Jahre nach seiner Vergabe ab.
 
 ## Ein Abzeichen teilen
 
-Jedes Abzeichen hat seine eigene öffentliche Verifizierungsseite, die das Abzeichen, den Namen in Ihrem Profil im Zertifizierungsarbeitsbereich, das Ausstellungsdatum, das Ablaufdatum und die weiterhin bestehende Gültigkeit zeigt. Hat PlaidCloud dort Ihr Konto angelegt, als Sie ein Lab gestartet haben, ist dieser Name der Teil Ihrer E-Mail-Adresse vor dem @, bis Sie ihn ändern. Die Seite zeigt nie Ihre vollständige E-Mail-Adresse. Die Seite existiert nur, solange das Abzeichen öffentlich ist.
+Jedes Abzeichen hat seine eigene öffentliche Verifizierungsseite, die das Abzeichen, Ihren Namen, das Ausstellungsdatum, das Ablaufdatum und die weiterhin bestehende Gültigkeit zeigt. Der Name ist der in Ihrem Profil im Zertifizierungs-Workspace, wenn Sie das Abzeichen öffentlich machen; hat PlaidCloud dort Ihr Konto angelegt, als Sie ein Lab gestartet haben, ist es der Teil Ihrer E-Mail-Adresse vor dem @. Um einen geänderten Namen anzuzeigen, machen Sie das Abzeichen privat und dann erneut öffentlich. Die Seite zeigt nie Ihre vollständige E-Mail-Adresse. Die Seite existiert nur, solange das Abzeichen öffentlich ist.
 
-Im Zertifizierungsarbeitsbereich unter jedem Abzeichen in **Ihre Abzeichen**:
+Im Zertifizierungs-Workspace unter jedem Abzeichen in **Ihre Abzeichen**:
 
 - **Öffentlich machen** veröffentlicht die Verifizierungsseite des Abzeichens. Deaktivieren Sie die Option, um die Seite offline zu nehmen.
 - **Link kopieren** kopiert die Adresse der Seite.
 - **Zu LinkedIn hinzufügen** öffnet das Formular von LinkedIn zum Hinzufügen einer Zertifizierung, ausgefüllt mit den Daten des Abzeichens.
 
-**Link kopieren** und **Zu LinkedIn hinzufügen** funktionieren nur, solange das Abzeichen öffentlich ist. In jedem anderen Workspace behält ein öffentliches Abzeichen **Link kopieren** und **Zu LinkedIn hinzufügen**, und ein Abzeichen, das nicht öffentlich ist, bietet **Im Zertifizierungsarbeitsbereich teilen** an, was den Zertifizierungsarbeitsbereich auf seinem Bereich **Zertifizierungen** öffnet.
+**Link kopieren** und **Zu LinkedIn hinzufügen** funktionieren nur, solange das Abzeichen öffentlich ist. In jedem anderen Workspace behält ein öffentliches Abzeichen **Link kopieren** und **Zu LinkedIn hinzufügen**, und ein Abzeichen, das nicht öffentlich ist, bietet **Im Zertifizierungsarbeitsbereich teilen** an, was den Zertifizierungs-Workspace auf seinem Bereich **Zertifizierungen** öffnet.
 
 Das Teilen erfordert eine verifizierte E-Mail-Adresse. Solange Ihre nicht verifiziert ist, listet **Ihre Abzeichen** keine auf.
 
