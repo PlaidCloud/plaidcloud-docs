@@ -14,4 +14,4 @@ Desde aquí puede administrar los pasos del flujo de trabajo, lo que incluye cre
 
 ## Crear un paso
 
-Haga clic en **Crear paso** y elija un tipo de paso. Si hay un paso seleccionado en la lista, un paso nuevo Table Extract, Table Inner Join, Table Outer Join, Table Anti Join, Table Cross Join o Table Lookup parte de la tabla que escribe ese paso: pasa a ser el origen del paso nuevo (**Table 1** en una combinación) y las columnas se rellenan como lo haría **Inspeccionar origen**. Una nota al pie del formulario lo indica. Cambie el origen si el paso nuevo debe leer otra cosa. No se guarda nada hasta que guarde el paso.
+Haga clic en **Crear paso** y elija un tipo de paso. Si hay un paso seleccionado en la lista, un paso nuevo Table Extract, Table Inner Join, Table Outer Join, Table Anti Join, Table Cross Join o Table Lookup parte de la tabla que escribe ese paso: pasa a ser el origen del paso nuevo (la tabla izquierda, en una combinación o en una búsqueda) y las columnas se rellenan como lo haría **Inspeccionar origen**. Una nota al pie del formulario lo indica. Cambie el origen si el paso nuevo debe leer otra cosa. No se guarda nada hasta que guarde el paso.

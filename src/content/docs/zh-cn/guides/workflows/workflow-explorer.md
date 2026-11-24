@@ -14,4 +14,4 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## 创建步骤
 
-单击**创建步骤**并选择步骤类型。如果列表中选中了一个步骤，则新的 Table Extract、Table Inner Join、Table Outer Join、Table Anti Join、Table Cross Join 或 Table Lookup 步骤会以该步骤所写入的表为起点：该表成为新步骤的源（联接步骤中为 **Table 1**），并且各列会按照**检查源**的方式自动填充。表单底部的说明会提示这一点。如果新步骤应读取其他内容，请更改源。在您保存该步骤之前不会保存任何内容。
+单击**创建步骤**并选择步骤类型。如果列表中选中了一个步骤，则新的 Table Extract、Table Inner Join、Table Outer Join、Table Anti Join、Table Cross Join 或 Table Lookup 步骤会以该步骤所写入的表为起点：该表成为新步骤的源（联接或查找时为左表），并且各列会按照**检查源**的方式自动填充。表单底部的说明会提示这一点。如果新步骤应读取其他内容，请更改源。在您保存该步骤之前不会保存任何内容。
