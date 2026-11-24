@@ -14,4 +14,4 @@ Stąd możesz zarządzać krokami przepływu pracy, w tym tworzyć lub modyfikow
 
 ## Tworzenie kroku
 
-Kliknij **Utwórz krok** i wybierz typ kroku. Jeśli na liście zaznaczono jeden krok, nowy krok Table Extract, Table Inner Join, Table Outer Join, Table Anti Join, Table Cross Join lub Table Lookup zaczyna od tabeli, którą ten krok zapisuje: staje się ona źródłem nowego kroku (**Table 1** dla złączenia), a kolumny są wypełniane tak, jak wypełniłoby je **Sprawdź źródło**. Informuje o tym uwaga na dole formularza. Zmień źródło, jeśli nowy krok ma odczytywać coś innego. Nic nie jest zapisywane, dopóki nie zapiszesz kroku.
+Kliknij **Utwórz krok** i wybierz typ kroku. Jeśli na liście zaznaczono jeden krok, nowy krok Table Extract, Table Inner Join, Table Outer Join, Table Anti Join, Table Cross Join lub Table Lookup zaczyna od tabeli, którą ten krok zapisuje: staje się ona źródłem nowego kroku (lewa tabela, dla złączenia lub wyszukiwania), a kolumny są wypełniane tak, jak wypełniłoby je **Sprawdź źródło**. Informuje o tym uwaga na dole formularza. Zmień źródło, jeśli nowy krok ma odczytywać coś innego. Nic nie jest zapisywane, dopóki nie zapiszesz kroku.

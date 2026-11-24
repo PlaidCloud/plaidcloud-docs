@@ -14,4 +14,4 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## 단계 만들기
 
-**단계 만들기**를 클릭하고 단계 유형을 선택합니다. 목록에서 단계 하나를 선택한 경우, 새 Table Extract, Table Inner Join, Table Outer Join, Table Anti Join, Table Cross Join 또는 Table Lookup 단계는 선택한 단계가 기록하는 테이블에서 시작합니다. 그 테이블이 새 단계의 소스가 되며(조인의 경우 **Table 1**), 열은 **소스 검사**가 채울 때와 같이 채워집니다. 양식 맨 아래의 참고 문구에 이 내용이 표시됩니다. 새 단계가 다른 대상을 읽어야 한다면 소스를 변경하십시오. 단계를 저장하기 전에는 아무것도 저장되지 않습니다.
+**단계 만들기**를 클릭하고 단계 유형을 선택합니다. 목록에서 단계 하나를 선택한 경우, 새 Table Extract, Table Inner Join, Table Outer Join, Table Anti Join, Table Cross Join 또는 Table Lookup 단계는 선택한 단계가 기록하는 테이블에서 시작합니다. 그 테이블이 새 단계의 소스가 되며(조인 또는 조회의 경우 왼쪽 테이블), 열은 **소스 검사**가 채울 때와 같이 채워집니다. 양식 맨 아래의 참고 문구에 이 내용이 표시됩니다. 새 단계가 다른 대상을 읽어야 한다면 소스를 변경하십시오. 단계를 저장하기 전에는 아무것도 저장되지 않습니다.
