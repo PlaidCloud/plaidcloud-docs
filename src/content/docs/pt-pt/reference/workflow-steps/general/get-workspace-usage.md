@@ -1,6 +1,6 @@
 ---
 title: Passo Get Workspace Usage
-description: Escreva numa tabela do projeto os totais de utilização da área de trabalho dos Relatórios de utilização, por dia ou por mês, para acompanhar a adoção ou alimentar um passo seguinte.
+description: Escreva a utilização da área de trabalho numa tabela do projeto como atividade, membros, conteúdo ou tendências, para comunicar a adoção ou alimentar um passo seguinte.
 sidebar:
   order: 12
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/get-workspace-usage.md
@@ -8,59 +8,32 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## Descrição
 
-Escreve numa tabela do projeto a forma como a área de trabalho é utilizada. Utilize-o para acompanhar a adoção ao longo do tempo, para comunicar a utilização por departamento ou equipa, para criar os seus próprios painéis de controlo ou para assinalar uma quebra de atividade num fluxo de trabalho agendado. Os valores são os mesmos que apresentam os [Relatórios de utilização](/pt-pt/administration/access/usage-reports/).
+Escreve numa tabela do projeto a forma como a área de trabalho é utilizada. Utilize-o para acompanhar a adoção ao longo do tempo, para comunicar a utilização por departamento ou equipa, para criar os seus próprios painéis de controlo ou para assinalar uma quebra de atividade num fluxo de trabalho agendado. Os valores provêm dos mesmos dados de utilização que os [Relatórios de utilização](/pt-pt/administration/access/usage-reports/), e cada conjunto de dados abrange todas as áreas.
 
-Três conjuntos de dados contêm apenas totais: nenhuma linha identifica um membro e os caminhos dos notebooks são substituídos por `*`. Os outros quatro (**Membros**, **Diário por membro**, **Conteúdo** e **Conteúdo por membro**) destinam-se à elaboração de relatórios. **Membros**, **Diário por membro** e **Conteúdo por membro** contêm a identidade dos membros (ID de utilizador, nome de utilizador, correio eletrónico, nome próprio, apelido e grupos de segurança), pelo que deve tratar a tabela de destino como trataria qualquer lista de membros. Cada execução do passo fica registada no Registo de segurança.
+**Atividade** e **Membros** contêm a identidade dos membros (ID de utilizador, nome de utilizador, correio eletrónico, nome próprio, apelido e grupos de segurança). A tabela de destino é uma tabela do projeto normal, pelo que qualquer pessoa com acesso ao projeto a pode ler: trate-a como trataria qualquer lista de membros. Cada execução que escreve a tabela fica registada no Registo de segurança.
 
 ## Configuração
 
 ### Dados de utilização
 
-**Conjunto de dados** define o que contém cada linha:
+**Conjunto de dados** define o que contém cada linha. A linha por baixo indica as linhas e as colunas do conjunto que escolher.
 
 | Conjunto de dados | Valor | Uma linha por | Contém identidade |
 |---|---|---|---|
-| **Diário por item** | `daily_item` | Dia, área, evento e assunto | Não |
-| **Mensal por item** | `monthly_item` | Mês, área, evento e assunto | Não |
-| **Totais mensais** (predefinido) | `monthly_tenant` | Mês e área | Não |
-| **Membros** | `members` | Pessoa na área de trabalho | Sim |
-| **Diário por membro** | `daily_user` | Pessoa, dia e área | Sim |
-| **Conteúdo** | `content` | Painel de controlo, aplicação ou notebook | Não |
-| **Conteúdo por membro** | `content_user` | Pessoa e item | Sim |
+| **Atividade** (predefinido) | `activity` | Dia, membro, ação e item | Sim |
+| **Membros** | `members` | Membro, incluindo membros sem atividade | Sim |
+| **Conteúdo** | `content` | Painel de controlo, aplicação e notebook, incluindo painéis de controlo e aplicações que ninguém utilizou | Não |
+| **Tendências** | `trends` | Dia, semana e mês do intervalo | Não |
 
-**Área** limita as linhas a uma área. Deixe em **Todas as áreas** para incluir todas.
-
-| Área | Valor |
-|---|---|
-| **Todas as áreas** (predefinido) | `""` |
-| **Aplicação PlaidCloud** | `plaidclient` |
-| **Painéis de controlo** | `superset` |
-| **Aplicações** | `panel` |
-| **Visitas a aplicações** | `panel_visit` |
-| **Servidores de notebooks** | `jupyterhub` |
-| **Notebooks** | `jupyter` |
-
-Os valores são os que um passo guarda quando o cria ou edita através da API ou de um assistente de IA.
+Os valores são os que um passo guarda quando o cria ou edita através da API ou de um assistente de IA. Um passo guardado com um conjunto de dados que não consta desta lista falha quando é executado, indicando os quatro conjuntos de dados: abra-o, escolha um **Conjunto de dados** e guarde-o. Um passo **Membros** ou **Conteúdo** guardado anteriormente continua a ser executado e escreve as colunas abaixo, e um passo que estava limitado a uma área passa a abranger todas as áreas.
 
 ### Colunas
 
-#### Diário por item
-
-`day`, `source`, `event`, `subject`, `events`.
-
-#### Mensal por item
-
-`month`, `source`, `event`, `subject`, `users`, `events`, `unattributed_events`, `coverage_start`, `partial`.
-
-#### Totais mensais
-
-`month`, `source`, `active_users`, `coverage_start`, `partial`.
-
-`partial` é verdadeiro para um mês que o histórico não cobre na totalidade, e `coverage_start` é a data em que a recolha começou. Um mês é incluído 3 dias após o seu fecho, quando os respetivos valores já estabilizaram.
+As datas e os dias são guardados como carimbos de data/hora à meia-noite UTC.
 
 #### Colunas de membros
 
-**Membros**, **Diário por membro** e **Conteúdo por membro** começam com as mesmas sete colunas:
+**Atividade** e **Membros** incluem estas colunas:
 
 | Coluna | Contém |
 |---|---|
@@ -72,59 +45,92 @@ Os valores são os que um passo guarda quando o cria ou edita através da API ou
 | `is_active` | Verdadeiro quando o membro está ativo, falso quando está desativado. |
 | `groups` | Os grupos de segurança do membro, separados por `; `. |
 
-`groups` lista apenas os grupos de nível superior. Os subgrupos não são expandidos.
+`groups` lista os grupos a que o membro pertence diretamente. Os subgrupos não são expandidos.
 
-#### Membros
-
-As colunas de membros, seguidas de:
+#### Atividade
 
 | Coluna | Contém |
 |---|---|
-| `first_seen` | O primeiro dia em que o membro utilizou o PlaidCloud, independentemente do intervalo de datas. Quando define uma **Área**, é o primeiro dia nessa área. |
-| `last_seen` | O último dia de atividade do membro dentro do intervalo. |
+| `day` | O dia. |
+| As colunas de membros | Como acima. |
+| `member` | O nome próprio e o apelido do membro, ou o nome de utilizador quando nenhum deles está definido. |
+| `area` | `PlaidCloud app`, `Dashboards`, `Apps` ou `Notebooks`. |
+| `action` | `Opened app`, `Opened screen`, `Opened step`, `Saved step`, `Used palette action`, `Viewed dashboard`, `Used chart`, `Opened notebook` ou `Saved notebook`. |
+| `item_type` | `App area`, `Screen`, `Step`, `Palette action`, `Dashboard`, `Chart`, `App` ou `Notebook`. |
+| `item_id` | O ID do item. Para um notebook, o respetivo caminho. |
+| `item_name` | O nome do item: um ecrã ou uma área da aplicação por extenso, como `Members List`; o tipo de passo; o nome do painel de controlo, do gráfico ou da aplicação; ou o caminho do notebook. Quando não é possível encontrar um nome, o ID do item. |
+| `events` | Quantas vezes o membro o fez nesse dia. |
+| `source` | A chave da área, tal como a designam as exportações dos [Relatórios de utilização](/pt-pt/administration/access/usage-reports/). |
+| `event` | A chave da ação, tal como a designam as exportações. |
+
+`member` e as colunas de membros dependem de quem a realizou:
+
+- A atividade que não pode ser associada a nenhum membro tem `Unattributed` em `member` e as colunas de membros em branco.
+- Um membro entretanto eliminado mantém apenas `user_id`, e `member` é `Deleted user`.
+- Qualquer outra conta, como uma conta de serviço ou um agente, mantém apenas `user_id`, e `member` é o respetivo nome de utilizador.
+
+`Used chart` conta uma vez por membro e gráfico em cada janela de 5 minutos, pelo que mede a utilização, não as consultas.
+
+#### Membros
+
+| Coluna | Contém |
+|---|---|
+| As colunas de membros | Como acima. |
+| `member` | O nome próprio e o apelido do membro, ou o nome de utilizador quando nenhum deles está definido. |
+| `created` | O dia em que o membro foi adicionado à área de trabalho, quando é conhecido. |
+| `status` | `Active` quando o membro esteve ativo no intervalo, `Dormant` quando utilizou o PlaidCloud antes mas não no intervalo, `Never active` quando não há utilização registada até ao fim do intervalo. |
+| `first_seen` | O primeiro dia registado em que o membro utilizou o PlaidCloud, independentemente do intervalo. |
+| `last_seen` | O último dia de atividade do membro no intervalo. |
 | `active_days` | Dias com atividade no intervalo. |
 | `events` | Eventos de atividade no intervalo. |
-| `active_minutes` | Minutos de atividade. Os minutos sobrepostos entre áreas são contados uma só vez. |
-| `session_minutes` | Minutos em sessões. |
-| `app_open_minutes` | Minutos em que o membro teve aplicações Panel abertas. |
+| `active_minutes` | Minutos de atividade no intervalo. |
+| `session_minutes` | Minutos em sessões no intervalo. |
+| `app_open_minutes` | Minutos em que o membro teve aplicações Panel abertas no intervalo. As pré-visualizações do Studio não são contadas. |
 
-Todos os membros têm uma linha, exceto aqueles cuja utilização foi apagada. As contas de serviço e os agentes não são listados. Um membro sem atividade no intervalo tem valores em branco após `groups`. Os totais coincidem com os [Relatórios de utilização](/pt-pt/administration/access/usage-reports/), exceto no caso de membros eliminados desde então.
-
-#### Diário por membro
-
-As colunas de membros, seguidas de `day`, `source` (a área), `events`, `active_minutes`, `session_minutes`, `first_at` e `last_at` (as horas da primeira e da última atividade nesse dia).
+Todos os membros têm uma linha, incluindo os desativados, exceto aqueles cuja utilização foi apagada. As contas de serviço e os agentes não são listados. Um membro sem atividade no intervalo não tem `last_seen`, e as restantes colunas de atividade ficam em branco ou a zero.
 
 #### Conteúdo
 
 | Coluna | Contém |
 |---|---|
-| `type` | `dashboard`, `panel_app`, `wasm_app` ou `notebook`. |
-| `subject` | O ID do item. Todos os notebooks partilham uma só linha, com `*` aqui. |
-| `name` | O nome do item, ou `*` para notebooks. |
-| `deleted` | Verdadeiro quando o item foi entretanto eliminado. |
-| `users` | Membros que o abriram. |
-| `opens` | Número de vezes que foi aberto. |
-| `last_used` | Quando foi utilizado pela última vez. |
-| `app_open_minutes` | Minutos em que as aplicações Panel estiveram abertas. |
+| `type` | `Dashboard`, `App` ou `Notebook`. |
+| `item_id` | O ID do painel de controlo ou da aplicação, ou o caminho do notebook. |
+| `name` | O nome do painel de controlo ou da aplicação, ou o caminho do notebook. Em branco quando o item foi eliminado ou não é possível ler os nomes. |
+| `deleted` | Verdadeiro quando o painel de controlo ou a aplicação foi entretanto eliminado. |
+| `unused` | Verdadeiro para um painel de controlo ou uma aplicação que ninguém utilizou no intervalo. |
+| `users` | Membros que o utilizaram no intervalo. |
+| `opens` | Número de vezes que foi aberto no intervalo, incluindo as aberturas que não podem ser associadas a um membro. |
+| `last_used` | O último dia em que foi utilizado no intervalo. Para um item não utilizado, o último dia em que foi aberto antes do fim do intervalo, ou em branco. |
+| `app_open_minutes` | Minutos em que uma aplicação Panel esteve aberta no intervalo. Em branco para painéis de controlo, notebooks e aplicações Dash e WASM. |
 
-#### Conteúdo por membro
+Cada caminho de notebook tem a sua própria linha. As linhas listam primeiro o que foi utilizado, começando pelo que teve mais utilizadores, e depois os painéis de controlo e as aplicações que ninguém utilizou. Estes são os painéis de controlo publicados e as aplicações que já existiam quando o intervalo começou. Só são listados quando o intervalo começa dentro dos dados diários que são conservados, a utilização desse tipo de item já estava a ser recolhida nessa altura e é possível ler os nomes. As pré-visualizações de aplicações no Studio ficam de fora.
 
-As colunas de membros, seguidas de `type`, `subject`, `name` (como em **Conteúdo**), `opens` (número de vezes que este membro abriu o item) e `last_day` (o último dia de utilização do membro).
+#### Tendências
 
-### Notas sobre os conjuntos de dados de membros
+| Coluna | Contém |
+|---|---|
+| `period` | `Day`, `Week` ou `Month`. |
+| `period_start` | O primeiro dia do período. As semanas começam à segunda-feira. |
+| `active_members` | Membros ativos no período, dentro do intervalo. |
+| `events` | Eventos de atividade no período. |
+| `active_minutes` | Minutos de atividade no período. |
+| `session_minutes` | Minutos em sessões no período. |
+| `active_members_7d` | Numa linha `Day`, membros ativos nos 7 dias que terminam nesse dia. |
+| `active_members_28d` | Numa linha `Day`, membros ativos nos 28 dias que terminam nesse dia. |
+| `stickiness` | Numa linha `Day`, `active_members` a dividir por `active_members_28d`. |
+| `complete` | Falso para hoje, para uma semana ou um mês que contenha hoje e para uma semana ou um mês que o intervalo corta. |
 
-- A atividade de agentes, contas de serviço e membros eliminados desde então tem as colunas de identidade em branco. Um membro eliminado mantém o `user_id` e mais nada.
-- As aberturas em **Conteúdo** podem exceder a soma das aberturas em **Conteúdo por membro**. A diferença são aberturas que não podem ser atribuídas a um membro, como as visualizações incorporadas ou de convidados de um painel de controlo. **Conteúdo** conta-as e **Conteúdo por membro** não pode contá-las.
+Cada dia do intervalo, a partir de onde começam os dados diários conservados, tem uma linha, mesmo sem utilização, tal como cada semana e cada mês em que esses dias se inserem. `active_members_7d`, `active_members_28d` e `stickiness` ficam em branco nas linhas `Week` e `Month`, e numa linha `Day` cujos 7 ou 28 dias recuam para antes dos dados diários que são conservados. Um mês que começa antes dos dados diários conservados e se encontra por inteiro no intervalo provém dos resumos mensais: tem `active_members`, mas eventos e minutos em branco, e `complete` indica se o resumo cobriu o mês inteiro.
 
 ### Exemplo: minutos ativos por departamento
 
-**Membros** e **Conteúdo por membro** contêm o `email` do membro, em minúsculas, pelo que pode associá-los a uma tabela sua, como uma tabela mestre de RH ou da organização, e elaborar relatórios por departamento.
+**Atividade** e **Membros** contêm o `email` do membro, em minúsculas, pelo que pode associá-los a uma tabela sua, como uma tabela mestre de RH ou da organização, e elaborar relatórios por departamento.
 
 1. Adicione um passo **Get Workspace Usage** com **Conjunto de dados** definido como **Membros** e uma tabela de destino como `usage_members`.
 2. Adicione um passo **Tabela: Junção interna** que una `usage_members` à sua tabela da organização onde as colunas `email` em minúsculas coincidam. Mantenha o departamento da sua tabela e as colunas `active_minutes` e `events` de `usage_members`.
 3. No mesmo passo, agregue por departamento e some `active_minutes`.
 
-O resultado são os minutos ativos por departamento. Os membros que não constam da sua tabela da organização são excluídos por uma junção interna, pelo que deve utilizar uma junção à esquerda se quiser vê-los. Repita com um segundo passo sobre **Conteúdo por membro** e some `opens` por departamento para comunicar quem utiliza que painéis de controlo e aplicações.
+O resultado são os minutos ativos por departamento. Os membros que não constam da sua tabela da organização são excluídos por uma junção interna, pelo que deve utilizar uma junção à esquerda se quiser vê-los. Repita com um segundo passo sobre **Atividade** e some `events` por departamento e `item_name` para comunicar quem utiliza que painéis de controlo e aplicações.
 
 ### Intervalo de datas
 
@@ -137,7 +143,9 @@ O resultado são os minutos ativos por departamento. Os membros que não constam
 | **Mês até à data** | `month_to_date` | Desde o primeiro dia deste mês até hoje. |
 | **Entre datas** | `dates` | De **Data de início** a **Data de fim**. Deixe **Data de fim** vazia para ler até hoje. |
 
-Os dias e as datas são UTC. **Dias**, **Data de início** e **Data de fim** aceitam uma [variável](/pt-pt/guides/workflows/manage-workflow-variables/) como `{report_start}`, bem como um número ou uma data `YYYY-MM-DD`. O início não pode ser posterior ao fim.
+Os dias e as datas são UTC. **Dias** aceita um número inteiro. **Data de início** e **Data de fim** aceitam uma data `YYYY-MM-DD` ou uma [variável](/pt-pt/guides/workflows/manage-workflow-variables/) como `{report_start}`. O início não pode ser posterior ao fim.
+
+Os dados diários são conservados durante 180 dias e os resumos mensais durante 25 meses.
 
 ### Destino da utilização
 
@@ -145,15 +153,25 @@ Os dias e as datas são UTC. **Dias**, **Data de início** e **Data de fim** ace
 
 ## Avisos
 
-Estes não fazem o passo falhar. Este termina com um aviso que indica o que aconteceu e escreve a tabela na mesma:
+Estes não fazem o passo falhar. Este termina com o aviso e substitui a tabela na mesma, com as colunas do conjunto de dados:
 
-- A recolha de utilização ainda não está configurada para a área de trabalho.
-- Não houve utilização no intervalo.
-- O intervalo começa antes do que é conservado, pelo que foi cortado para começar onde o histórico começa. Os dados diários são conservados durante 180 dias e os dados mensais durante 25 meses.
+| Aviso | Significado |
+|---|---|
+| "Usage data is not available yet: the usage database has not been set up on this workspace." | A recolha de utilização ainda não está configurada para a área de trabalho. |
+| "Usage data is not available right now: the usage database could not be reached." | Não foi possível ler os dados de utilização. Execute o passo novamente mais tarde. |
+| "No usage from *start* to *end*." | Não houve utilização no intervalo. |
+| "Usage before *date* isn't kept, so the range was clipped to start there." | O intervalo começa antes dos dados diários que são conservados, pelo que a atividade é contada a partir de *date*. **Tendências** continua a ter os meses completos anteriores a essa data, a partir dos resumos mensais. |
+| "This took too long to compute: narrow the date range." | A leitura esgotou o tempo, pelo que a tabela não tem linhas. Escolha um intervalo mais curto. |
+| "Some names are unavailable right now, so those items are named by their id." | Apenas **Atividade**. Não foi possível ler alguns nomes de painéis de controlo, gráficos ou aplicações, pelo que `item_name` contém o ID. |
+| "Members could not be read right now, so they are named by their id." | Apenas **Atividade**. Não foi possível ler a lista de membros, pelo que `member` contém o ID do membro e, das colunas de membros, só `user_id` está preenchida. |
+| "Names are unavailable right now, so items nobody used are not listed." | Apenas **Conteúdo**. Não foi possível ler os nomes dos painéis de controlo ou das aplicações, pelo que só são listados os itens utilizados. |
+| "Activity before *date* isn't kept, so items nobody used in this range can't be listed." | Apenas **Conteúdo**. O intervalo começa antes dos dados diários que são conservados, pelo que só são listados os itens utilizados. |
+
+Quando não é possível ler a lista de membros, **Membros** falha em vez disso e deixa a tabela de destino como estava.
 
 ## Registo de segurança
 
-Cada execução escreve uma entrada no Registo de segurança que regista o conjunto de dados, o intervalo, a tabela de destino, o fluxo de trabalho, o passo e a execução, e o número de linhas escritas.
+Cada execução que escreve a tabela acrescenta uma entrada ao Registo de segurança que regista o conjunto de dados, o intervalo, a tabela de destino e o respetivo projeto, o fluxo de trabalho, o passo e a execução, o número de linhas escritas e, para **Atividade** e **Membros**, que as linhas contêm a identidade dos membros.
 
 ## Relacionado
 
