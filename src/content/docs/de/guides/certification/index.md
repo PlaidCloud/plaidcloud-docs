@@ -28,7 +28,8 @@ Auf jedem Pfad wird Ihr Experten-Abzeichen anstelle Ihres Praktiker-Abzeichens a
 - einem Banner mit Ihrem Ziel, wenn ein Workspace-Administrator eines festgelegt hat, das angibt, ob Sie dieses Abzeichen bereits besitzen;
 - **Ihre Abzeichen**, mit dem Datum, an dem Sie jedes Abzeichen erworben haben, und dem Datum, an dem es abläuft;
 - **Labs**, einem Raster aus jedem Pfad gegenüber **Grundlagen**, **Praktiker** und **Experte**. Jede Zelle zeigt **Lab starten**, **Erworben** für ein Abzeichen, das Sie besitzen, oder, im Zertifizierungs-Workspace, das Datum, an dem das Lab nach einer [Wartezeit](#die-wartezeit-von-7-tagen) wieder verfügbar ist. Die Zeile Ihres Ziels ist mit **Ihr Ziel** markiert, und ein Ziel Grundlagen oder Master markiert **Alle Pfade**;
-- **Master**, mit der Anzahl der drei Experten-Abzeichen, die Sie besitzen.
+- **Master**, mit der Anzahl der drei Experten-Abzeichen, die Sie besitzen;
+- **Zertifizierungsleitfaden ›**, der diese Anleitung öffnet.
 
 **Zurück zur Startseite** schließt den Bereich.
 
@@ -40,18 +41,18 @@ Beim ersten Mal sendet Ihnen PlaidCloud eine E-Mail, um ein Passwort für den Ze
 
 Wenn Sie keinem PlaidCloud-Workspace angehören, wenden Sie sich an PlaidCloud, und wir laden Sie in den Zertifizierungs-Workspace ein.
 
-Ein Lab zu starten, abzubrechen und ein Abzeichen zu erwerben erfordert jeweils eine verifizierte E-Mail-Adresse, weil Ihre Abzeichen dazu gehören.
+Ein Lab zu starten, abzubrechen und ein Abzeichen zu erwerben erfordert jeweils eine verifizierte E-Mail-Adresse, weil Ihre Abzeichen dazu gehören. In jedem anderen Workspace erfordert **Lab starten**, dass Ihre E-Mail-Adresse in diesem Workspace verifiziert ist. Dort öffnen **Lab starten** und **Im Zertifizierungsarbeitsbereich teilen** den Zertifizierungs-Workspace pro E-Mail-Adresse nur eine begrenzte Anzahl Male pro Tag; danach versuchen Sie es am nächsten Tag erneut.
 
 ## So funktioniert ein Lab
 
 1. Wählen Sie im Zertifizierungs-Workspace **Lab starten**. PlaidCloud erstellt das Projekt des Labs für Sie; nur Sie können es öffnen.
 2. Der Bereich zeigt das Lab: seinen Titel, wann Sie es gestartet haben, **Ihre Aufgabe** sowie **Zur Bewertung einreichen**, **Projekt öffnen** und **Abbrechen**. Solange ein Lab geöffnet ist, zeigt der Bereich es anstelle Ihrer Abzeichen und des Rasters.
 3. Wählen Sie **Projekt öffnen** und erledigen Sie die Aufgabe.
-4. Wählen Sie **Zur Bewertung einreichen**. Die Bewertung führt den Workflow des Labs aus und prüft dann, was diese Ausführung erzeugt hat; sie kann also so lange dauern wie die Ausführung.
+4. Wählen Sie **Zur Bewertung einreichen**. Die Bewertung führt den Workflow des Labs aus und prüft dann, was diese Ausführung erzeugt hat; sie kann also so lange dauern wie die Ausführung. Sie läuft im Hintergrund: Der Bereich zeigt **Ihr Lab wird bewertet** und prüft, ob das Ergebnis vorliegt, und **Zur Bewertung einreichen** und **Abbrechen** sind nicht verfügbar, bis die Bewertung endet. Sie können den Bereich oder PlaidCloud verlassen, während bewertet wird; wenn Sie **Zertifizierungen** erneut öffnen, wartet der Bereich weiter auf das Ergebnis oder zeigt es an, falls die Bewertung beendet ist. Wenn der Bereich den Server bei einer langen Bewertung nicht erreichen kann, ergänzt er *Server nicht erreichbar; es wird weiter versucht…* und prüft weiter.
    - Wenn jede Prüfung bestanden wird, gehört das Abzeichen Ihnen, und das Lab-Projekt wird gelöscht.
    - Wenn eine Prüfung fehlschlägt, listet **Letztes Ergebnis** jede Prüfung als **Bestanden** oder **Fehlgeschlagen** auf. Eine fehlgeschlagene Prüfung sagt, was falsch war, und hat einen Link **Anleitung ›** zur Anleitung, die das Thema behandelt. Korrigieren Sie Ihr Projekt und reichen Sie erneut ein.
 
-Solange das Lab geöffnet ist, können Sie so oft einreichen, wie Sie möchten. Wenn Sie einreichen, während der Workflow des Labs bereits läuft, wird nichts bewertet; warten Sie, bis die Ausführung beendet ist, und reichen Sie dann erneut ein.
+Solange das Lab geöffnet ist, können Sie so oft einreichen, wie Sie möchten. Wenn Sie einreichen, während der Workflow des Labs bereits läuft, wird nichts bewertet; warten Sie, bis die Ausführung beendet ist, und reichen Sie dann erneut ein. Wenn die Bewertung stoppt, bevor sie fertig ist, sagt **Letztes Ergebnis** das; reichen Sie erneut ein.
 
 Wenn jede Prüfung bestanden wird, Ihre E-Mail-Adresse aber nicht verifiziert ist, wird kein Abzeichen vergeben. Verifizieren Sie Ihre E-Mail-Adresse und reichen Sie dann erneut ein.
 
@@ -59,13 +60,15 @@ Wenn jede Prüfung bestanden wird, Ihre E-Mail-Adresse aber nicht verifiziert is
 
 Experten-Labs sind zeitlich begrenzt: Das Raster **Labs** zeigt **Zeitlich begrenzt · 4 Std.**, und ein geöffnetes Experten-Lab zeigt an, wie viele Minuten noch bleiben. Die Uhr startet, wenn Sie das Lab starten, und läuft weiter, ob Sie daran arbeiten oder nicht.
 
-Sobald die Zeit abgelaufen ist, kann das Lab nicht mehr bestanden werden. Ihr nächstes Einreichen beendet den Versuch, löscht das Lab-Projekt und startet die Wartezeit von 7 Tagen.
+Eine Einreichung, die Sie vor Ablauf der Zeit vornehmen, wird auch dann bewertet, wenn die Bewertung erst danach endet. Wenn diese Bewertung stoppt, bevor sie fertig ist, oder wenn jede Prüfung bestanden wird, aber noch kein Abzeichen vergeben werden kann, können Sie nach Ablauf der Zeit noch mindestens einen Tag lang erneut einreichen.
+
+Andernfalls kann das Lab nach Ablauf der Zeit nicht mehr bestanden werden. Ihr nächstes Einreichen beendet den Versuch, löscht das Lab-Projekt und startet die Wartezeit von 7 Tagen. Wenn Sie nicht erneut einreichen, beendet die nächtliche Bereinigung von PlaidCloud den Versuch auf dieselbe Weise.
 
 Labs für Grundlagen und Praktiker haben kein Zeitlimit.
 
 ### Die Wartezeit von 7 Tagen
 
-**Abbrechen** löscht Ihr Lab-Projekt und beendet den Versuch. Sie bestätigen es zuvor. Wenn Sie ein Lab abbrechen oder bei einem Experten-Lab die Zeit abläuft, beginnt eine Wartezeit von 7 Tagen, bevor Sie dieses Lab erneut starten können; das Raster **Labs** zeigt das Datum, an dem es wieder verfügbar ist. Wenn Sie ein Lab einreichen, bei dem einige Prüfungen fehlschlagen, beginnt keine Wartezeit.
+**Abbrechen** löscht Ihr Lab-Projekt und beendet den Versuch. Sie bestätigen es zuvor. Wenn ein Lab-Projekt nicht gelöscht werden kann, wenn sein Versuch endet, ob Sie bestehen, abbrechen oder die Zeit ablaufen lassen, sagt eine Meldung das, wenn der Bereich geöffnet ist, und die nächtliche Bereinigung löscht es später. Wenn Sie ein Lab abbrechen oder bei einem Experten-Lab die Zeit abläuft, beginnt eine Wartezeit von 7 Tagen, bevor Sie dieses Lab erneut starten können; das Raster **Labs** zeigt das Datum, an dem es wieder verfügbar ist. Wenn Sie ein Lab einreichen, bei dem einige Prüfungen fehlschlagen, beginnt keine Wartezeit.
 
 ## Ablauf
 
@@ -100,7 +103,7 @@ Das Teilen erfordert eine verifizierte E-Mail-Adresse. Solange Ihre nicht verifi
 
 ## Was Administratoren sehen
 
-Abzeichen gehören zu Ihrer E-Mail-Adresse, daher werden sie in jedem Workspace angezeigt, in dem Sie mit dieser Adresse Mitglied sind. In der Liste **Mitglieder** eines Workspace sehen Administratoren die Abzeichen und das Ziel jedes Mitglieds und können einen Zielpfad zuweisen. Sie sehen Abzeichen, nicht aber Lab-Versuche oder -Ergebnisse. Siehe [Zertifizierungsabzeichen und Ziele](/de/administration/access/member-management/#zertifizierungsabzeichen-und-ziele).
+Abzeichen gehören zu Ihrer E-Mail-Adresse, daher werden sie in jedem Workspace angezeigt, in dem Sie mit dieser Adresse Mitglied sind. In der Liste **Mitglieder** eines Workspace sehen Administratoren die Abzeichen und das Ziel jedes Mitglieds und können einen Zielpfad zuweisen. Sie sehen Abzeichen, nicht aber Lab-Versuche oder -Ergebnisse, und ein Mitglied, dessen E-Mail-Adresse nicht verifiziert ist, zeigt keine Abzeichen. KI-Agenten, die über MCP verbunden sind, können die Abzeichen und Ziele der Mitglieder auf dieselbe Weise lesen. Siehe [Zertifizierungsabzeichen und Ziele](/de/administration/access/member-management/#zertifizierungsabzeichen-und-ziele).
 
 ## Lernpfade
 
