@@ -16,7 +16,7 @@ Schreibt, wie Ihr Workspace genutzt wird, in eine Projekttabelle. Verwenden Sie 
 
 ### Usage Data
 
-**Dataset** legt fest, was jede Zeile enthält. Die Zeile darunter nennt die Zeilen und Spalten des gewählten Datasets.
+**Dataset** legt fest, was jede Zeile enthält. Der Text darunter beschreibt die Zeilen und nennt die wichtigsten Spalten des gewählten Datasets.
 
 | Dataset | Wert | Eine Zeile für jeweils | Enthält Identität |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Schreibt, wie Ihr Workspace genutzt wird, in eine Projekttabelle. Verwenden Sie 
 | **Inhalt** | `content` | Dashboard, App und Notebook, auch Dashboards und Apps, die niemand genutzt hat | Nein |
 | **Trends** | `trends` | Tag, Woche und Monat des Zeitraums | Nein |
 
-Die Werte sind das, was ein Schritt enthält, wenn Sie ihn über die API oder einen KI-Assistenten erstellen oder bearbeiten. Ein Schritt, der mit einem Dataset gespeichert wurde, das nicht in dieser Liste steht, schlägt bei der Ausführung fehl und nennt die vier Datasets: Öffnen Sie ihn, wählen Sie ein **Dataset** und speichern Sie ihn. Ein zuvor gespeicherter Schritt mit **Mitglieder** oder **Inhalt** läuft weiter und schreibt die unten stehenden Spalten, und ein Schritt, der auf einen Bereich beschränkt war, deckt nun alle Bereiche ab.
+Die Werte sind das, was ein Schritt enthält, wenn Sie ihn über die API oder einen KI-Assistenten erstellen oder bearbeiten. Ein Schritt, der mit einem Dataset gespeichert wurde, das nicht in dieser Liste steht, schlägt bei der Ausführung fehl und nennt die vier Datasets: Öffnen Sie ihn, wählen Sie ein **Dataset** und speichern Sie ihn. Ein zuvor gespeicherter Schritt mit **Mitglieder** oder **Inhalt** läuft weiter und schreibt die unten stehenden Spalten, und ein Schritt, der auf einen Bereich beschränkt war, deckt nun alle Bereiche ab. In **Inhalt** heißt `subject` jetzt `item_id`, und `type` enthält `Dashboard`, `App` oder `Notebook`.
 
 ### Spalten
 
@@ -46,7 +46,7 @@ Daten und Tage landen als Zeitstempel um Mitternacht UTC.
 | `groups` | Die Sicherheitsgruppen des Mitglieds, getrennt durch `; `. |
 
 
-`groups` listet die Gruppen auf, denen das Mitglied direkt angehört. Untergruppen werden nicht aufgelöst.
+`groups` listet die Gruppen der obersten Ebene auf, denen das Mitglied direkt angehört.
 
 #### Aktivität
 
@@ -88,7 +88,7 @@ Daten und Tage landen als Zeitstempel um Mitternacht UTC.
 | `session_minutes` | Minuten in Sitzungen im Zeitraum. |
 | `app_open_minutes` | Minuten, in denen das Mitglied Panel-Apps im Zeitraum geöffnet hatte. Studio-Vorschauen werden nicht gezählt. |
 
-Jedes Mitglied hat eine Zeile, auch deaktivierte Mitglieder, außer Mitgliedern, deren Nutzungsdaten gelöscht wurden. Servicekonten und Agenten werden nicht aufgeführt. Ein Mitglied ohne Aktivität im Zeitraum hat kein `last_seen`, und seine übrigen Aktivitätsspalten sind leer oder null.
+Jedes Mitglied hat eine Zeile, auch deaktivierte Mitglieder, außer Mitgliedern, deren Nutzungsdaten gelöscht wurden. Servicekonten und Agenten werden nicht aufgeführt. Ein Mitglied ohne Aktivität im Zeitraum hat kein `last_seen`, und seine übrigen Aktivitätsspalten sind leer.
 
 #### Inhalt
 
@@ -104,7 +104,7 @@ Jedes Mitglied hat eine Zeile, auch deaktivierte Mitglieder, außer Mitgliedern,
 | `last_used` | Der letzte Tag der Nutzung im Zeitraum. Bei einem ungenutzten Element der letzte Tag, an dem es vor Ende des Zeitraums geöffnet wurde, oder leer. |
 | `app_open_minutes` | Minuten, in denen eine Panel-App im Zeitraum geöffnet war. Leer bei Dashboards, Notebooks sowie Dash- und WASM-Apps. |
 
-Jeder Notebook-Pfad hat eine eigene Zeile. Die Zeilen nennen zuerst, was genutzt wurde, mit den meisten Benutzern zuerst, dann die Dashboards und Apps, die niemand genutzt hat. Das sind die veröffentlichten Dashboards und die Apps, die zu Beginn des Zeitraums bereits existierten. Sie werden nur aufgeführt, wenn der Zeitraum innerhalb der aufbewahrten Tagesdaten beginnt, die Nutzung dieser Elementart dann bereits erfasst wurde und Namen gelesen werden können. Studio-Vorschauen von Apps bleiben unberücksichtigt.
+Jeder Notebook-Pfad hat eine eigene Zeile. Die Zeilen nennen zuerst, was genutzt wurde, mit den meisten Benutzern zuerst, dann die Dashboards und Apps, die niemand genutzt hat. Das sind die veröffentlichten Dashboards und Apps, die zu Beginn des Zeitraums bereits existierten. Sie werden nur aufgeführt, wenn der Zeitraum innerhalb der aufbewahrten Tagesdaten beginnt, die Nutzung dieser Elementart dann bereits erfasst wurde und Namen gelesen werden können. Studio-Vorschauen von Apps bleiben unberücksichtigt.
 
 #### Trends
 
@@ -121,7 +121,7 @@ Jeder Notebook-Pfad hat eine eigene Zeile. Die Zeilen nennen zuerst, was genutzt
 | `stickiness` | In einer `Day`-Zeile `active_members` geteilt durch `active_members_28d`. |
 | `complete` | Falsch für heute, für eine Woche oder einen Monat, der heute enthält, und für eine Woche oder einen Monat, die der Zeitraum anschneidet. |
 
-Jeder Tag des Zeitraums, ab dem Beginn der aufbewahrten Tagesdaten, hat eine Zeile, auch ohne Nutzung, ebenso jede Woche und jeder Monat, in die diese Tage fallen. `active_members_7d`, `active_members_28d` und `stickiness` sind in `Week`- und `Month`-Zeilen leer sowie in einer `Day`-Zeile, deren 7 oder 28 Tage vor die aufbewahrten Tagesdaten zurückreichen. Ein Monat, der vor den aufbewahrten Tagesdaten beginnt und vollständig im Zeitraum liegt, stammt aus den Monatszusammenfassungen: Er hat `active_members`, aber leere Ereignisse und Minuten, und `complete` gibt an, ob die Zusammenfassung den ganzen Monat abdeckte.
+Jeder Tag des Zeitraums, ab dem Beginn der aufbewahrten Tagesdaten, hat eine Zeile, auch ohne Nutzung, ebenso jede Woche und jeder Monat, in die diese Tage fallen. `active_members_7d`, `active_members_28d` und `stickiness` sind in `Week`- und `Month`-Zeilen leer sowie in einer `Day`-Zeile, deren 7 oder 28 Tage vor die aufbewahrten Tagesdaten zurückreichen. `stickiness` ist außerdem leer, wenn `active_members_28d` 0 ist. Ein Monat, der vor den aufbewahrten Tagesdaten beginnt und vollständig im Zeitraum liegt, stammt aus den Monatszusammenfassungen: Er hat `active_members`, aber leere Ereignisse und Minuten, und `complete` gibt an, ob die Zusammenfassung den ganzen Monat abdeckte.
 
 ### Beispiel: Aktive Minuten nach Abteilung
 

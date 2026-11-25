@@ -15,7 +15,7 @@ Writes how your workspace is used into a project table. Use it to track adoption
 
 ### Usage Data
 
-**Dataset** chooses what each row holds. The line under it names the rows and columns of the one you choose.
+**Dataset** chooses what each row holds. The text under it describes the rows and names the main columns of the one you choose.
 
 | Dataset | Value | One row for each | Holds identity |
 |---|---|---|---|
@@ -24,7 +24,7 @@ Writes how your workspace is used into a project table. Use it to track adoption
 | **Content** | `content` | Dashboard, app and notebook, including dashboards and apps nobody used | No |
 | **Trends** | `trends` | Day, week and month of the range | No |
 
-The values are what a step holds when you create or edit it through the API or an AI assistant. A step saved with a dataset that isn't in this list fails when it runs, naming the four datasets: open it, choose a **Dataset** and save it. A **Members** or **Content** step saved before keeps running and writes the columns below, and a step that was limited to one area now covers all areas.
+The values are what a step holds when you create or edit it through the API or an AI assistant. A step saved with a dataset that isn't in this list fails when it runs, naming the four datasets: open it, choose a **Dataset** and save it. A **Members** or **Content** step saved before keeps running and writes the columns below, and a step that was limited to one area now covers all areas. In **Content**, `subject` is now `item_id` and `type` holds `Dashboard`, `App` or `Notebook`.
 
 ### Columns
 
@@ -44,7 +44,7 @@ Dates and days land as timestamps at midnight UTC.
 | `is_active` | True when the member is active, false when deactivated. |
 | `groups` | The member's security groups, separated by `; `. |
 
-`groups` lists the groups the member belongs to directly. Subgroups aren't expanded.
+`groups` lists the top-level groups the member belongs to directly.
 
 #### Activity
 
@@ -86,7 +86,7 @@ Dates and days land as timestamps at midnight UTC.
 | `session_minutes` | Minutes in sessions in the range. |
 | `app_open_minutes` | Minutes the member had Panel apps open in the range. Studio previews aren't counted. |
 
-Every member has a row, deactivated members included, except members whose usage was erased. Service accounts and agents aren't listed. A member with no activity in the range has no `last_seen`, and their other activity columns are blank or zero.
+Every member has a row, deactivated members included, except members whose usage was erased. Service accounts and agents aren't listed. A member with no activity in the range has no `last_seen`, and their other activity columns are blank.
 
 #### Content
 
@@ -102,7 +102,7 @@ Every member has a row, deactivated members included, except members whose usage
 | `last_used` | The last day it was used in the range. For an unused item, the last day it was opened before the range ended, or blank. |
 | `app_open_minutes` | Minutes a Panel app was open in the range. Blank for dashboards, notebooks, and Dash and WASM apps. |
 
-Each notebook path has its own row. The rows list what was used first, most users first, then the dashboards and apps nobody used. Those are the published dashboards and the apps that already existed when the range began. They are listed only when the range starts within the daily data that is kept, usage of that kind of item was being collected by then, and names can be read. Studio previews of apps are left out.
+Each notebook path has its own row. The rows list what was used first, most users first, then the dashboards and apps nobody used. Those are the published dashboards and apps that already existed when the range began. They are listed only when the range starts within the daily data that is kept, usage of that kind of item was being collected by then, and names can be read. Studio previews of apps are left out.
 
 #### Trends
 
@@ -119,7 +119,7 @@ Each notebook path has its own row. The rows list what was used first, most user
 | `stickiness` | On a `Day` row, `active_members` divided by `active_members_28d`. |
 | `complete` | False for today, for a week or month that holds today, and for a week or month the range cuts. |
 
-Every day of the range, from where the kept daily data begins, has a row, even with no usage, and so does every week and month those days fall in. `active_members_7d`, `active_members_28d` and `stickiness` are blank on `Week` and `Month` rows, and on a `Day` row whose 7 or 28 days reach before the daily data that is kept. A month that starts before the kept daily data and lies wholly in the range comes from the monthly summaries: it has `active_members` but blank events and minutes, and `complete` says whether the summary covered the whole month.
+Every day of the range, from where the kept daily data begins, has a row, even with no usage, and so does every week and month those days fall in. `active_members_7d`, `active_members_28d` and `stickiness` are blank on `Week` and `Month` rows, and on a `Day` row whose 7 or 28 days reach before the daily data that is kept. `stickiness` is also blank when `active_members_28d` is 0. A month that starts before the kept daily data and lies wholly in the range comes from the monthly summaries: it has `active_members` but blank events and minutes, and `complete` says whether the summary covered the whole month.
 
 ### Example: Active Minutes by Department
 

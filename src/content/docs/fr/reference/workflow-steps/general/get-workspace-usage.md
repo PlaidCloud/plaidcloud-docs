@@ -16,7 +16,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ### Données d'utilisation
 
-**Jeu de données** détermine ce que contient chaque ligne. La ligne située sous ce champ nomme les lignes et les colonnes du jeu de données que vous choisissez.
+**Jeu de données** détermine ce que contient chaque ligne. Le texte situé sous ce champ décrit les lignes et nomme les principales colonnes du jeu de données que vous choisissez.
 
 | Jeu de données | Valeur | Une ligne pour chaque | Contient l'identité |
 |---|---|---|---|
@@ -25,7 +25,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | **Contenu** | `content` | Tableau de bord, application et notebook, y compris les tableaux de bord et les applications que personne n'a utilisés | Non |
 | **Tendances** | `trends` | Jour, semaine et mois de la plage | Non |
 
-Ces valeurs sont celles que contient une étape lorsque vous la créez ou la modifiez via l'API ou un assistant IA. Une étape enregistrée avec un jeu de données absent de cette liste échoue à l'exécution, en nommant les quatre jeux de données : ouvrez-la, choisissez un **Jeu de données** et enregistrez-la. Une étape enregistrée auparavant avec **Membres** ou **Contenu** continue de s'exécuter et écrit les colonnes ci-dessous, et une étape qui était limitée à un domaine couvre désormais tous les domaines.
+Ces valeurs sont celles que contient une étape lorsque vous la créez ou la modifiez via l'API ou un assistant IA. Une étape enregistrée avec un jeu de données absent de cette liste échoue à l'exécution, en nommant les quatre jeux de données : ouvrez-la, choisissez un **Jeu de données** et enregistrez-la. Une étape enregistrée auparavant avec **Membres** ou **Contenu** continue de s'exécuter et écrit les colonnes ci-dessous, et une étape qui était limitée à un domaine couvre désormais tous les domaines. Dans **Contenu**, `subject` est désormais `item_id` et `type` contient `Dashboard`, `App` ou `Notebook`.
 
 ### Colonnes
 
@@ -45,7 +45,7 @@ Les dates et les jours sont écrits sous forme d'horodatages à minuit UTC.
 | `is_active` | True lorsque le membre est actif, false lorsqu'il est désactivé. |
 | `groups` | Les groupes de sécurité du membre, séparés par `; `. |
 
-`groups` liste les groupes auxquels le membre appartient directement. Les sous-groupes ne sont pas développés.
+`groups` liste les groupes de premier niveau auxquels le membre appartient directement.
 
 #### Activité
 
@@ -87,7 +87,7 @@ Les dates et les jours sont écrits sous forme d'horodatages à minuit UTC.
 | `session_minutes` | Les minutes en session dans la plage. |
 | `app_open_minutes` | Les minutes pendant lesquelles le membre a gardé des applications Panel ouvertes dans la plage. Les aperçus Studio ne sont pas comptés. |
 
-Chaque membre a une ligne, y compris les membres désactivés, sauf les membres dont l'utilisation a été effacée. Les comptes de service et les agents ne sont pas listés. Un membre sans activité dans la plage n'a pas de `last_seen`, et ses autres colonnes d'activité sont vides ou à zéro.
+Chaque membre a une ligne, y compris les membres désactivés, sauf les membres dont l'utilisation a été effacée. Les comptes de service et les agents ne sont pas listés. Un membre sans activité dans la plage n'a pas de `last_seen`, et ses autres colonnes d'activité sont vides.
 
 #### Contenu
 
@@ -120,7 +120,7 @@ Chaque chemin de notebook a sa propre ligne. Les lignes listent d'abord ce qui a
 | `stickiness` | Sur une ligne `Day`, `active_members` divisé par `active_members_28d`. |
 | `complete` | False pour aujourd'hui, pour une semaine ou un mois qui contient aujourd'hui, et pour une semaine ou un mois que la plage coupe. |
 
-Chaque jour de la plage, à partir du début des données quotidiennes conservées, a une ligne, même sans utilisation, de même que chaque semaine et chaque mois dans lesquels tombent ces jours. `active_members_7d`, `active_members_28d` et `stickiness` sont vides sur les lignes `Week` et `Month`, et sur une ligne `Day` dont les 7 ou 28 jours remontent avant les données quotidiennes conservées. Un mois qui commence avant les données quotidiennes conservées et entièrement compris dans la plage provient des synthèses mensuelles : il a `active_members` mais des événements et des minutes vides, et `complete` indique si la synthèse couvrait tout le mois.
+Chaque jour de la plage, à partir du début des données quotidiennes conservées, a une ligne, même sans utilisation, de même que chaque semaine et chaque mois dans lesquels tombent ces jours. `active_members_7d`, `active_members_28d` et `stickiness` sont vides sur les lignes `Week` et `Month`, et sur une ligne `Day` dont les 7 ou 28 jours remontent avant les données quotidiennes conservées. `stickiness` est aussi vide lorsque `active_members_28d` vaut 0. Un mois qui commence avant les données quotidiennes conservées et entièrement compris dans la plage provient des synthèses mensuelles : il a `active_members` mais des événements et des minutes vides, et `complete` indique si la synthèse couvrait tout le mois.
 
 ### Exemple : minutes actives par service
 

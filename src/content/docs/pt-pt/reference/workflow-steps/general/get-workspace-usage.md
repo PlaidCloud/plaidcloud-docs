@@ -16,7 +16,7 @@ Escreve numa tabela do projeto a forma como a área de trabalho é utilizada. Ut
 
 ### Dados de utilização
 
-**Conjunto de dados** define o que contém cada linha. A linha por baixo indica as linhas e as colunas do conjunto que escolher.
+**Conjunto de dados** define o que contém cada linha. O texto por baixo descreve as linhas e indica as principais colunas do conjunto que escolher.
 
 | Conjunto de dados | Valor | Uma linha por | Contém identidade |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Escreve numa tabela do projeto a forma como a área de trabalho é utilizada. Ut
 | **Conteúdo** | `content` | Painel de controlo, aplicação e notebook, incluindo painéis de controlo e aplicações que ninguém utilizou | Não |
 | **Tendências** | `trends` | Dia, semana e mês do intervalo | Não |
 
-Os valores são os que um passo guarda quando o cria ou edita através da API ou de um assistente de IA. Um passo guardado com um conjunto de dados que não consta desta lista falha quando é executado, indicando os quatro conjuntos de dados: abra-o, escolha um **Conjunto de dados** e guarde-o. Um passo **Membros** ou **Conteúdo** guardado anteriormente continua a ser executado e escreve as colunas abaixo, e um passo que estava limitado a uma área passa a abranger todas as áreas.
+Os valores são os que um passo guarda quando o cria ou edita através da API ou de um assistente de IA. Um passo guardado com um conjunto de dados que não consta desta lista falha quando é executado, indicando os quatro conjuntos de dados: abra-o, escolha um **Conjunto de dados** e guarde-o. Um passo **Membros** ou **Conteúdo** guardado anteriormente continua a ser executado e escreve as colunas abaixo, e um passo que estava limitado a uma área passa a abranger todas as áreas. Em **Conteúdo**, `subject` passa a ser `item_id` e `type` contém `Dashboard`, `App` ou `Notebook`.
 
 ### Colunas
 
@@ -45,7 +45,7 @@ As datas e os dias são guardados como carimbos de data/hora à meia-noite UTC.
 | `is_active` | Verdadeiro quando o membro está ativo, falso quando está desativado. |
 | `groups` | Os grupos de segurança do membro, separados por `; `. |
 
-`groups` lista os grupos a que o membro pertence diretamente. Os subgrupos não são expandidos.
+`groups` lista os grupos de nível superior a que o membro pertence diretamente.
 
 #### Atividade
 
@@ -87,7 +87,7 @@ As datas e os dias são guardados como carimbos de data/hora à meia-noite UTC.
 | `session_minutes` | Minutos em sessões no intervalo. |
 | `app_open_minutes` | Minutos em que o membro teve aplicações Panel abertas no intervalo. As pré-visualizações do Studio não são contadas. |
 
-Todos os membros têm uma linha, incluindo os desativados, exceto aqueles cuja utilização foi apagada. As contas de serviço e os agentes não são listados. Um membro sem atividade no intervalo não tem `last_seen`, e as restantes colunas de atividade ficam em branco ou a zero.
+Todos os membros têm uma linha, incluindo os desativados, exceto aqueles cuja utilização foi apagada. As contas de serviço e os agentes não são listados. Um membro sem atividade no intervalo não tem `last_seen`, e as restantes colunas de atividade ficam em branco.
 
 #### Conteúdo
 
@@ -120,7 +120,7 @@ Cada caminho de notebook tem a sua própria linha. As linhas listam primeiro o q
 | `stickiness` | Numa linha `Day`, `active_members` a dividir por `active_members_28d`. |
 | `complete` | Falso para hoje, para uma semana ou um mês que contenha hoje e para uma semana ou um mês que o intervalo corta. |
 
-Cada dia do intervalo, a partir de onde começam os dados diários conservados, tem uma linha, mesmo sem utilização, tal como cada semana e cada mês em que esses dias se inserem. `active_members_7d`, `active_members_28d` e `stickiness` ficam em branco nas linhas `Week` e `Month`, e numa linha `Day` cujos 7 ou 28 dias recuam para antes dos dados diários que são conservados. Um mês que começa antes dos dados diários conservados e se encontra por inteiro no intervalo provém dos resumos mensais: tem `active_members`, mas eventos e minutos em branco, e `complete` indica se o resumo cobriu o mês inteiro.
+Cada dia do intervalo, a partir de onde começam os dados diários conservados, tem uma linha, mesmo sem utilização, tal como cada semana e cada mês em que esses dias se inserem. `active_members_7d`, `active_members_28d` e `stickiness` ficam em branco nas linhas `Week` e `Month`, e numa linha `Day` cujos 7 ou 28 dias recuam para antes dos dados diários que são conservados. `stickiness` também fica em branco quando `active_members_28d` é 0. Um mês que começa antes dos dados diários conservados e se encontra por inteiro no intervalo provém dos resumos mensais: tem `active_members`, mas eventos e minutos em branco, e `complete` indica se o resumo cobriu o mês inteiro.
 
 ### Exemplo: minutos ativos por departamento
 

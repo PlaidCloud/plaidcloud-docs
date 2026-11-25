@@ -16,7 +16,7 @@ Zbiory **Aktywność** i **Członkowie** zawierają tożsamość członka (ident
 
 ### Dane użycia
 
-**Zbiór danych** określa, co zawiera każdy wiersz. Wiersz pod nim opisuje wiersze i kolumny wybranego zbioru.
+**Zbiór danych** określa, co zawiera każdy wiersz. Tekst pod nim opisuje wiersze i wymienia główne kolumny wybranego zbioru.
 
 | Zbiór danych | Wartość | Jeden wiersz dla każdego | Zawiera tożsamość |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Zbiory **Aktywność** i **Członkowie** zawierają tożsamość członka (ident
 | **Treść** | `content` | pulpitu, aplikacji i notebooka, także pulpitów i aplikacji, z których nikt nie korzystał | Nie |
 | **Trendy** | `trends` | dnia, tygodnia i miesiąca zakresu | Nie |
 
-Wartości to to, co krok przechowuje po utworzeniu lub edycji za pośrednictwem API albo asystenta AI. Krok zapisany ze zbiorem danych, którego nie ma na tej liście, kończy się niepowodzeniem po uruchomieniu i wymienia cztery zbiory: otwórz go, wybierz **Zbiór danych** i zapisz. Krok **Członkowie** lub **Treść** zapisany wcześniej nadal działa i zapisuje poniższe kolumny, a krok ograniczony wcześniej do jednego obszaru obejmuje teraz wszystkie obszary.
+Wartości to to, co krok przechowuje po utworzeniu lub edycji za pośrednictwem API albo asystenta AI. Krok zapisany ze zbiorem danych, którego nie ma na tej liście, kończy się niepowodzeniem po uruchomieniu i wymienia cztery zbiory: otwórz go, wybierz **Zbiór danych** i zapisz. Krok **Członkowie** lub **Treść** zapisany wcześniej nadal działa i zapisuje poniższe kolumny, a krok ograniczony wcześniej do jednego obszaru obejmuje teraz wszystkie obszary. W zbiorze **Treść** `subject` to teraz `item_id`, a `type` zawiera `Dashboard`, `App` lub `Notebook`.
 
 ### Kolumny
 
@@ -45,7 +45,7 @@ Zbiory **Aktywność** i **Członkowie** zawierają te kolumny:
 | `is_active` | Prawda, gdy członek jest aktywny, fałsz, gdy został dezaktywowany. |
 | `groups` | Grupy zabezpieczeń członka, oddzielone znakami `; `. |
 
-Kolumna `groups` zawiera grupy, do których członek należy bezpośrednio. Podgrupy nie są rozwijane.
+Kolumna `groups` zawiera grupy najwyższego poziomu, do których członek należy bezpośrednio.
 
 #### Aktywność
 
@@ -87,7 +87,7 @@ Wartość `Used chart` liczy się raz na członka i wykres w każdym 5-minutowym
 | `session_minutes` | Minuty w sesjach w zakresie. |
 | `app_open_minutes` | Minuty, w których członek miał otwarte aplikacje Panel w zakresie. Podglądy w Studio nie są liczone. |
 
-Każdy członek ma wiersz, także dezaktywowani, z wyjątkiem członków, których dane użycia zostały wymazane. Konta usług i agenci nie są wymieniani. Członek bez aktywności w zakresie nie ma `last_seen`, a jego pozostałe kolumny aktywności są puste lub zerowe.
+Każdy członek ma wiersz, także dezaktywowani, z wyjątkiem członków, których dane użycia zostały wymazane. Konta usług i agenci nie są wymieniani. Członek bez aktywności w zakresie nie ma `last_seen`, a jego pozostałe kolumny aktywności są puste.
 
 #### Treść
 
@@ -103,7 +103,7 @@ Każdy członek ma wiersz, także dezaktywowani, z wyjątkiem członków, który
 | `last_used` | Ostatni dzień użycia w zakresie. Dla nieużywanego elementu ostatni dzień otwarcia przed końcem zakresu lub puste. |
 | `app_open_minutes` | Minuty, w których aplikacja Panel była otwarta w zakresie. Puste dla pulpitów, notebooków oraz aplikacji Dash i WASM. |
 
-Każda ścieżka notebooka ma własny wiersz. Wiersze wymieniają najpierw elementy używane, od największej liczby użytkowników, a potem pulpity i aplikacje, z których nikt nie korzystał. Są to opublikowane pulpity oraz aplikacje, które istniały już na początku zakresu. Są wymieniane tylko wtedy, gdy zakres zaczyna się w przechowywanych danych dziennych, użycie tego rodzaju elementów było już wtedy zbierane, a nazwy można odczytać. Podglądy aplikacji w Studio są pomijane.
+Każda ścieżka notebooka ma własny wiersz. Wiersze wymieniają najpierw elementy używane, od największej liczby użytkowników, a potem pulpity i aplikacje, z których nikt nie korzystał. Są to opublikowane pulpity i aplikacje, które istniały już na początku zakresu. Są wymieniane tylko wtedy, gdy zakres zaczyna się w przechowywanych danych dziennych, użycie tego rodzaju elementów było już wtedy zbierane, a nazwy można odczytać. Podglądy aplikacji w Studio są pomijane.
 
 #### Trendy
 
@@ -120,7 +120,7 @@ Każda ścieżka notebooka ma własny wiersz. Wiersze wymieniają najpierw eleme
 | `stickiness` | W wierszu `Day` wartość `active_members` podzielona przez `active_members_28d`. |
 | `complete` | Fałsz dla dzisiejszego dnia, dla tygodnia lub miesiąca, który zawiera dzisiejszy dzień, oraz dla tygodnia lub miesiąca ściętego przez zakres. |
 
-Każdy dzień zakresu, od miejsca, w którym zaczynają się przechowywane dane dzienne, ma wiersz, nawet bez użycia, tak samo jak każdy tydzień i miesiąc, na które te dni przypadają. Kolumny `active_members_7d`, `active_members_28d` i `stickiness` są puste w wierszach `Week` i `Month` oraz w wierszu `Day`, którego 7 lub 28 dni sięga przed przechowywane dane dzienne. Miesiąc, który zaczyna się przed przechowywanymi danymi dziennymi i w całości leży w zakresie, pochodzi z podsumowań miesięcznych: ma `active_members`, ale puste zdarzenia i minuty, a `complete` informuje, czy podsumowanie obejmowało cały miesiąc.
+Każdy dzień zakresu, od miejsca, w którym zaczynają się przechowywane dane dzienne, ma wiersz, nawet bez użycia, tak samo jak każdy tydzień i miesiąc, na które te dni przypadają. Kolumny `active_members_7d`, `active_members_28d` i `stickiness` są puste w wierszach `Week` i `Month` oraz w wierszu `Day`, którego 7 lub 28 dni sięga przed przechowywane dane dzienne. Kolumna `stickiness` jest też pusta, gdy `active_members_28d` wynosi 0. Miesiąc, który zaczyna się przed przechowywanymi danymi dziennymi i w całości leży w zakresie, pochodzi z podsumowań miesięcznych: ma `active_members`, ale puste zdarzenia i minuty, a `complete` informuje, czy podsumowanie obejmowało cały miesiąc.
 
 ### Przykład: aktywne minuty według działu
 

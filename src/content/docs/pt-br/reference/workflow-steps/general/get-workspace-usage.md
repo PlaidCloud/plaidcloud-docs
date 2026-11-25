@@ -16,7 +16,7 @@ Grava como o seu espaço de trabalho é usado em uma tabela do projeto. Use-a pa
 
 ### Dados de uso
 
-**Dataset** define o que cada linha contém. A linha abaixo dele nomeia as linhas e as colunas do que você escolher.
+**Dataset** define o que cada linha contém. O texto abaixo dele descreve as linhas e nomeia as principais colunas do que você escolher.
 
 | Dataset | Valor | Uma linha para cada | Contém identidade |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Grava como o seu espaço de trabalho é usado em uma tabela do projeto. Use-a pa
 | **Conteúdo** | `content` | Painel, aplicativo e notebook, incluindo painéis e aplicativos que ninguém usou | Não |
 | **Tendências** | `trends` | Dia, semana e mês do intervalo | Não |
 
-Os valores são o que uma etapa armazena quando você a cria ou edita pela API ou por um assistente de IA. Uma etapa salva com um dataset que não está nesta lista falha quando é executada, citando os quatro datasets: abra-a, escolha um **Dataset** e salve-a. Uma etapa **Membros** ou **Conteúdo** salva anteriormente continua sendo executada e grava as colunas abaixo, e uma etapa que era limitada a uma área agora abrange todas as áreas.
+Os valores são o que uma etapa armazena quando você a cria ou edita pela API ou por um assistente de IA. Uma etapa salva com um dataset que não está nesta lista falha quando é executada, citando os quatro datasets: abra-a, escolha um **Dataset** e salve-a. Uma etapa **Membros** ou **Conteúdo** salva anteriormente continua sendo executada e grava as colunas abaixo, e uma etapa que era limitada a uma área agora abrange todas as áreas. Em **Conteúdo**, `subject` agora é `item_id` e `type` contém `Dashboard`, `App` ou `Notebook`.
 
 ### Colunas
 
@@ -45,7 +45,7 @@ Datas e dias são gravados como carimbos de data e hora à meia-noite UTC.
 | `is_active` | Verdadeiro quando o membro está ativo, falso quando está desativado. |
 | `groups` | Os grupos de segurança do membro, separados por `; `. |
 
-`groups` lista os grupos aos quais o membro pertence diretamente. Os subgrupos não são expandidos.
+`groups` lista os grupos de nível superior aos quais o membro pertence diretamente.
 
 #### Atividade
 
@@ -87,7 +87,7 @@ Datas e dias são gravados como carimbos de data e hora à meia-noite UTC.
 | `session_minutes` | Minutos em sessões no intervalo. |
 | `app_open_minutes` | Minutos em que o membro manteve aplicativos Panel abertos no intervalo. As visualizações prévias do Studio não são contadas. |
 
-Todo membro tem uma linha, inclusive os membros desativados, exceto os membros cujo uso foi apagado. Contas de serviço e agentes não são listados. Um membro sem atividade no intervalo não tem `last_seen`, e as outras colunas de atividade dele ficam em branco ou zero.
+Todo membro tem uma linha, inclusive os membros desativados, exceto os membros cujo uso foi apagado. Contas de serviço e agentes não são listados. Um membro sem atividade no intervalo não tem `last_seen`, e as outras colunas de atividade dele ficam em branco.
 
 #### Conteúdo
 
@@ -103,7 +103,7 @@ Todo membro tem uma linha, inclusive os membros desativados, exceto os membros c
 | `last_used` | O último dia em que foi usado no intervalo. Para um item não utilizado, o último dia em que foi aberto antes do fim do intervalo, ou em branco. |
 | `app_open_minutes` | Minutos em que um aplicativo Panel ficou aberto no intervalo. Em branco para painéis, notebooks e aplicativos Dash e WASM. |
 
-Cada caminho de notebook tem a própria linha. As linhas listam primeiro o que foi usado, com mais usuários primeiro, e depois os painéis e aplicativos que ninguém usou. São os painéis publicados e os aplicativos que já existiam quando o intervalo começou. Eles só são listados quando o intervalo começa dentro dos dados diários mantidos, o uso desse tipo de item já estava sendo coletado nessa data e os nomes podem ser lidos. As visualizações prévias de aplicativos no Studio ficam de fora.
+Cada caminho de notebook tem a própria linha. As linhas listam primeiro o que foi usado, com mais usuários primeiro, e depois os painéis e aplicativos que ninguém usou. São os painéis publicados e aplicativos que já existiam quando o intervalo começou. Eles só são listados quando o intervalo começa dentro dos dados diários mantidos, o uso desse tipo de item já estava sendo coletado nessa data e os nomes podem ser lidos. As visualizações prévias de aplicativos no Studio ficam de fora.
 
 #### Tendências
 
@@ -120,7 +120,7 @@ Cada caminho de notebook tem a própria linha. As linhas listam primeiro o que f
 | `stickiness` | Em uma linha `Day`, `active_members` dividido por `active_members_28d`. |
 | `complete` | Falso para hoje, para uma semana ou um mês que contém hoje e para uma semana ou um mês que o intervalo corta. |
 
-Todo dia do intervalo, a partir de onde começam os dados diários mantidos, tem uma linha, mesmo sem uso, assim como toda semana e todo mês em que esses dias se encaixam. `active_members_7d`, `active_members_28d` e `stickiness` ficam em branco nas linhas `Week` e `Month` e em uma linha `Day` cujos 7 ou 28 dias alcançam um período anterior aos dados diários mantidos. Um mês que começa antes dos dados diários mantidos e está inteiramente dentro do intervalo vem dos resumos mensais: ele tem `active_members`, mas eventos e minutos em branco, e `complete` informa se o resumo cobriu o mês inteiro.
+Todo dia do intervalo, a partir de onde começam os dados diários mantidos, tem uma linha, mesmo sem uso, assim como toda semana e todo mês em que esses dias se encaixam. `active_members_7d`, `active_members_28d` e `stickiness` ficam em branco nas linhas `Week` e `Month` e em uma linha `Day` cujos 7 ou 28 dias alcançam um período anterior aos dados diários mantidos. `stickiness` também fica em branco quando `active_members_28d` é 0. Um mês que começa antes dos dados diários mantidos e está inteiramente dentro do intervalo vem dos resumos mensais: ele tem `active_members`, mas eventos e minutos em branco, e `complete` informa se o resumo cobriu o mês inteiro.
 
 ### Exemplo: minutos ativos por departamento
 

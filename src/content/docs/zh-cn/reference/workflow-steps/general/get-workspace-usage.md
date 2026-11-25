@@ -16,7 +16,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ### 使用情况数据
 
-**数据集**用于选择每行保存的内容。其下方的说明行会列出所选数据集的行和列。
+**数据集**用于选择每行保存的内容。其下方的文字会说明所选数据集的行，并列出其中的主要列。
 
 | 数据集 | 值 | 每行对应 | 包含身份信息 |
 |---|---|---|---|
@@ -25,7 +25,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | **内容** | `content` | 仪表板、应用和笔记本，包括无人使用的仪表板和应用 | 否 |
 | **趋势** | `trends` | 范围内的每一天、每一周和每个月 | 否 |
 
-这些值是通过 API 或 AI 助手创建或编辑步骤时步骤所保存的值。如果步骤保存的数据集不在此列表中，运行时会失败并列出这四个数据集：请打开该步骤，选择一个**数据集**并保存。之前保存的**成员**或**内容**步骤会继续运行并写入下面的列，而之前限定在一个领域的步骤现在会覆盖所有领域。
+这些值是通过 API 或 AI 助手创建或编辑步骤时步骤所保存的值。如果步骤保存的数据集不在此列表中，运行时会失败并列出这四个数据集：请打开该步骤，选择一个**数据集**并保存。之前保存的**成员**或**内容**步骤会继续运行并写入下面的列，而之前限定在一个领域的步骤现在会覆盖所有领域。在**内容**中，`subject` 现为 `item_id`，`type` 为 `Dashboard`、`App` 或 `Notebook`。
 
 ### 列
 
@@ -45,7 +45,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `is_active` | 成员处于活动状态时为 true，已停用时为 false。 |
 | `groups` | 成员所属的安全组，以 `; ` 分隔。 |
 
-`groups` 列出成员直接所属的分组，不会展开子分组。
+`groups` 列出成员直接所属的顶级分组。
 
 #### 活动
 
@@ -87,7 +87,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `session_minutes` | 该范围内的会话分钟数。 |
 | `app_open_minutes` | 成员在该范围内打开 Panel 应用的分钟数。不统计 Studio 预览。 |
 
-每个成员都有一行，包括已停用的成员，但使用数据已被清除的成员除外。服务账户和代理不会列出。在该范围内没有活动的成员没有 `last_seen`，其他活动列为空或为零。
+每个成员都有一行，包括已停用的成员，但使用数据已被清除的成员除外。服务账户和代理不会列出。在该范围内没有活动的成员没有 `last_seen`，其他活动列为空。
 
 #### 内容
 
@@ -103,7 +103,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `last_used` | 在该范围内最后一次使用的日期。对于未使用的项目，为范围结束前最后一次被打开的日期，或为空。 |
 | `app_open_minutes` | Panel 应用在该范围内被打开的分钟数。仪表板、笔记本以及 Dash 和 WASM 应用为空。 |
 
-每个笔记本路径各占一行。各行先列出已使用的内容（使用成员最多的在前），然后是无人使用的仪表板和应用。这些是已发布的仪表板，以及范围开始时已经存在的应用。只有当范围起点在保留的每日数据之内、当时已在收集该类项目的使用情况且能读取名称时，才会列出它们。应用的 Studio 预览不包括在内。
+每个笔记本路径各占一行。各行先列出已使用的内容（使用成员最多的在前），然后是无人使用的仪表板和应用。这些是范围开始时已经存在的已发布仪表板和应用。只有当范围起点在保留的每日数据之内、当时已在收集该类项目的使用情况且能读取名称时，才会列出它们。应用的 Studio 预览不包括在内。
 
 #### 趋势
 
@@ -120,7 +120,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `stickiness` | 在 `Day` 行上，`active_members` 除以 `active_members_28d`。 |
 | `complete` | 对于今天、包含今天的周或月，以及被范围截断的周或月，为 false。 |
 
-从保留的每日数据开始之处起，范围内的每一天都有一行，即使没有使用情况，这些天所在的每一周和每个月也是如此。在 `Week` 和 `Month` 行上，以及其 7 天或 28 天跨到保留的每日数据之前的 `Day` 行上，`active_members_7d`、`active_members_28d` 和 `stickiness` 为空。始于保留的每日数据之前且完全位于范围内的月份来自月度摘要：它有 `active_members`，但事件和分钟数为空，`complete` 表示该摘要是否覆盖了整个月。
+从保留的每日数据开始之处起，范围内的每一天都有一行，即使没有使用情况，这些天所在的每一周和每个月也是如此。在 `Week` 和 `Month` 行上，以及其 7 天或 28 天跨到保留的每日数据之前的 `Day` 行上，`active_members_7d`、`active_members_28d` 和 `stickiness` 为空。当 `active_members_28d` 为 0 时，`stickiness` 也为空。始于保留的每日数据之前且完全位于范围内的月份来自月度摘要：它有 `active_members`，但事件和分钟数为空，`complete` 表示该摘要是否覆盖了整个月。
 
 ### 示例：按部门统计活动分钟数
 

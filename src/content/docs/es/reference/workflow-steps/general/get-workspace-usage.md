@@ -16,7 +16,7 @@ Escribe en una tabla del proyecto cómo se usa su espacio de trabajo. Utilícelo
 
 ### Datos de uso
 
-**Conjunto de datos** elige lo que contiene cada fila. La línea que aparece debajo nombra las filas y las columnas del que elija.
+**Conjunto de datos** elige lo que contiene cada fila. El texto que aparece debajo describe las filas y nombra las columnas principales del que elija.
 
 | Conjunto de datos | Valor | Una fila por | Contiene identidad |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Escribe en una tabla del proyecto cómo se usa su espacio de trabajo. Utilícelo
 | **Contenido** | `content` | Panel de control, aplicación y notebook, incluidos los paneles de control y las aplicaciones que nadie usó | No |
 | **Tendencias** | `trends` | Día, semana y mes del intervalo | No |
 
-Los valores son los que contiene un paso cuando lo crea o edita mediante la API o un asistente de IA. Un paso guardado con un conjunto de datos que no figura en esta lista falla al ejecutarse y nombra los cuatro conjuntos de datos: ábralo, elija un **Conjunto de datos** y guárdelo. Un paso guardado antes con **Miembros** o **Contenido** sigue ejecutándose y escribe las columnas siguientes, y un paso que estaba limitado a un área ahora abarca todas las áreas.
+Los valores son los que contiene un paso cuando lo crea o edita mediante la API o un asistente de IA. Un paso guardado con un conjunto de datos que no figura en esta lista falla al ejecutarse y nombra los cuatro conjuntos de datos: ábralo, elija un **Conjunto de datos** y guárdelo. Un paso guardado antes con **Miembros** o **Contenido** sigue ejecutándose y escribe las columnas siguientes, y un paso que estaba limitado a un área ahora abarca todas las áreas. En **Contenido**, `subject` es ahora `item_id` y `type` contiene `Dashboard`, `App` o `Notebook`.
 
 ### Columnas
 
@@ -45,7 +45,7 @@ Las fechas y los días se escriben como marcas de tiempo a medianoche UTC.
 | `is_active` | Verdadero cuando el miembro está activo, falso cuando está desactivado. |
 | `groups` | Los grupos de seguridad del miembro, separados por `; `. |
 
-`groups` enumera los grupos a los que el miembro pertenece directamente. Los subgrupos no se expanden.
+`groups` enumera los grupos de nivel superior a los que el miembro pertenece directamente.
 
 #### Actividad
 
@@ -87,7 +87,7 @@ Las fechas y los días se escriben como marcas de tiempo a medianoche UTC.
 | `session_minutes` | Minutos en sesiones en el intervalo. |
 | `app_open_minutes` | Minutos que el miembro tuvo abiertas aplicaciones de Panel en el intervalo. Las vistas previas de Studio no se cuentan. |
 
-Todos los miembros tienen una fila, incluidos los miembros desactivados, excepto aquellos cuyo uso se borró. Las cuentas de servicio y los agentes no aparecen en la lista. Un miembro sin actividad en el intervalo no tiene `last_seen`, y sus otras columnas de actividad están en blanco o en cero.
+Todos los miembros tienen una fila, incluidos los miembros desactivados, excepto aquellos cuyo uso se borró. Las cuentas de servicio y los agentes no aparecen en la lista. Un miembro sin actividad en el intervalo no tiene `last_seen`, y sus otras columnas de actividad están en blanco.
 
 #### Contenido
 
@@ -120,7 +120,7 @@ Cada ruta de notebook tiene su propia fila. Las filas enumeran primero lo que se
 | `stickiness` | En una fila `Day`, `active_members` dividido por `active_members_28d`. |
 | `complete` | Falso para hoy, para una semana o un mes que contiene hoy y para una semana o un mes que el intervalo corta. |
 
-Todos los días del intervalo, desde donde empiezan los datos diarios que se conservan, tienen una fila, incluso sin uso, y también todas las semanas y todos los meses en que caen esos días. `active_members_7d`, `active_members_28d` y `stickiness` están en blanco en las filas `Week` y `Month`, y en una fila `Day` cuyos 7 o 28 días llegan a antes de los datos diarios que se conservan. Un mes que empieza antes de los datos diarios que se conservan y que queda totalmente dentro del intervalo procede de los resúmenes mensuales: tiene `active_members`, pero eventos y minutos en blanco, y `complete` indica si el resumen cubría todo el mes.
+Todos los días del intervalo, desde donde empiezan los datos diarios que se conservan, tienen una fila, incluso sin uso, y también todas las semanas y todos los meses en que caen esos días. `active_members_7d`, `active_members_28d` y `stickiness` están en blanco en las filas `Week` y `Month`, y en una fila `Day` cuyos 7 o 28 días llegan a antes de los datos diarios que se conservan. `stickiness` también está en blanco cuando `active_members_28d` es 0. Un mes que empieza antes de los datos diarios que se conservan y que queda totalmente dentro del intervalo procede de los resúmenes mensuales: tiene `active_members`, pero eventos y minutos en blanco, y `complete` indica si el resumen cubría todo el mes.
 
 ### Ejemplo: minutos activos por departamento
 
