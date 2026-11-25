@@ -13,7 +13,7 @@ PlaidCloud udostępnia REST API, z którego może korzystać każda aplikacja zd
 
 Tokeny OAuth są generowane w aplikacji PlaidCloud. Aby wyświetlić listę bieżących tokenów OAuth przypisanych do Ciebie i wygenerować nowe, przejdź do `Analyze > Tools > Registered Systems`.
 
-Tam możesz wyświetlić istniejące tokeny lub utworzyć nowy.
+Tam możesz wyświetlić istniejące tokeny lub utworzyć nowy. Użyj klienta, którego **Typ** to **Klient API**: klient **BI / zewnętrzny kanał danych** działa tylko z kanałem danych BI.
 
 ## Pobieranie pliku konfiguracyjnego OAuth PlaidCloud
 Wybierz „Register a New System".

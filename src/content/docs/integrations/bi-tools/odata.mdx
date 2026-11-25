@@ -1,0 +1,203 @@
+---
+title: Connect With OData
+description: Connect Power BI, Excel and Tableau to a project's read-only OData feed, keep large tables under the row cap with filters and Power BI incremental refresh, and see the query options, types and names the feed uses.
+sidebar:
+  label: OData (Power BI, Excel, Tableau)
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The OData feed serves a project's tables as an OData v4 service. Power BI, Excel and Tableau read it with their own OData connector, with nothing to install. Before you connect, create a BI feed client and add it to the project; see [Connect BI Tools](/integrations/bi-tools/).
+
+The feed's address is the project's **Feed URL**, on the **BI feed clients** card of the project's **Access & sharing** page:
+
+```text
+https://odata.<workspace host>/v1/projects/<project id>/
+```
+
+Every tool signs in with basic authentication: the client ID as the user name and the client secret as the password.
+
+<Aside type="caution">
+Enter the client ID and secret only where the tool asks for credentials. Don't call `Web.Contents` in a Power Query (M) query to fetch a token or to send the secret yourself: the feed needs no token, and anything written in a query is saved in the report or workbook, where anyone who opens the file can read it.
+</Aside>
+
+## Power BI Desktop
+
+1. Choose **Get data** > **OData feed**.
+2. Paste the project's **Feed URL** and choose **OK**.
+3. When Power BI asks for credentials, choose **Basic**, enter the client ID as **User name** and the secret as **Password**, and choose **Connect**.
+4. In **Navigator**, choose the tables to load.
+
+Power BI imports the tables. An OData feed doesn't offer DirectQuery.
+
+For a table with more than 1,000,000 rows that isn't [served in pages](#tables-served-in-pages), filter it or set up [incremental refresh](#use-incremental-refresh-in-power-bi) before you load it; see [Keep Each Read Under the Row Cap](#keep-each-read-under-the-row-cap).
+
+## Power BI Service
+
+Publish the report from Power BI Desktop, then give the semantic model the client's credentials:
+
+1. In the semantic model's settings, open **Data source credentials** and choose **Edit credentials** for the OData source.
+2. Choose **Basic** as the **Authentication method**, enter the client ID and secret, and sign in.
+3. Set up a scheduled refresh.
+
+Power BI Service refreshes the feed directly: no on-premises data gateway is needed. It connects from Microsoft's cloud addresses, so the workspace must allow every address; see [Turn on External Access](/integrations/bi-tools/#turn-on-external-access).
+
+When you regenerate the client's secret, enter the new one here too, or the next refresh fails.
+
+Power BI Service reads the feed at roughly a million rows a minute, so a table of ten million rows takes about ten minutes to refresh; the pace depends on the table and the warehouse. When the feed refuses a refresh, as after the secret is regenerated or the client is taken off the project, Power BI Service tries again several times before it reports the failure, which can take a quarter of an hour.
+
+## Excel
+
+1. On the **Data** tab, choose **Get Data** > **From Other Sources** > **From OData Feed**.
+2. Paste the project's **Feed URL** and choose **OK**.
+3. Choose **Basic**, enter the client ID as **User name** and the secret as **Password**, and choose **Connect**.
+4. In **Navigator**, choose the tables, then **Load**.
+
+A worksheet holds at most 1,048,576 rows. Load a larger table to the Data Model with **Load To...** instead.
+
+## Tableau
+
+In Tableau Desktop:
+
+1. Under **Connect**, choose **To a Server** > **OData**.
+2. Paste the project's **Feed URL** as the **Server**.
+3. Under **Authentication**, choose **Username and Password**, enter the client ID and secret, and choose **Sign In**.
+
+In Tableau Cloud, choose the **OData** connector when you connect to data, and enter the same **Feed URL**, client ID and secret.
+
+Tableau reads an OData feed into an extract. Before it reads a table in full, it starts reading it and stops part-way to take a sample, so each table is read more than once. To refresh the extract on Tableau Cloud, publish the data source with its credentials embedded. Tableau Cloud connects from its own addresses, which the workspace must allow; see [Turn on External Access](/integrations/bi-tools/#turn-on-external-access).
+
+On Lakehouse v2, Tableau Desktop follows a [paged read](#tables-served-in-pages) to the end, so it reads a table served in pages whatever its size. Otherwise, read a table larger than the row cap with [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
+
+## Keep Each Read Under the Row Cap
+
+One request returns at most 1,000,000 rows. Unless the table is [served in pages](#tables-served-in-pages), a read that would return more fails with this message rather than stopping short without a word:
+
+> This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
+
+To stay under the cap:
+
+- **Filter in Power Query on a value or a range.** A filter that keeps the rows equal to a value, or between two numbers or dates, is sent to the feed, so only the rows that pass are read.
+- **Use incremental refresh in Power BI.** Each refresh then reads one date range at a time; see [below](#use-incremental-refresh-in-power-bi).
+
+### What Power BI and Excel Send to the Feed
+
+Power Query, in Power BI and in Excel, hands some steps to the feed and does the rest itself:
+
+- **Done by the feed:** filters on a value, a range of numbers or a range of dates; choosing columns; sorting; and keeping the top rows.
+- **Done by Power Query:** a text filter such as **Contains** (`Text.Contains`), and counting rows (`Table.RowCount`). Power Query reads the whole table and works on it locally, so on a large table filter on a value or a range instead.
+- **After a step the feed can't do,** such as an added column, Power Query reads the whole table and finishes the query itself, without an error. Put your filters before any such step.
+
+Before each read it sends, Power Query also reads the first 1,000 rows of the same query.
+
+### Tables Served in Pages
+
+On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI, Excel and Tableau Desktop follow on their own. Pages differ in size: each holds at least half the row cap and never more than the cap, and the last holds whatever is left. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row.
+
+A paged read must fetch each page within 15 minutes of the one before, and finish within 6 hours of the first. Otherwise, or if the version of the table it is reading is no longer kept, as when the table is replaced, the refresh fails with a message that asks you to refresh again.
+
+A read isn't paged on Lakehouse v1 (Databend) or on your own Snowflake or Databricks warehouse, nor when it sorts with `$orderby`, asks with `$top` for no more than the row cap, or reads a table with its own column named `_row_id`. Nor is it paged when PlaidCloud can't pin the version of the table it reads, as when the lakehouse's catalog doesn't answer in time. One request then returns it, up to the row cap.
+
+## Use Incremental Refresh in Power BI
+
+For a large table, set up incremental refresh. Power BI then refreshes the table one date range at a time, so each request stays under the row cap.
+
+1. In Power Query, create two parameters named `RangeStart` and `RangeEnd`, of type **Date/Time**.
+2. Filter the table's date or timestamp column to the rows on or after `RangeStart` and before `RangeEnd`.
+3. Set the table's incremental refresh policy in Power BI Desktop, then publish.
+
+The parameters are plain dates and times, but the feed sends timestamps in UTC with their time zone, and dates without a time. So compare a timestamp column with `DateTime.AddZone(RangeStart, 0)`, and a date column with `Date.From(RangeStart)`, rather than with `RangeStart` itself. A timestamp column compared with `RangeStart` itself fails the refresh with `We cannot apply operator < to types DateTime and DateTimeZone.`
+
+For example:
+
+```text
+let
+    Source = OData.Feed("https://odata.<workspace host>/v1/projects/<project id>/", null, [Implementation = "2.0"]),
+    Orders = Source{[Name = "Orders"]}[Data],
+    InRange = Table.SelectRows(Orders, each [OrderDate] >= DateTime.AddZone(RangeStart, 0) and [OrderDate] < DateTime.AddZone(RangeEnd, 0))
+in
+    InRange
+```
+
+Power BI turns the filter into the feed's `$filter`, so each range's refresh reads only its own rows. Put the filter straight after the table is chosen, before any step that can't be passed on to the feed.
+
+## Query Options
+
+| Option | What the feed does |
+| --- | --- |
+| `$select` | Returns only the properties named. |
+| `$filter` | Returns only the rows that pass; see [Filters](#filters). |
+| `$orderby` | Sorts by one or more properties, each `asc` or `desc`. Empty values sort first ascending and last descending. |
+| `$top` | Returns at most that many rows. |
+| `$skip` | Skips that many rows, with `$orderby` only. |
+| `/$count` | `<entity set>/$count` returns how many rows `$filter` keeps, as plain text. |
+| `$format` | JSON only. |
+
+The feed doesn't answer `$expand`, `$search`, `$apply` or `$count=true` (ask `/$count` instead), nor `$skip` without `$orderby`, nor `$orderby` on an expression. Power BI and Excel then fetch the table without that option and apply the step themselves.
+
+### Filters
+
+`$filter` takes:
+
+- **Comparisons:** `eq`, `ne`, `gt`, `ge`, `lt`, `le` and `in`. `eq null` and `ne null` find empty and filled values.
+- **Logic and arithmetic:** `and`, `or`, `not`, `add`, `sub`, `mul`, `div` and `mod`.
+- **Text functions:** `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat` and `matchesPattern`.
+- **Date and time functions:** `year`, `month`, `day`, `hour`, `minute`, `second`, `date` and `now`.
+- **Number functions:** `round`, `floor` and `ceiling`.
+
+Write a date as `2024-01-31`, a timestamp as `2024-01-31T09:00:00Z` (one with another offset is read as the same moment in UTC), and text in single quotes, with a quote inside doubled: `'O''Neil'`. A decimal is compared exactly as written, up to 38 digits, and a whole number must fit in 64 bits.
+
+`cast`, `isof`, `time`, durations, geography functions and arithmetic on dates and times aren't supported.
+
+This is what the feed answers when a tool sends it. Power BI and Excel send only some of it; see [What Power BI and Excel Send to the Feed](#what-power-bi-and-excel-send-to-the-feed).
+
+## What the Feed Serves
+
+### Tables and Names
+
+Each table the client may read is an entity set, and each of its columns a property. Views aren't included.
+
+Names come from the table's and the column's names:
+
+- A name made of the letters A to Z, digits and underscores, starting with a letter or an underscore, is used as it is.
+- In any other name, each run of other characters, such as spaces or punctuation, becomes one underscore, and none is left at either end. Letters beyond A to Z are kept, but a name that doesn't start with A to Z or an underscore gets an underscore in front. So `Sales 2024 (EMEA)` becomes `Sales_2024_EMEA`, `2024 Sales` becomes `_2024_Sales`, and a column `Cost Center Name` becomes `Cost_Center_Name`.
+- A table's name is cut to 125 characters and a column's to 128.
+
+Names are compared ignoring case, as Power BI compares them. When two names would be the same, such as `Sales` and `SALES`, or `Sales 2024` and `Sales_2024`, each of them gets an underscore and a short code made from its own table or column, such as `Sales_1a2b3c4d`. The code stays the same from one refresh to the next. But when a rename makes one table's name collide with another's, both take a code, and a report that reads either by its plain name finds nothing; rename one of the tables to clear it.
+
+### Keys
+
+Each entity set's key is the table's update keys, when it has them and none of them is a floating-point number or binary. Otherwise it is the table's first column that is neither, or failing that its first column. The key needn't be unique or filled in: Power BI and Excel load a table with repeated or empty key values.
+
+### Types
+
+| Column holds | OData type |
+| --- | --- |
+| True or false | `Edm.Boolean` |
+| Whole numbers | `Edm.Int16`, `Edm.Int32` or `Edm.Int64`, by size |
+| Decimals, including currency | `Edm.Decimal`, with the column's precision and scale |
+| Floating-point numbers | `Edm.Double` |
+| Text | `Edm.String`, with the column's maximum length when it has one |
+| Dates | `Edm.Date` |
+| Timestamps | `Edm.DateTimeOffset`, in UTC |
+| Times of day | `Edm.TimeOfDay` |
+| Intervals of days and time | `Edm.Duration` |
+| Binary | `Edm.Binary` |
+| JSON, lists, structures, UUIDs, whole numbers wider than 64 bits, intervals with months, and anything else | `Edm.String`, holding the value as text |
+
+The feed sends decimals and 64-bit whole numbers exactly, digit for digit. Power BI and Excel hold numbers as doubles, though, which keep about 15 significant digits: a decimal with more loses its last digits, and so does a whole number above 9,007,199,254,740,992. For money, change the column's type in Power Query to **Fixed decimal number**, which keeps four decimal places exactly.
+
+## When a Read Fails
+
+Sign-in messages are listed in [Connect BI Tools](/integrations/bi-tools/#when-a-tool-cant-sign-in-or-sees-no-tables). Once signed in:
+
+| Message | What to do |
+| --- | --- |
+| This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh. | See [Keep Each Read Under the Row Cap](#keep-each-read-under-the-row-cap). |
+| This feed has no entity set … | The table is gone, renamed, now hidden from the client's role, or its name now [collides with another's](#tables-and-names). Refresh the tool's list of tables. |
+| … not a property of … | The query names a column the table no longer has, or doesn't use its name in the feed. |
+| The $filter is not valid … | The tool sent a filter the feed can't read. The message says what it couldn't read. |
+| This next link has expired … | A [paged read](#tables-served-in-pages) waited more than 15 minutes between pages. Refresh again. |
+| This read began more than 6 hours ago … | A paged read took more than 6 hours. Refresh again. |
+| The table changed while this feed was reading it, or was written to a moment ago. Refresh to read it again. | A paged read lost the version of the table it was reading, as when the table is replaced. Refresh again. |

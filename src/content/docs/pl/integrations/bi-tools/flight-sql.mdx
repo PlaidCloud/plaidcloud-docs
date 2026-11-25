@@ -1,0 +1,129 @@
+---
+title: Połączenie przez Arrow Flight SQL
+description: Wykonuj własne zapytania SQL na tabelach projektu z Pythona, DBeavera i Tableau Desktop przez Arrow Flight SQL, ze stosowanym do każdej odczytywanej tabeli Dostępem do wierszy właściciela klienta.
+sidebar:
+  label: Arrow Flight SQL (Python, DBeaver, Tableau Desktop)
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/flight-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL przyjmuje instrukcję SQL i zwraca jej wynik strumieniowo w formacie Arrow. Sprawdza się w narzędziach danych Pythona, klientach SQL, takich jak DBeaver, oraz w Tableau Desktop. Wysyłasz jedną instrukcję tylko do odczytu na tabelach projektu, a PlaidCloud przed jej uruchomieniem filtruje każdą odczytywaną tabelę do wierszy, które może widzieć właściciel klienta. Zanim się połączysz, utwórz klienta kanału danych BI i dodaj go do projektu; zobacz [Połącz narzędzia BI](/pl/integrations/bi-tools/).
+
+## Szczegóły połączenia
+
+| Ustawienie | Wartość |
+| --- | --- |
+| Punkt końcowy | `grpc+tls://flightsql.<workspace host>:443` |
+| Adres URL JDBC | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| Nazwa użytkownika | Identyfikator klienta |
+| Hasło | Sekret klienta |
+| Projekt | `project_id`: część adresu URL JDBC lub opcja ADBC `adbc.flight.sql.rpc.call_header.project_id` |
+
+**Adres URL JDBC** projektu znajduje się na karcie **Klienci kanału danych BI** na jego stronie **Dostęp i udostępnianie**, gotowy do skopiowania. Połączenie jest zawsze szyfrowane, na porcie 443.
+
+Połączenie odczytuje jeden projekt. Aby odczytać inny, połącz się ponownie, podając identyfikator tego projektu.
+
+## Python
+
+Zainstaluj sterownik ADBC Flight SQL poleceniem `pip install adbc-driver-flightsql pyarrow`, a następnie połącz się, używając identyfikatora i sekretu klienta, tu odczytanych ze zmiennych środowiskowych:
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+Kanał nie obsługuje transakcji, więc łącz się z `autocommit=True`. `sales` to tabela Arrow:
+
+- **pandas:** `sales.to_pandas()`
+- **polars:** `polars.from_arrow(sales)`
+- **DuckDB:** zapytaj ją po nazwie, jak w `duckdb.sql("SELECT * FROM sales")`
+
+W przypadku dużego wyniku `cursor.fetch_record_batch()` odczytuje go partiami zamiast naraz.
+
+## DBeaver
+
+DBeaver nie zawiera sterownika Apache Arrow Flight SQL, więc dodaj go jednorazowo:
+
+1. Wybierz **Database** > **Driver Manager** > **New**.
+2. Nazwij sterownik, na przykład `Arrow Flight SQL`, i ustaw **Class Name** na `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver`.
+3. Na karcie **Libraries** wybierz **Add Artifact** i wpisz `org.apache.arrow:flight-sql-jdbc-driver` albo wybierz **Add File** i wskaż plik `.jar` sterownika. Wybierz **OK**.
+
+Następnie połącz się:
+
+1. Wybierz **Database** > **New Database Connection** i wskaż dodany sterownik.
+2. Połącz się przez **URL**: wklej **Adres URL JDBC** projektu, a następnie wpisz identyfikator klienta jako nazwę użytkownika i sekret jako hasło.
+3. Wybierz **Finish**. Tabele projektu znajdują się w schemacie `plaid`.
+
+We własnym programie w Javie uruchom Javę z opcją `--add-opens=java.base/java.nio=ALL-UNNAMED`. Bez niej sterownik łączy się i wykonuje zwykłe instrukcje, ale instrukcja z parametrami `?` kończy się błędem `sun.misc.Unsafe or java.nio.DirectByteBuffer.<init>(long, int) not available`. DBeaver już uruchamia się z tą opcją.
+
+## Tableau Desktop i Tableau Server
+
+1. Pobierz sterownik JDBC Apache Arrow Flight SQL (`flight-sql-jdbc-driver`, plik `.jar`) i umieść go w folderze sterowników Tableau: `C:\Program Files\Tableau\Drivers` w systemie Windows lub `~/Library/Tableau/Drivers` na komputerze Mac. Następnie uruchom Tableau ponownie.
+2. W sekcji **Connect** wybierz **To a Server** > **Other Databases (JDBC)**.
+3. Wpisz **Adres URL JDBC** projektu jako **URL**, jako **Dialect** wybierz **PostgreSQL**, wpisz identyfikator i sekret klienta jako **Username** i **Password** i wybierz **Sign In**.
+4. Tabele projektu znajdują się w schemacie `plaid`.
+
+Aby odświeżyć opublikowany skoroszyt lub źródło danych, Tableau Server potrzebuje tego samego sterownika zainstalowanego we własnym folderze sterowników.
+
+## Instrukcje SQL, które możesz wysyłać
+
+Kanał odczytuje SQL w stylu PostgreSQL i akceptuje jednocześnie jedną instrukcję tylko do odczytu:
+
+- **Jedna instrukcja:** `SELECT`, `WITH … SELECT` albo `UNION`, `INTERSECT` lub `EXCEPT` takich instrukcji. Rekurencyjny `WITH` jest odrzucany.
+- **Tabele projektu, po nazwie:** wpisz samą nazwę tabeli lub nazwę w schemacie `plaid`, jak w `plaid."Sales"`. Każdy inny schemat lub katalog jest odrzucany.
+- **Cudzysłowy:** nazwa bez cudzysłowów pasuje niezależnie od wielkości liter, więc `sales` pasuje do `Sales`. Nazwa w cudzysłowach musi pasować dokładnie; ujmij w cudzysłowy nazwę ze spacjami lub znakami interpunkcyjnymi, jak w `"Sales 2024"` lub `"Cost Center Name"`.
+- **Zwykłe klauzule:** złączenia, podzapytania, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, `OFFSET`, `FETCH`, `DISTINCT`, `CASE`, `CAST` i funkcje okna.
+- **Funkcje:** typowe funkcje tekstowe, liczbowe, daty, agregujące i okna, w tym `UPPER`, `LOWER`, `TRIM`, `SUBSTRING`, `REPLACE`, `CONCAT`, `ROUND`, `ABS`, `COALESCE`, `NULLIF`, `EXTRACT`, `DATE_TRUNC`, `CURRENT_DATE`, `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `ROW_NUMBER`, `RANK`, `LAG` i `LEAD`.
+- **Parametry:** znaczniki `?`, z których każdemu nadajesz liczbę, tekst, prawdę lub fałsz, datę, znacznik czasu albo NULL.
+- **Długość:** do 65 536 znaków, z wpisanymi parametrami.
+
+Puste wartości są sortowane tak, jak sortuje je hurtownia danych projektu. Gdy kolejność ma znaczenie, wpisz `NULLS FIRST` lub `NULLS LAST`.
+
+Ujmij w cudzysłowy kolumnę o nazwie takiej jak słowo, które hurtownia danych zna jako część sesji lub zegara, jak w `"user"` lub `"current_date"`. Bez cudzysłowów słowo może nie odczytać Twojej kolumny: kanał może je odrzucić albo hurtownia danych może odczytać własną wartość sesji, tak jak `current_date` odczytuje dzisiejszą datę. Słowa `user`, `system_user`, `current_role`, `current_database`, `sysdate` i `systimestamp` bez cudzysłowów są zawsze odrzucane, z komunikatem z prośbą o ujęcie ich w cudzysłowy.
+
+Kanał odrzuca wszystko, co zapisuje lub blokuje (`INSERT`, `UPDATE`, `DELETE`, `MERGE`, `SELECT … INTO`), `VALUES`, `UNNEST`, `LATERAL`, odczyt plików, time travel, `TABLESAMPLE`, `PIVOT` oraz każdą funkcję spoza swojej listy. Odrzucenie zaczyna się od „Nothing was run:” i wskazuje, co zostało odrzucone, więc możesz przepisać tę część.
+
+<Aside type="note">
+Każda tabela odczytywana przez instrukcję, bezpośrednio, w złączeniu, podzapytaniu lub `WITH`, jest filtrowana do wierszy, które może odczytać właściciel klienta, zanim zobaczy ją reszta instrukcji.
+</Aside>
+
+## Co widzą klienci
+
+- **Schemat:** jeden schemat, `plaid`, bez katalogu.
+- **Tabele:** tabele projektu widoczne dla roli klienta, pod ich nazwami w projekcie. Dwie nazwy różniące się tylko wielkością liter otrzymują każda podkreślenie i krótki kod utworzony z ich tabeli. Widoki nie są uwzględniane.
+- **Kolumny:** pod ich nazwami w projekcie, ze spacjami, jak w `"FULL YEAR"` lub `"Cost Center Name"`. Różni się to od OData, które pokazuje `FULL_YEAR`.
+- **Klucze:** klucze aktualizacji tabeli są jej kluczem głównym, a tabela bez nich nie ma klucza głównego. Tabele nie mają kluczy obcych.
+
+Znaczniki czasu docierają w UTC.
+
+## Limity i komunikaty
+
+Nie ma limitu wierszy: wynik jest przesyłany strumieniowo do końca. Komunikaty logowania są wymienione w [Połącz narzędzia BI](/pl/integrations/bi-tools/#gdy-narzędzie-nie-może-się-zalogować-lub-nie-widzi-tabel). Poniższe dotyczą wyłącznie Flight SQL:
+
+| Komunikat | Co zrobić |
+| --- | --- |
+| Name the project to read with the project_id connection property … | Dodaj `project_id` do adresu URL JDBC lub ustaw opcję ADBC `adbc.flight.sql.rpc.call_header.project_id`. |
+| This session reads another project. Connect again to read this one. | Połączenie odczytuje jeden projekt. Otwórz kolejne połączenie dla drugiego projektu. |
+| This session has ended. Connect again. | Sesja połączenia kończy się po 8 godzinach bezczynności i 24 godzinach od jej rozpoczęcia. Połącz się ponownie. |
+| This client was disabled or its secret has changed since this session began. Connect again. | Połącz się ponownie, używając bieżącego sekretu. Jeśli klient został wyłączony, najpierw go włącz. Usunięty klient lub taki, którego właściciel ma wyłączone konto, nie może się połączyć. |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | Jedna instrukcja może działać najwyżej godzinę. Przefiltruj ją lub zagreguj, aby zwracała mniej. |
+| Nothing was run: … | Instrukcja zawiera coś, czego kanał nie akceptuje; zobacz [Instrukcje SQL, które możesz wysyłać](#instrukcje-sql-które-możesz-wysyłać). |
+| The warehouse could not run the statement: … | Hurtownia danych projektu odrzuciła instrukcję z podanego powodu. |

@@ -13,7 +13,7 @@ PlaidCloud에는 HTTP 요청을 보낼 수 있는 모든 애플리케이션에�
 
 OAuth 토큰은 PlaidCloud 앱에서 생성합니다. 사용자에게 할당된 현재 OAuth 토큰 목록을 보거나 새 토큰을 생성하려면 `Analyze > Tools > Registered Systems`로 이동하십시오.
 
-해당 화면에서 기존 토큰을 확인하거나 새 토큰을 만들 수 있습니다.
+해당 화면에서 기존 토큰을 확인하거나 새 토큰을 만들 수 있습니다. **유형**이 **API 클라이언트**인 클라이언트를 사용하십시오. **BI / 외부 데이터 피드** 클라이언트는 BI 피드에서만 작동합니다.
 
 ## OAuth PlaidCloud 구성 파일 다운로드
 "Register a New System"을 선택하십시오.

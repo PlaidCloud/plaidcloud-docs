@@ -1,0 +1,125 @@
+---
+title: BI 도구 연결
+description: 읽기 전용 OData 피드 또는 Arrow Flight SQL을 통해 Power BI, Excel, Tableau, Python, DBeaver에서 프로젝트의 테이블을 클라이언트 소유자가 읽을 수 있는 범위만큼, 행 액세스를 적용하여 읽습니다.
+sidebar:
+  label: 개요
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/index.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Power BI, Excel, Tableau, Python, DBeaver 및 기타 도구는 PlaidCloud의 BI 피드를 통해 프로젝트의 테이블을 직접 읽을 수 있습니다. 이 피드는 읽기 전용이며 두 가지 방식으로 접속할 수 있습니다.
+
+- **OData**: Power BI, Excel, Tableau가 이미 가지고 있는 OData 커넥터로 읽는 피드입니다.
+- **Arrow Flight SQL**: 사용자가 작성한 SQL 문을 받아 결과를 Arrow로 반환하며, Python, DBeaver, Tableau Desktop에서 사용합니다.
+
+각 도구는 BI 피드 클라이언트, 즉 사용자가 만들어 프로젝트에 추가하는 클라이언트 ID와 시크릿으로 로그인합니다. 클라이언트는 소유자인 사용자가 읽을 수 있는 범위만큼 프로젝트를 읽습니다.
+
+## 어떤 연결을 사용해야 합니까?
+
+| 도구 | 연결 방식 |
+| --- | --- |
+| Power BI Desktop | [OData](/ko/integrations/bi-tools/odata/#power-bi-desktop) |
+| Power BI Service | [OData](/ko/integrations/bi-tools/odata/#power-bi-service) |
+| Excel | [OData](/ko/integrations/bi-tools/odata/#excel) |
+| Tableau Cloud | [OData](/ko/integrations/bi-tools/odata/#tableau) |
+| Tableau Desktop 및 Tableau Server | Arrow Flight SQL JDBC 드라이버를 통한 [Flight SQL](/ko/integrations/bi-tools/flight-sql/#tableau-desktop과-tableau-server) 또는 [OData](/ko/integrations/bi-tools/odata/#tableau) |
+| pandas, polars 또는 DuckDB를 사용하는 Python | ADBC를 통한 [Flight SQL](/ko/integrations/bi-tools/flight-sql/#python) |
+| DBeaver | [Flight SQL](/ko/integrations/bi-tools/flight-sql/#dbeaver) |
+
+두 방식 모두 같은 클라이언트를 사용하여 같은 테이블을 같은 행 액세스로 읽습니다. OData는 요청 하나에 최대 1,000,000개의 행을 반환합니다. Lakehouse v2에서는 더 큰 테이블을 [페이지 단위로 제공](/ko/integrations/bi-tools/odata/#페이지-단위로-제공되는-테이블)할 수 있으며, 그렇지 않으면 필터나 증분 새로 고침으로 읽습니다. Flight SQL에는 행 수 제한이 없습니다.
+
+OData와 Flight SQL은 테이블과 열의 이름을 다르게 표시합니다. OData는 이름의 공백과 구두점을 밑줄로 바꾸므로 `FULL YEAR` 열은 `FULL_YEAR`가 됩니다. Flight SQL은 프로젝트에서 지정한 이름을 그대로 유지하므로 SQL에서는 `"FULL YEAR"`처럼 따옴표로 묶어야 합니다.
+
+## 외부 액세스 켜기
+
+BI 피드는 워크스페이스에서 외부 데이터베이스 액세스를 사용하도록 설정한 경우에만 사용할 수 있습니다. 이 설정은 연결이 허용되는 주소 범위와 함께 PlaidCloud가 해 드립니다. 사용을 시작하거나 범위를 변경하려면 PlaidCloud 지원팀에 문의하십시오. [워크스페이스 구성](/ko/administration/control-plane/workspace-configuration/#lakehouse)을 참조하십시오.
+
+허용된 주소 범위에 따라 BI 피드에 접근할 수 있는 주소가 결정됩니다.
+
+- 도구가 접속하는 위치(예: 사무실 또는 VPN)의 범위를 CIDR 형식으로 요청하십시오.
+- Tableau Cloud처럼 클라우드에서 새로 고치는 서비스는 자체 주소에서 접속하므로, 해당 주소도 허용되어야 합니다.
+- 범위가 설정되지 않은 경우 피드는 모든 주소의 연결을 받아들이며, 클라이언트의 시크릿만으로 보호됩니다.
+- 거부된 주소 범위는 BI 피드에 적용되지 않습니다.
+
+<Aside type="note">
+Power BI Service는 Microsoft의 공유 클라우드 주소에서 새로 고치며, 이 주소는 너무 많아 일일이 나열할 수 없습니다. Power BI Service에서 새로 고치려면 PlaidCloud 지원팀에 범위를 설정하지 않도록 요청하십시오. 그러면 피드가 모든 주소를 받아들이고 클라이언트의 시크릿만으로 보호됩니다.
+</Aside>
+
+## BI 피드 클라이언트 만들기
+
+1. Analyze에서 **도구**를 열고 **등록된 시스템(OAuth 클라이언트)** 항목을 선택합니다.
+2. **새 시스템 등록(oAuth 클라이언트)** 항목을 선택합니다.
+3. **이름**을 입력하고 **유형**에서 **BI / 외부 데이터 피드**를 선택합니다.
+4. **만들기**를 선택합니다.
+5. **BI 피드 클라이언트 시크릿** 창에 **클라이언트 ID**와 **클라이언트 시크릿**이 표시됩니다. 시크릿은 다시 표시되지 않으므로 지금 둘 다 복사하십시오.
+
+같은 창에는 프로젝트 ID가 들어갈 자리에 자리 표시자가 있는 피드 주소도 표시됩니다. 각 프로젝트의 **액세스 및 공유** 페이지에는 해당 프로젝트 고유의 주소가 복사할 수 있는 형태로 표시됩니다.
+
+**등록된 시스템(OAuth 클라이언트)** 화면에서 BI 피드 클라이언트는 **유형** 열에 **BI / 외부 데이터 피드**로 표시됩니다. API 클라이언트와 달리 복사할 구성이 없으며, 시크릿을 다시 확인할 수 없습니다. 시크릿을 분실했거나 다른 사람이 보았을 수 있다면 클라이언트 행에서 **시크릿 다시 생성**을 선택한 다음 **다시 생성**을 선택하십시오. 새 시크릿은 생성할 때와 마찬가지로 한 번만 표시되며 이전 시크릿은 즉시 작동하지 않으므로, 새 시크릿을 입력하기 전까지 이를 사용하는 모든 도구가 실패합니다.
+
+클라이언트가 아무것도 읽지 못하게 하려면 클라이언트를 편집하여 **사용**을 지우거나 클라이언트를 삭제하십시오.
+
+## 프로젝트에 클라이언트 추가
+
+새 클라이언트는 프로젝트에 추가하기 전까지는 아무것도 읽지 못합니다.
+
+1. 프로젝트의 [프로젝트 홈](/ko/guides/projects/project-home/#액세스-및-공유)을 열고 **액세스 및 공유**를 선택합니다.
+2. **BI 피드 클라이언트** 카드에서 **클라이언트 추가 ›** 버튼을 선택합니다.
+3. **BI 피드 클라이언트**와 해당 **역할**(**탐색기** 또는 **관리자**)을 선택합니다.
+4. **추가**를 선택합니다.
+
+<Aside type="caution" title="클라이언트는 자신의 역할에 표시되는 테이블만 볼 수 있습니다">
+관리자 클라이언트는 테이블의 **관리자** 상자가 선택된 경우에만 해당 테이블을 볼 수 있고, 탐색기 클라이언트는 **탐색기** 상자가 선택된 경우에만 볼 수 있습니다. 두 상자가 모두 비어 있는 테이블은 어떤 클라이언트도 읽지 못하므로, 모든 테이블의 두 상자가 비어 있는 프로젝트에서는 도구에 로그인은 되지만 테이블이 하나도 나열되지 않습니다. 아키텍트는 프로젝트의 **테이블** 탭에서 상자를 선택합니다. [보기 역할에 대한 테이블 표시](/ko/guides/projects/managing-tables-and-views/#보기-역할에-맞게-테이블-표시)를 참조하십시오.
+</Aside>
+
+클라이언트는 아키텍트가 될 수 없습니다. 아키텍트는 상자와 관계없이 모든 테이블을 보므로, 클라이언트의 역할과 각 테이블에서 그 역할의 상자로 피드에 들어갈 테이블을 선택합니다.
+
+클라이언트를 추가하려면 프로젝트의 아키텍트나 워크스페이스 관리자처럼 프로젝트의 액세스를 변경할 수 있어야 하며, 본인이 소유한 클라이언트만 추가할 수 있습니다. 소유한 클라이언트가 없으면 창에 그 내용이 표시되고 **등록된 시스템 열기**가 제공됩니다. 클라이언트를 추가할 수 없는 경우 카드에 그 이유가 표시됩니다.
+
+카드에는 프로젝트를 읽는 클라이언트가 각각의 역할과 함께 나열됩니다. 프로젝트의 아키텍트나 워크스페이스 관리자에게는 모든 클라이언트가, 그 외의 사용자에게는 본인의 클라이언트만 표시됩니다. OData용 **피드 URL**과 Flight SQL용 **JDBC URL**도 표시됩니다. 클라이언트 행의 **제거**를 선택하면 해당 클라이언트가 프로젝트에서 제외됩니다. 프로젝트의 아키텍트나 워크스페이스 관리자는 모든 클라이언트를 제거할 수 있으며, 소유자는 본인의 클라이언트를 제거할 수 있습니다.
+
+## 클라이언트가 읽는 내용
+
+BI 피드 클라이언트는 클라이언트를 만든 사람인 소유자로서 읽습니다.
+
+- **테이블:** [위](#프로젝트에-클라이언트-추가)에서 설명한 대로 클라이언트의 역할에 표시되는 프로젝트의 테이블입니다. 뷰는 포함되지 않습니다.
+- **행:** 소유자의 [행 액세스](/ko/administration/access/managing-security-groups-and-assignments/#행-액세스-관리)가 허용하는 행만 읽습니다. 소유자가 프로젝트의 아키텍트인 경우에도 마찬가지입니다. 피드를 통해서는 소유자의 보안 그룹이 행을 결정합니다.
+- **소유자가 가능한 동안:** 소유자는 계속 프로젝트를 열고 테이블을 읽을 수 있어야 합니다. 소유자가 프로젝트에 대한 액세스를 잃거나 계정이 비활성화되면 클라이언트는 1분 이내에 작동을 멈춥니다.
+- **읽기 전용:** 클라이언트가 보내는 어떤 것도 데이터를 변경할 수 없습니다.
+
+<Aside type="caution">
+클라이언트 ID와 시크릿이 있는 사람은 누구나 소유자로서 프로젝트를 읽습니다. 시크릿은 암호처럼 취급하여 도구의 자체 자격 증명 설정에 보관하고, 다른 사람이 보았을 수 있다면 다시 생성하십시오. 시크릿은 BI 피드에서만 작동하며 REST API, JSON-RPC, MCP 서버는 이를 거부합니다.
+</Aside>
+
+## 연결 세부 정보
+
+주소를 직접 입력하지 말고 프로젝트의 **BI 피드 클라이언트** 카드에서 복사하십시오. 표에서 `<workspace host>`는 PlaidCloud를 여는 주소입니다.
+
+| | OData | Flight SQL |
+| --- | --- | --- |
+| 주소 | `https://odata.<workspace host>/v1/projects/<project id>/` | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| 사용자 이름 | 클라이언트 ID | 클라이언트 ID |
+| 암호 | 클라이언트 시크릿 | 클라이언트 시크릿 |
+| 프로젝트 | 주소의 일부 | `project_id` 연결 속성 |
+
+## 도구가 로그인할 수 없거나 테이블이 보이지 않는 경우
+
+도구가 피드에 전혀 접속하지 못하면 PlaidCloud 지원팀에 워크스페이스에서 외부 데이터베이스 액세스가 켜져 있고 도구가 접속하는 주소가 허용되어 있는지 확인해 달라고 요청하십시오. 접속이 되면 다음 메시지가 문제를 알려 줍니다.
+
+| 도구에 표시되는 내용 | 조치 사항 |
+| --- | --- |
+| 로그인은 되지만 테이블이 나열되지 않습니다. | 클라이언트는 자신의 역할에 표시되는 테이블만 볼 수 있습니다. 클라이언트가 읽어야 하는 각 테이블에서 클라이언트의 역할에 해당하는 **관리자** 또는 **탐색기** 상자를 선택하십시오. [프로젝트에 클라이언트 추가](#프로젝트에-클라이언트-추가)를 참조하십시오. |
+| Sign in with the client id and secret of a BI feed client. | 도구가 사용자 이름과 암호를 보내지 않았습니다. 기본(사용자 이름과 암호) 인증을 선택하십시오. |
+| The client id or secret is wrong, or the client is not a BI feed client. | 클라이언트 ID와 시크릿을 확인하십시오. 비활성화되었거나 삭제된 클라이언트, API 클라이언트, 소유자의 계정이 비활성화된 클라이언트에도 같은 메시지가 표시됩니다. |
+| This client may not read this project. | **액세스 및 공유**에서 클라이언트를 프로젝트에 추가하십시오. 이미 추가되어 있다면 소유자가 더 이상 프로젝트를 열 수 없는 것일 수 있습니다. |
+| Too many requests. Try again later. (OData)<br />Too many attempts. Try again in … seconds. (Flight SQL) | 짧은 시간에 한 주소에서 로그인 시도가 너무 많이 있었습니다. 잠시 기다린 후 올바른 시크릿으로 다시 시도하십시오. |
+| PlaidCloud could not check these credentials just now. Try again shortly. | PlaidCloud 측의 일시적인 문제입니다. 다시 시도하십시오. |
+| The gateway is busy. Try again shortly. (OData)<br />The gateway is busy. Try again in 30 seconds. (Flight SQL) | 피드가 동시에 처리할 수 있는 최대 읽기 요청을 처리하고 있습니다. 다시 시도하십시오. |
+
+## 다음 단계
+
+- [OData로 연결](/ko/integrations/bi-tools/odata/): Power BI, Excel, Tableau, 증분 새로 고침, 피드가 제공하는 내용.
+- [Arrow Flight SQL로 연결](/ko/integrations/bi-tools/flight-sql/): Python, DBeaver, Tableau Desktop과 보낼 수 있는 SQL.

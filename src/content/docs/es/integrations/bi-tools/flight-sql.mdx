@@ -1,0 +1,129 @@
+---
+title: Conectar con Arrow Flight SQL
+description: Consulte las tablas de un proyecto con su propio SQL desde Python, DBeaver y Tableau Desktop mediante Arrow Flight SQL, con el acceso a filas del propietario del cliente aplicado a cada tabla que lee una instrucción.
+sidebar:
+  label: Arrow Flight SQL (Python, DBeaver, Tableau Desktop)
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/flight-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL recibe una instrucción SQL y devuelve su resultado en streaming como Arrow. Es adecuado para las herramientas de datos de Python, para clientes SQL como DBeaver y para Tableau Desktop. Usted envía una instrucción de solo lectura sobre las tablas del proyecto, y PlaidCloud filtra cada tabla que lee a las filas que el propietario del cliente puede ver antes de ejecutarla. Antes de conectarse, cree un cliente de feed de BI y agréguelo al proyecto; consulte [Conectar herramientas de BI](/es/integrations/bi-tools/).
+
+## Detalles de la conexión
+
+| Configuración | Valor |
+| --- | --- |
+| Punto de conexión | `grpc+tls://flightsql.<workspace host>:443` |
+| URL de JDBC | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| Nombre de usuario | El ID de cliente |
+| Contraseña | El secreto de cliente |
+| Proyecto | `project_id`: parte de la URL de JDBC, o la opción de ADBC `adbc.flight.sql.rpc.call_header.project_id` |
+
+La **URL de JDBC** del proyecto está en la tarjeta **Clientes de feed de BI** de su página **Acceso y uso compartido**, lista para copiar. La conexión siempre está cifrada, en el puerto 443.
+
+Una conexión lee un proyecto. Para leer otro, vuelva a conectarse con el ID de ese proyecto.
+
+## Python
+
+Instale el controlador ADBC Flight SQL con `pip install adbc-driver-flightsql pyarrow` y luego conéctese con el ID y el secreto del cliente, aquí leídos de variables de entorno:
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+El feed no ejecuta transacciones, así que conéctese con `autocommit=True`. `sales` es una tabla de Arrow:
+
+- **pandas:** `sales.to_pandas()`
+- **polars:** `polars.from_arrow(sales)`
+- **DuckDB:** consúltela por su nombre, como en `duckdb.sql("SELECT * FROM sales")`
+
+Para un resultado grande, `cursor.fetch_record_batch()` lo lee por lotes en lugar de todo de una vez.
+
+## DBeaver
+
+DBeaver no incluye el controlador Apache Arrow Flight SQL, así que agréguelo una sola vez:
+
+1. Elija **Base de datos** > **Driver Manager** > **Nuevo**.
+2. Asigne un nombre al controlador, por ejemplo `Arrow Flight SQL`, y establezca **Class Name** en `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver`.
+3. En **Libraries**, elija **Add Artifact** e ingrese `org.apache.arrow:flight-sql-jdbc-driver`, o elija **Agregar archivo** y seleccione el archivo `.jar` del controlador. Elija **Aceptar**.
+
+Luego conéctese:
+
+1. Elija **Base de datos** > **New Database Connection** y seleccione el controlador que agregó.
+2. Conéctese por **URL**: pegue la **URL de JDBC** del proyecto y luego ingrese el ID de cliente como nombre de usuario y el secreto como contraseña.
+3. Elija **Finish**. Las tablas del proyecto están en el esquema `plaid`.
+
+En su propio programa de Java, inicie Java con `--add-opens=java.base/java.nio=ALL-UNNAMED`. Sin esa opción, el controlador se conecta y ejecuta instrucciones simples, pero una instrucción con parámetros `?` falla con `sun.misc.Unsafe or java.nio.DirectByteBuffer.<init>(long, int) not available`. DBeaver ya se inicia con esa opción.
+
+## Tableau Desktop y Tableau Server
+
+1. Descargue el controlador JDBC de Apache Arrow Flight SQL (`flight-sql-jdbc-driver`, un archivo `.jar`) y colóquelo en la carpeta de controladores de Tableau: `C:\Program Files\Tableau\Drivers` en Windows, o `~/Library/Tableau/Drivers` en un Mac. Después reinicie Tableau.
+2. En **Conectar**, elija **To a Server** > **Other Databases (JDBC)**.
+3. Ingrese la **URL de JDBC** del proyecto como **URL**, elija **PostgreSQL** como **Dialect**, ingrese el ID y el secreto del cliente como **Nombre de usuario** y **Contraseña**, y elija **Sign In**.
+4. Las tablas del proyecto están en el esquema `plaid`.
+
+Para actualizar un libro o un origen de datos publicado, Tableau Server necesita el mismo controlador instalado en su propia carpeta de controladores.
+
+## El SQL que puede enviar
+
+El feed lee SQL de estilo PostgreSQL y acepta una instrucción de solo lectura a la vez:
+
+- **Una instrucción:** un `SELECT`, un `WITH … SELECT`, o un `UNION`, `INTERSECT` o `EXCEPT` de ellos. Un `WITH` recursivo se rechaza.
+- **Las tablas del proyecto, por nombre:** escriba el nombre de una tabla solo, o en el esquema `plaid`, como en `plaid."Sales"`. Cualquier otro esquema o catálogo se rechaza.
+- **Comillas:** un nombre sin comillas coincide sea cual sea su uso de mayúsculas, como `sales` coincide con `Sales`. Un nombre entre comillas debe coincidir exactamente; use comillas en un nombre con espacios o signos de puntuación, como en `"Sales 2024"` o `"Cost Center Name"`.
+- **Las cláusulas habituales:** combinaciones, subconsultas, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, `OFFSET`, `FETCH`, `DISTINCT`, `CASE`, `CAST` y funciones de ventana.
+- **Funciones:** las funciones habituales de texto, número, fecha, agregación y ventana, incluidas `UPPER`, `LOWER`, `TRIM`, `SUBSTRING`, `REPLACE`, `CONCAT`, `ROUND`, `ABS`, `COALESCE`, `NULLIF`, `EXTRACT`, `DATE_TRUNC`, `CURRENT_DATE`, `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `ROW_NUMBER`, `RANK`, `LAG` y `LEAD`.
+- **Parámetros:** marcadores `?`, a cada uno de los cuales se le da un número, un texto, verdadero o falso, una fecha, una marca de tiempo o NULL.
+- **Longitud:** hasta 65.536 caracteres, con sus parámetros ya escritos.
+
+Los valores vacíos se ordenan como los ordena el almacén de datos del proyecto. Escriba `NULLS FIRST` o `NULLS LAST` cuando el orden importe.
+
+Ponga entre comillas una columna que se llame como una palabra que un almacén de datos conoce por la sesión o el reloj, como en `"user"` o `"current_date"`. Sin comillas, es posible que la palabra no lea su columna: el feed puede rechazarla, o el almacén de datos puede leer el valor propio de la sesión, como `current_date` lee la fecha de hoy. `user`, `system_user`, `current_role`, `current_database`, `sysdate` y `systimestamp` siempre se rechazan sin comillas, con un mensaje que pide ponerlas entre comillas.
+
+El feed rechaza todo lo que escribe o bloquea (`INSERT`, `UPDATE`, `DELETE`, `MERGE`, `SELECT … INTO`), `VALUES`, `UNNEST`, `LATERAL`, la lectura de archivos, time travel, `TABLESAMPLE`, `PIVOT` y cualquier función fuera de su lista. Un rechazo comienza con "Nothing was run:" y nombra lo que rechazó, de modo que pueda reescribir esa parte.
+
+<Aside type="note">
+Cada tabla que lee una instrucción, ya sea directamente, en una combinación, una subconsulta o un `WITH`, se filtra a las filas que el propietario del cliente puede leer antes de que el resto de la instrucción la vea.
+</Aside>
+
+## Lo que ven los clientes
+
+- **Esquema:** un solo esquema, `plaid`, sin catálogo.
+- **Tablas:** las tablas del proyecto que se muestran al rol del cliente, por sus nombres en el proyecto. Dos nombres que difieren solo en mayúsculas y minúsculas reciben cada uno un guion bajo y un código corto formado a partir de su tabla. Las vistas no se incluyen.
+- **Columnas:** por sus nombres en el proyecto, con los espacios incluidos, como en `"FULL YEAR"` o `"Cost Center Name"`. Esto difiere de OData, que muestra `FULL_YEAR`.
+- **Claves:** las claves de actualización de una tabla son su clave principal, y una tabla sin ellas no tiene clave principal. Las tablas no tienen claves externas.
+
+Las marcas de tiempo llegan en UTC.
+
+## Límites y mensajes
+
+No hay un límite de filas: un resultado se transmite hasta que termina. Los mensajes de inicio de sesión se enumeran en [Conectar herramientas de BI](/es/integrations/bi-tools/#cuando-una-herramienta-no-puede-iniciar-sesión-o-no-ve-tablas). Los siguientes son propios de Flight SQL:
+
+| Mensaje | Qué hacer |
+| --- | --- |
+| Name the project to read with the project_id connection property … | Agregue `project_id` a la URL de JDBC, o establezca la opción de ADBC `adbc.flight.sql.rpc.call_header.project_id`. |
+| This session reads another project. Connect again to read this one. | Una conexión lee un proyecto. Abra otra conexión para el otro proyecto. |
+| This session has ended. Connect again. | La sesión de una conexión termina tras 8 horas sin usarse, y 24 horas después de que comenzó. Vuelva a conectarse. |
+| This client was disabled or its secret has changed since this session began. Connect again. | Vuelva a conectarse con el secreto actual. Si el cliente estaba desactivado, actívelo primero. Un cliente eliminado, o uno cuyo propietario tiene la cuenta desactivada, no puede conectarse. |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | Una instrucción puede ejecutarse durante una hora como máximo. Fíltrela o agréguela para devolver menos. |
+| Nothing was run: … | La instrucción contiene algo que el feed no acepta; consulte [El SQL que puede enviar](#el-sql-que-puede-enviar). |
+| The warehouse could not run the statement: … | El almacén de datos del proyecto rechazó la instrucción, por el motivo indicado. |

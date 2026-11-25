@@ -1,0 +1,129 @@
+---
+title: Arrow Flight SQL で接続する
+description: Python、DBeaver、Tableau Desktop から Arrow Flight SQL を使って、独自の SQL でプロジェクトのテーブルをクエリします。ステートメントが読み取るすべてのテーブルに、クライアント所有者の行アクセスが適用されます。
+sidebar:
+  label: Arrow Flight SQL（Python、DBeaver、Tableau Desktop）
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/flight-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL は、SQL ステートメントを受け取り、その結果を Arrow としてストリーミングで返します。Python のデータツール、DBeaver などの SQL クライアント、Tableau Desktop に適しています。プロジェクトのテーブルに対して読み取り専用のステートメントを 1 つ送信すると、PlaidCloud は実行前に、読み取るすべてのテーブルをクライアントの所有者が閲覧できる行だけにフィルターします。接続する前に、BI フィードクライアントを作成してプロジェクトに追加してください。[BI ツールを接続する](/ja/integrations/bi-tools/)を参照してください。
+
+## 接続の詳細
+
+| 設定 | 値 |
+| --- | --- |
+| エンドポイント | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| ユーザー名 | クライアント ID |
+| パスワード | クライアントシークレット |
+| プロジェクト | `project_id`: JDBC URL の一部、または ADBC オプション `adbc.flight.sql.rpc.call_header.project_id` |
+
+プロジェクトの **JDBC URL** は、**アクセスと共有**ページの **BI フィードクライアント**カードにあり、そのままコピーできます。接続は常に暗号化され、ポート 443 を使用します。
+
+1 つの接続で読み取れるプロジェクトは 1 つです。別のプロジェクトを読み取るには、そのプロジェクトの ID で接続し直してください。
+
+## Python
+
+`pip install adbc-driver-flightsql pyarrow` で ADBC Flight SQL ドライバーをインストールし、クライアントの ID とシークレットで接続します。ここでは環境変数から読み取っています。
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+フィードはトランザクションを実行しないため、`autocommit=True` で接続します。`sales` は Arrow テーブルです。
+
+- **pandas:** `sales.to_pandas()`
+- **polars:** `polars.from_arrow(sales)`
+- **DuckDB:** `duckdb.sql("SELECT * FROM sales")` のように、名前でクエリします。
+
+大きな結果は、`cursor.fetch_record_batch()` を使うと、一度にではなく 1 バッチずつ読み取れます。
+
+## DBeaver
+
+DBeaver には Apache Arrow Flight SQL ドライバーが含まれていないため、最初に 1 回だけ追加します。
+
+1. **Database** > **Driver Manager** > **New** を選択します。
+2. ドライバーに `Arrow Flight SQL` などの名前を付け、**Class Name** を `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver` に設定します。
+3. **Libraries** で **Add Artifact** を選択して `org.apache.arrow:flight-sql-jdbc-driver` を入力するか、**Add File** を選択してドライバーの `.jar` ファイルを指定します。**OK** を選択します。
+
+次に接続します。
+
+1. **Database** > **New Database Connection** を選択し、追加したドライバーを選びます。
+2. **URL** で接続します。プロジェクトの **JDBC URL** を貼り付け、ユーザー名にクライアント ID、パスワードにシークレットを入力します。
+3. **Finish** を選択します。プロジェクトのテーブルは `plaid` スキーマにあります。
+
+独自の Java プログラムでは、`--add-opens=java.base/java.nio=ALL-UNNAMED` を指定して Java を起動してください。指定しないと、ドライバーは接続して通常のステートメントを実行できますが、`?` パラメーターを使うステートメントは `sun.misc.Unsafe or java.nio.DirectByteBuffer.<init>(long, int) not available` で失敗します。DBeaver はすでにこのオプションを付けて起動します。
+
+## Tableau Desktop と Tableau Server
+
+1. Apache Arrow Flight SQL JDBC ドライバー（`flight-sql-jdbc-driver`、`.jar` ファイル）をダウンロードし、Tableau のドライバーフォルダーに置きます。Windows では `C:\Program Files\Tableau\Drivers`、Mac では `~/Library/Tableau/Drivers` です。その後、Tableau を再起動します。
+2. **Connect** で **To a Server** > **Other Databases (JDBC)** を選択します。
+3. **URL** にプロジェクトの **JDBC URL** を入力し、**Dialect** で **PostgreSQL** を選択し、**Username** と **Password** にクライアント ID とシークレットを入力して、**Sign In** を選択します。
+4. プロジェクトのテーブルは `plaid` スキーマにあります。
+
+公開済みのワークブックまたはデータソースを更新するには、Tableau Server の独自のドライバーフォルダーにも同じドライバーをインストールする必要があります。
+
+## 送信できる SQL
+
+フィードは PostgreSQL 形式の SQL を読み取り、一度に 1 つの読み取り専用ステートメントを受け付けます。
+
+- **1 つのステートメント:** `SELECT`、`WITH … SELECT`、またはそれらの `UNION`、`INTERSECT`、`EXCEPT`。再帰的な `WITH` は拒否されます。
+- **プロジェクトのテーブルを名前で指定:** テーブル名だけで書くか、`plaid."Sales"` のように `plaid` スキーマで書きます。それ以外のスキーマやカタログは拒否されます。
+- **引用符:** 引用符のない名前は大文字小文字を区別せずに一致し、たとえば `sales` は `Sales` に一致します。引用符付きの名前は完全に一致する必要があります。スペースや記号を含む名前は、`"Sales 2024"` や `"Cost Center Name"` のように引用符で囲みます。
+- **よく使う句:** 結合、サブクエリ、`GROUP BY`、`HAVING`、`ORDER BY`、`LIMIT`、`OFFSET`、`FETCH`、`DISTINCT`、`CASE`、`CAST`、ウィンドウ関数。
+- **関数:** 一般的な文字列、数値、日付、集計、ウィンドウ関数。`UPPER`、`LOWER`、`TRIM`、`SUBSTRING`、`REPLACE`、`CONCAT`、`ROUND`、`ABS`、`COALESCE`、`NULLIF`、`EXTRACT`、`DATE_TRUNC`、`CURRENT_DATE`、`COUNT`、`SUM`、`AVG`、`MIN`、`MAX`、`ROW_NUMBER`、`RANK`、`LAG`、`LEAD` などがあります。
+- **パラメーター:** `?` マーカー。それぞれに、数値、テキスト、true または false、日付、タイムスタンプ、NULL のいずれかを渡します。
+- **長さ:** パラメーターを書き込んだ状態で最大 65,536 文字です。
+
+空の値の並び順は、プロジェクトのウェアハウスの並び順に従います。順序が重要な場合は、`NULLS FIRST` または `NULLS LAST` を指定してください。
+
+ウェアハウスがセッションや時刻について認識している単語と同じ名前の列は、`"user"` や `"current_date"` のように引用符で囲んでください。引用符がないと、その単語が列として読み取られない場合があります。フィードが拒否するか、ウェアハウスが `current_date` が今日の日付を読み取るようにセッション自身の値を読み取ることがあります。`user`、`system_user`、`current_role`、`current_database`、`sysdate`、`systimestamp` は、引用符がない場合は常に拒否され、引用符で囲むよう求めるメッセージが表示されます。
+
+フィードは、書き込みやロックを行うもの（`INSERT`、`UPDATE`、`DELETE`、`MERGE`、`SELECT … INTO`）、`VALUES`、`UNNEST`、`LATERAL`、ファイルの読み取り、タイムトラベル、`TABLESAMPLE`、`PIVOT`、および一覧にない関数を拒否します。拒否のメッセージは "Nothing was run:" で始まり、拒否した対象を示すため、その部分を書き直せます。
+
+<Aside type="note">
+ステートメントが読み取るすべてのテーブルは、直接読み取る場合でも、結合、サブクエリ、`WITH` の中で読み取る場合でも、ステートメントの残りの部分に渡される前に、クライアントの所有者が読み取れる行だけにフィルターされます。
+</Aside>
+
+## クライアントに表示される内容
+
+- **スキーマ:** カタログのない 1 つのスキーマ `plaid` です。
+- **テーブル:** クライアントのロールに表示されるプロジェクトのテーブルが、プロジェクト内の名前で表示されます。大文字小文字だけが異なる 2 つの名前には、それぞれアンダースコアと、そのテーブルから作られた短いコードが付きます。ビューは含まれません。
+- **列:** プロジェクト内の名前で表示され、スペースも含まれます。たとえば `"FULL YEAR"` や `"Cost Center Name"` です。OData では `FULL_YEAR` と表示されるのとは異なります。
+- **キー:** テーブルの更新キーが主キーになり、更新キーのないテーブルには主キーがありません。テーブルに外部キーはありません。
+
+タイムスタンプは UTC で届きます。
+
+## 制限とメッセージ
+
+行数の上限はなく、結果は終わりまでストリーミングされます。サインインのメッセージは、[BI ツールを接続する](/ja/integrations/bi-tools/#ツールがサインインできないまたはテーブルが表示されない場合)に記載されています。次のメッセージは Flight SQL に固有です。
+
+| メッセージ | 対応 |
+| --- | --- |
+| Name the project to read with the project_id connection property … | JDBC URL に `project_id` を追加するか、ADBC オプション `adbc.flight.sql.rpc.call_header.project_id` を設定します。 |
+| This session reads another project. Connect again to read this one. | 1 つの接続で読み取れるプロジェクトは 1 つです。別のプロジェクトには別の接続を開きます。 |
+| This session has ended. Connect again. | 接続のセッションは、未使用のまま 8 時間、または開始から 24 時間で終了します。もう一度接続します。 |
+| This client was disabled or its secret has changed since this session began. Connect again. | 現在のシークレットでもう一度接続します。クライアントが無効になっていた場合は、先に有効にします。削除されたクライアントや、所有者のアカウントが無効なクライアントは接続できません。 |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | 1 つのステートメントを実行できるのは最大 1 時間です。フィルターまたは集計で、返す量を減らしてください。 |
+| Nothing was run: … | ステートメントにフィードが受け付けないものが含まれています。[送信できる SQL](#送信できる-sql)を参照してください。 |
+| The warehouse could not run the statement: … | プロジェクトのウェアハウスが、示された理由でステートメントを拒否しました。 |
