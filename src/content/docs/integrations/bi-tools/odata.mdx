@@ -31,7 +31,7 @@ Enter the client ID and secret only where the tool asks for credentials. Don't c
 
 Power BI imports the tables. An OData feed doesn't offer DirectQuery.
 
-For a table with more than 1,000,000 rows, filter it or set up [incremental refresh](#use-incremental-refresh-in-power-bi) before you load it; see [Keep Each Read Under the Row Cap](#keep-each-read-under-the-row-cap).
+For a table with more than 1,000,000 rows that isn't [served in pages](#tables-served-in-pages), filter it or set up [incremental refresh](#use-incremental-refresh-in-power-bi) before you load it; see [Keep Each Read Under the Row Cap](#keep-each-read-under-the-row-cap).
 
 ## Power BI Service
 
@@ -45,7 +45,7 @@ Power BI Service refreshes the feed directly: no on-premises data gateway is nee
 
 When you regenerate the client's secret, enter the new one here too, or the next refresh fails.
 
-A refresh reads roughly a million rows a minute, so a table of ten million rows takes about ten minutes. When the feed refuses a refresh, as after the secret is regenerated or the client is taken off the project, Power BI Service tries again a few times before it reports the failure, so a refused refresh can take up to a quarter of an hour to fail.
+Power BI Service reads the feed at roughly a million rows a minute, so a table of ten million rows takes about ten minutes to refresh; the pace depends on the table and the warehouse. When the feed refuses a refresh, as after the secret is regenerated or the client is taken off the project, Power BI Service tries again several times before it reports the failure, which can take a quarter of an hour.
 
 ## Excel
 
@@ -68,11 +68,11 @@ In Tableau Cloud, choose the **OData** connector when you connect to data, and e
 
 Tableau reads an OData feed into an extract. Before it reads a table in full, it starts reading it and stops part-way to take a sample, so each table is read more than once. To refresh the extract on Tableau Cloud, publish the data source with its credentials embedded. Tableau Cloud connects from its own addresses, which the workspace must allow; see [Turn on External Access](/integrations/bi-tools/#turn-on-external-access).
 
-On Lakehouse v2, Tableau follows a [paged read](#tables-served-in-pages) to the end, so it can read a table larger than the row cap. On Lakehouse v1, read such a table with [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
+On Lakehouse v2, Tableau Desktop follows a [paged read](#tables-served-in-pages) to the end, so it can read a table larger than the row cap. On Lakehouse v1, read such a table with [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
 
 ## Keep Each Read Under the Row Cap
 
-One request returns at most 1,000,000 rows. A read that would return more fails with this message rather than stopping short without a word:
+One request returns at most 1,000,000 rows. Unless the table is [served in pages](#tables-served-in-pages), a read that would return more fails with this message rather than stopping short without a word:
 
 > This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
 
@@ -89,15 +89,15 @@ Power Query, in Power BI and in Excel, hands some steps to the feed and does the
 - **Done by Power Query:** a text filter such as **Contains** (`Text.Contains`), and counting rows (`Table.RowCount`). Power Query reads the whole table and works on it locally, so on a large table filter on a value or a range instead.
 - **After a step the feed can't do,** such as an added column, Power Query reads the whole table and finishes the query itself, without an error. Put your filters before any such step.
 
-Each refresh also reads a sample of 1,000 rows before it reads the table.
+Before each read it sends, Power Query also reads the first 1,000 rows of the same query.
 
 ### Tables Served in Pages
 
-On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI, Excel and Tableau follow on their own. Pages differ in size: each holds at least half the row cap and never more than the cap, and the last holds whatever is left. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row. A read sorted with `$orderby` is never paged.
+On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI, Excel and Tableau Desktop follow on their own. Pages differ in size: each holds at least half the row cap and never more than the cap, and the last holds whatever is left. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row.
 
 A paged read must fetch each page within 15 minutes of the one before, and finish within 6 hours of the first. Otherwise, or if the version of the table it is reading is no longer kept, as when the table is replaced, the refresh fails with a message that asks you to refresh again.
 
-A table on Lakehouse v1 (Databend) is never paged: one request returns it, up to the row cap.
+A read isn't paged on Lakehouse v1 (Databend) or on your own Snowflake or Databricks warehouse, nor when it sorts with `$orderby`, asks with `$top` for no more than the row cap, or reads a table with its own column named `_row_id`. One request then returns it, up to the row cap.
 
 ## Use Incremental Refresh in Power BI
 
