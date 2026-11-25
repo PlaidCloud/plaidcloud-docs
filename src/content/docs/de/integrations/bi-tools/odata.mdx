@@ -1,0 +1,204 @@
+---
+title: Verbindung über OData
+description: Verbinden Sie Power BI, Excel und Tableau mit dem schreibgeschützten OData-Feed eines Projekts, halten Sie große Tabellen mit Filtern und der inkrementellen Aktualisierung von Power BI unter der Zeilenobergrenze und sehen Sie die Abfrageoptionen, Typen und Namen, die der Feed verwendet.
+sidebar:
+  label: OData (Power BI, Excel, Tableau)
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/odata.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Der OData-Feed stellt die Tabellen eines Projekts als OData-v4-Dienst bereit. Power BI, Excel und Tableau lesen ihn mit ihrem eigenen OData-Connector, ohne dass etwas installiert werden muss. Bevor Sie eine Verbindung herstellen, erstellen Sie einen BI-Feed-Client und fügen ihn dem Projekt hinzu; siehe [BI-Tools verbinden](/de/integrations/bi-tools/).
+
+Die Adresse des Feeds ist die **Feed-URL** des Projekts auf der Karte **BI-Feed-Clients** der Seite **Zugriff & Freigabe** des Projekts:
+
+```text
+https://odata.<workspace host>/v1/projects/<project id>/
+```
+
+Jedes Tool meldet sich mit der einfachen Authentifizierung an: die Client-ID als Benutzername und das Client-Geheimnis als Kennwort.
+
+<Aside type="caution">
+Geben Sie die Client-ID und das Geheimnis nur dort ein, wo das Tool nach Anmeldedaten fragt. Rufen Sie in einer Power Query-Abfrage (M) nicht `Web.Contents` auf, um ein Token abzurufen oder das Geheimnis selbst zu senden: Der Feed braucht kein Token, und alles, was in einer Abfrage steht, wird im Bericht oder in der Arbeitsmappe gespeichert, wo jeder, der die Datei öffnet, es lesen kann.
+</Aside>
+
+## Power BI Desktop
+
+1. Wählen Sie **Get data** > **OData feed**.
+2. Fügen Sie die **Feed-URL** des Projekts ein und wählen Sie **OK**.
+3. Wenn Power BI nach Anmeldedaten fragt, wählen Sie **Basic**, geben Sie die Client-ID als **User name** und das Geheimnis als **Password** ein und wählen Sie **Connect**.
+4. Wählen Sie im **Navigator** die zu ladenden Tabellen aus.
+
+Power BI importiert die Tabellen. Ein OData-Feed bietet kein DirectQuery.
+
+Filtern Sie eine Tabelle mit mehr als 1.000.000 Zeilen, die nicht [seitenweise bereitgestellt](#seitenweise-bereitgestellte-tabellen) wird, oder richten Sie die [inkrementelle Aktualisierung](#inkrementelle-aktualisierung-in-power-bi-verwenden) ein, bevor Sie sie laden; siehe [Jeden Lesevorgang unter der Zeilenobergrenze halten](#jeden-lesevorgang-unter-der-zeilenobergrenze-halten).
+
+## Power BI Service
+
+Veröffentlichen Sie den Bericht aus Power BI Desktop und geben Sie dem semantischen Modell dann die Anmeldedaten des Clients:
+
+1. Öffnen Sie in den Einstellungen des semantischen Modells **Data source credentials** und wählen Sie für die OData-Quelle **Edit credentials**.
+2. Wählen Sie **Basic** als **Authentication method**, geben Sie die Client-ID und das Geheimnis ein und melden Sie sich an.
+3. Richten Sie eine geplante Aktualisierung ein.
+
+Power BI Service aktualisiert den Feed direkt: Ein lokales Datengateway ist nicht erforderlich. Es verbindet sich von den Cloud-Adressen von Microsoft, daher muss der Workspace jede Adresse erlauben; siehe [Externen Zugriff aktivieren](/de/integrations/bi-tools/#externen-zugriff-aktivieren).
+
+Wenn Sie das Geheimnis des Clients neu generieren, geben Sie auch hier das neue ein, sonst schlägt die nächste Aktualisierung fehl.
+
+Power BI Service liest den Feed mit etwa einer Million Zeilen pro Minute, sodass die Aktualisierung einer Tabelle mit zehn Millionen Zeilen etwa zehn Minuten dauert; das Tempo hängt von der Tabelle und dem Warehouse ab. Wenn der Feed eine Aktualisierung ablehnt, etwa nachdem das Geheimnis neu generiert oder der Client aus dem Projekt entfernt wurde, versucht Power BI Service es mehrmals erneut, bevor es den Fehler meldet, was eine Viertelstunde dauern kann.
+
+## Excel
+
+1. Wählen Sie auf der Registerkarte **Data** die Optionen **Get Data** > **From Other Sources** > **From OData Feed**.
+2. Fügen Sie die **Feed-URL** des Projekts ein und wählen Sie **OK**.
+3. Wählen Sie **Basic**, geben Sie die Client-ID als **User name** und das Geheimnis als **Password** ein und wählen Sie **Connect**.
+4. Wählen Sie im **Navigator** die Tabellen aus und dann **Load**.
+
+Ein Arbeitsblatt fasst höchstens 1.048.576 Zeilen. Laden Sie eine größere Tabelle stattdessen mit **Load To...** in das Datenmodell.
+
+## Tableau
+
+In Tableau Desktop:
+
+1. Wählen Sie unter **Connect** die Option **To a Server** > **OData**.
+2. Fügen Sie die **Feed-URL** des Projekts als **Server** ein.
+3. Wählen Sie unter **Authentication** die Option **Username and Password**, geben Sie die Client-ID und das Geheimnis ein und wählen Sie **Sign In**.
+
+Wählen Sie in Tableau Cloud beim Verbinden mit Daten den Connector **OData** und geben Sie dieselbe **Feed-URL**, Client-ID und dasselbe Geheimnis ein.
+
+Tableau liest einen OData-Feed in einen Extrakt. Bevor es eine Tabelle vollständig liest, beginnt es sie zu lesen und bricht auf halbem Weg ab, um eine Stichprobe zu nehmen, sodass jede Tabelle mehr als einmal gelesen wird. Um den Extrakt in Tableau Cloud zu aktualisieren, veröffentlichen Sie die Datenquelle mit eingebetteten Anmeldedaten. Tableau Cloud verbindet sich von seinen eigenen Adressen, die der Workspace erlauben muss; siehe [Externen Zugriff aktivieren](/de/integrations/bi-tools/#externen-zugriff-aktivieren).
+
+Auf Lakehouse v2 folgt Tableau Desktop einem [seitenweisen Lesevorgang](#seitenweise-bereitgestellte-tabellen) bis zum Ende und liest daher eine seitenweise bereitgestellte Tabelle unabhängig von ihrer Größe. Andernfalls lesen Sie eine Tabelle, die größer als die Zeilenobergrenze ist, aus Tableau Desktop oder Tableau Server mit [Flight SQL](/de/integrations/bi-tools/flight-sql/#tableau-desktop-und-tableau-server), das keine Zeilenobergrenze hat.
+
+## Jeden Lesevorgang unter der Zeilenobergrenze halten
+
+Eine Anfrage liefert höchstens 1.000.000 Zeilen. Sofern die Tabelle nicht [seitenweise bereitgestellt](#seitenweise-bereitgestellte-tabellen) wird, schlägt ein Lesevorgang, der mehr liefern würde, mit dieser Meldung fehl, statt kommentarlos zu früh aufzuhören:
+
+> This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
+
+So bleiben Sie unter der Obergrenze:
+
+- **Filtern Sie in Power Query nach einem Wert oder einem Bereich.** Ein Filter, der die Zeilen mit einem bestimmten Wert oder zwischen zwei Zahlen oder Datumsangaben behält, wird an den Feed gesendet, sodass nur die Zeilen gelesen werden, die ihn bestehen.
+- **Verwenden Sie die inkrementelle Aktualisierung in Power BI.** Jede Aktualisierung liest dann jeweils einen Datumsbereich; siehe [unten](#inkrementelle-aktualisierung-in-power-bi-verwenden).
+
+### Was Power BI und Excel an den Feed senden
+
+Power Query übergibt in Power BI und in Excel einige Schritte an den Feed und erledigt den Rest selbst:
+
+- **Vom Feed erledigt:** Filter nach einem Wert, einem Zahlenbereich oder einem Datumsbereich; das Auswählen von Spalten; das Sortieren; und das Beibehalten der obersten Zeilen.
+- **Von Power Query erledigt:** ein Textfilter wie **Contains** (`Text.Contains`) und das Zählen von Zeilen (`Table.RowCount`). Power Query liest die gesamte Tabelle und bearbeitet sie lokal; filtern Sie bei einer großen Tabelle daher stattdessen nach einem Wert oder einem Bereich.
+- **Nach einem Schritt, den der Feed nicht ausführen kann,** etwa einer hinzugefügten Spalte, liest Power Query die gesamte Tabelle und führt die Abfrage ohne Fehler selbst zu Ende. Setzen Sie Ihre Filter vor einen solchen Schritt.
+
+Vor jedem Lesevorgang, den es sendet, liest Power Query außerdem die ersten 1.000 Zeilen derselben Abfrage.
+
+### Seitenweise bereitgestellte Tabellen
+
+Auf Lakehouse v2 (StarRocks) kann eine Tabelle mit mehr Zeilen als der Obergrenze stattdessen seitenweise bereitgestellt werden. Jede Seite endet mit einem Link zur nächsten, dem Power BI, Excel und Tableau Desktop von selbst folgen. Die Seiten unterscheiden sich in der Größe: Jede enthält mindestens die Hälfte der Zeilenobergrenze und nie mehr als die Obergrenze, und die letzte enthält den Rest. Jede Seite liest die Tabelle so, wie sie beim Lesen der ersten Seite war, sodass ein Schreibvorgang während der Aktualisierung keine Zeile auslässt oder wiederholt.
+
+Ein seitenweiser Lesevorgang muss jede Seite innerhalb von 15 Minuten nach der vorherigen abrufen und innerhalb von 6 Stunden nach der ersten abschließen. Andernfalls, oder wenn die Version der Tabelle, die er liest, nicht mehr aufbewahrt wird, etwa weil die Tabelle ersetzt wurde, schlägt die Aktualisierung mit einer Meldung fehl, die Sie bittet, erneut zu aktualisieren.
+
+Ein Lesevorgang erfolgt nicht seitenweise auf Lakehouse v1 (Databend) oder auf Ihrem eigenen Snowflake- oder Databricks-Warehouse, ebenso wenig, wenn er mit `$orderby` sortiert, mit `$top` nicht mehr als die Zeilenobergrenze anfordert oder eine Tabelle mit einer eigenen Spalte namens `_row_id` liest. Er erfolgt auch dann nicht seitenweise, wenn PlaidCloud die Version der gelesenen Tabelle nicht festlegen kann, etwa weil der Katalog des Lakehouse nicht rechtzeitig antwortet. Eine Anfrage liefert sie dann bis zur Zeilenobergrenze.
+
+## Inkrementelle Aktualisierung in Power BI verwenden
+
+Richten Sie für eine große Tabelle die inkrementelle Aktualisierung ein. Power BI aktualisiert die Tabelle dann jeweils einen Datumsbereich, sodass jede Anfrage unter der Zeilenobergrenze bleibt.
+
+1. Erstellen Sie in Power Query zwei Parameter mit den Namen `RangeStart` und `RangeEnd` vom Typ **Date/Time**.
+2. Filtern Sie die Datums- oder Zeitstempelspalte der Tabelle auf die Zeilen ab `RangeStart` und vor `RangeEnd`.
+3. Legen Sie die Richtlinie für die inkrementelle Aktualisierung der Tabelle in Power BI Desktop fest und veröffentlichen Sie dann.
+
+Die Parameter sind einfache Datums- und Zeitangaben, der Feed sendet Zeitstempel jedoch in UTC mit ihrer Zeitzone und Datumsangaben ohne Uhrzeit. Vergleichen Sie daher eine Zeitstempelspalte mit `DateTime.AddZone(RangeStart, 0)` und eine Datumsspalte mit `Date.From(RangeStart)` statt mit `RangeStart` selbst. Eine Zeitstempelspalte, die mit `RangeStart` selbst verglichen wird, lässt die Aktualisierung mit `We cannot apply operator < to types DateTime and DateTimeZone.` fehlschlagen.
+
+Zum Beispiel:
+
+```text
+let
+    Source = OData.Feed("https://odata.<workspace host>/v1/projects/<project id>/", null, [Implementation = "2.0"]),
+    Orders = Source{[Name = "Orders"]}[Data],
+    InRange = Table.SelectRows(Orders, each [OrderDate] >= DateTime.AddZone(RangeStart, 0) and [OrderDate] < DateTime.AddZone(RangeEnd, 0))
+in
+    InRange
+```
+
+Power BI wandelt den Filter in den `$filter` des Feeds um, sodass die Aktualisierung jedes Bereichs nur ihre eigenen Zeilen liest. Setzen Sie den Filter direkt nach der Auswahl der Tabelle, vor jeden Schritt, der nicht an den Feed weitergegeben werden kann.
+
+## Abfrageoptionen
+
+| Option | Was der Feed tut |
+| --- | --- |
+| `$select` | Liefert nur die genannten Eigenschaften. |
+| `$filter` | Liefert nur die Zeilen, die ihn bestehen; siehe [Filter](#filter). |
+| `$orderby` | Sortiert nach einer oder mehreren Eigenschaften, jeweils `asc` oder `desc`. Leere Werte stehen aufsteigend zuerst und absteigend zuletzt. |
+| `$top` | Liefert höchstens so viele Zeilen. |
+| `$skip` | Überspringt so viele Zeilen, nur mit `$orderby`. |
+| `/$count` | `<entity set>/$count` liefert als einfachen Text, wie viele Zeilen `$filter` beibehält. |
+| `$format` | Nur JSON. |
+
+Der Feed beantwortet weder `$expand`, `$search`, `$apply` oder `$count=true` (fragen Sie stattdessen `/$count` ab) noch `$skip` ohne `$orderby` noch `$orderby` auf einem Ausdruck. Power BI und Excel rufen die Tabelle dann ohne diese Option ab und wenden den Schritt selbst an.
+
+### Filter
+
+`$filter` akzeptiert:
+
+- **Vergleiche:** `eq`, `ne`, `gt`, `ge`, `lt`, `le` und `in`. `eq null` und `ne null` finden leere und gefüllte Werte.
+- **Logik und Arithmetik:** `and`, `or`, `not`, `add`, `sub`, `mul`, `div` und `mod`.
+- **Textfunktionen:** `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat` und `matchesPattern`.
+- **Datums- und Zeitfunktionen:** `year`, `month`, `day`, `hour`, `minute`, `second`, `date` und `now`.
+- **Zahlenfunktionen:** `round`, `floor` und `ceiling`.
+
+Schreiben Sie ein Datum als `2024-01-31`, einen Zeitstempel als `2024-01-31T09:00:00Z` (einer mit einem anderen Offset wird als derselbe Zeitpunkt in UTC gelesen) und Text in einfachen Anführungszeichen, wobei ein Anführungszeichen im Text verdoppelt wird: `'O''Neil'`. Eine Dezimalzahl wird genau so verglichen, wie sie geschrieben ist, bis zu 38 Stellen, und eine ganze Zahl muss in 64 Bit passen.
+
+`cast`, `isof`, `time`, Dauern, Geografiefunktionen und Arithmetik mit Datums- und Zeitangaben werden nicht unterstützt.
+
+Das beantwortet der Feed, wenn ein Tool es ihm sendet. Power BI und Excel senden nur einen Teil davon; siehe [Was Power BI und Excel an den Feed senden](#was-power-bi-und-excel-an-den-feed-senden).
+
+## Was der Feed bereitstellt
+
+### Tabellen und Namen
+
+Jede Tabelle, die der Client lesen darf, ist ein Entitätssatz, und jede ihrer Spalten eine Eigenschaft. Ansichten sind nicht enthalten.
+
+Die Namen stammen aus den Namen der Tabelle und der Spalte:
+
+- Ein Name aus den Buchstaben A bis Z, Ziffern und Unterstrichen, der mit einem Buchstaben oder einem Unterstrich beginnt, wird unverändert verwendet.
+- In jedem anderen Namen wird jede Folge anderer Zeichen, etwa Leerzeichen oder Satzzeichen, zu einem Unterstrich, und an keinem Ende bleibt einer stehen. Buchstaben jenseits von A bis Z bleiben erhalten, aber ein Name, der nicht mit A bis Z oder einem Unterstrich beginnt, erhält einen Unterstrich davor. So wird `Sales 2024 (EMEA)` zu `Sales_2024_EMEA`, `2024 Sales` zu `_2024_Sales` und eine Spalte `Cost Center Name` zu `Cost_Center_Name`.
+- Der Name einer Tabelle wird auf 125 Zeichen gekürzt, der einer Spalte auf 128.
+
+Namen werden ohne Beachtung der Groß- und Kleinschreibung verglichen, so wie Power BI sie vergleicht. Wären zwei Namen gleich, etwa `Sales` und `SALES` oder `Sales 2024` und `Sales_2024`, erhält jeder einen Unterstrich und einen kurzen Code, der aus der eigenen Tabelle oder Spalte gebildet wird, etwa `Sales_1a2b3c4d`. Der Code bleibt von einer Aktualisierung zur nächsten gleich. Wenn aber eine Umbenennung den Namen einer Tabelle mit dem einer anderen kollidieren lässt, erhalten beide einen Code, und ein Bericht, der eine von beiden über ihren einfachen Namen liest, findet nichts; benennen Sie eine der Tabellen um, um das zu beheben.
+
+### Schlüssel
+
+Der Schlüssel jedes Entitätssatzes sind die Aktualisierungsschlüssel der Tabelle, wenn sie welche hat und keiner davon eine Gleitkommazahl oder binär ist. Andernfalls ist es die erste Spalte der Tabelle, die keines von beidem ist, oder, falls es keine gibt, ihre erste Spalte. Der Schlüssel muss weder eindeutig noch gefüllt sein: Power BI und Excel laden eine Tabelle mit wiederholten oder leeren Schlüsselwerten.
+
+### Typen
+
+| Die Spalte enthält | OData-Typ |
+| --- | --- |
+| Wahr oder falsch | `Edm.Boolean` |
+| Ganze Zahlen | `Edm.Int16`, `Edm.Int32` oder `Edm.Int64`, je nach Größe |
+| Dezimalzahlen, einschließlich Währung | `Edm.Decimal`, mit der Genauigkeit und Skalierung der Spalte |
+| Gleitkommazahlen | `Edm.Double` |
+| Text | `Edm.String`, mit der maximalen Länge der Spalte, sofern sie eine hat |
+| Datumsangaben | `Edm.Date` |
+| Zeitstempel | `Edm.DateTimeOffset`, in UTC |
+| Tageszeiten | `Edm.TimeOfDay` |
+| Intervalle aus Tagen und Zeit | `Edm.Duration` |
+| Binär | `Edm.Binary` |
+| JSON, Listen, Strukturen, UUIDs, ganze Zahlen mit mehr als 64 Bit, Intervalle mit Monaten und alles andere | `Edm.String`, das den Wert als Text enthält |
+
+Der Feed sendet Dezimalzahlen und 64-Bit-Ganzzahlen exakt, Ziffer für Ziffer. Power BI und Excel halten Zahlen jedoch als Doubles, die etwa 15 signifikante Stellen behalten: Eine Dezimalzahl mit mehr Stellen verliert ihre letzten Ziffern, ebenso eine ganze Zahl über 9.007.199.254.740.992. Ändern Sie bei Geldbeträgen den Typ der Spalte in Power Query auf **Fixed decimal number**, wodurch vier Dezimalstellen exakt erhalten bleiben.
+
+## Wenn ein Lesevorgang fehlschlägt
+
+Meldungen bei der Anmeldung sind in [BI-Tools verbinden](/de/integrations/bi-tools/#wenn-sich-ein-tool-nicht-anmelden-kann-oder-keine-tabellen-sieht) aufgeführt. Nach der Anmeldung:
+
+| Meldung | Was zu tun ist |
+| --- | --- |
+| This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh. | Siehe [Jeden Lesevorgang unter der Zeilenobergrenze halten](#jeden-lesevorgang-unter-der-zeilenobergrenze-halten). |
+| This feed has no entity set … | Die Tabelle ist nicht mehr vorhanden, wurde umbenannt, ist der Rolle des Clients jetzt verborgen oder ihr Name [kollidiert nun mit einem anderen](#tabellen-und-namen). Aktualisieren Sie die Tabellenliste des Tools. |
+| … not a property of … | Die Abfrage nennt eine Spalte, die die Tabelle nicht mehr hat, oder verwendet nicht ihren Namen im Feed. |
+| The $filter is not valid … | Das Tool hat einen Filter gesendet, den der Feed nicht lesen kann. Die Meldung nennt, was er nicht lesen konnte. |
+| This next link has expired … | Ein [seitenweiser Lesevorgang](#seitenweise-bereitgestellte-tabellen) hat zwischen zwei Seiten mehr als 15 Minuten gewartet. Aktualisieren Sie erneut. |
+| This read began more than 6 hours ago … | Ein seitenweiser Lesevorgang hat mehr als 6 Stunden gedauert. Aktualisieren Sie erneut. |
+| The table changed while this feed was reading it, or was written to a moment ago. Refresh to read it again. | Ein seitenweiser Lesevorgang hat die Version der Tabelle verloren, die er las, etwa weil die Tabelle ersetzt wurde. Aktualisieren Sie erneut. |

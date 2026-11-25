@@ -1,0 +1,129 @@
+---
+title: Arrow Flight SQL로 연결
+description: Arrow Flight SQL을 통해 Python, DBeaver, Tableau Desktop에서 직접 작성한 SQL로 프로젝트의 테이블을 쿼리하며, 문이 읽는 모든 테이블에 클라이언트 소유자의 행 액세스가 적용됩니다.
+sidebar:
+  label: Arrow Flight SQL(Python, DBeaver, Tableau Desktop)
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/flight-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL은 SQL 문을 받아 그 결과를 Arrow로 스트리밍합니다. Python 데이터 도구, DBeaver와 같은 SQL 클라이언트, Tableau Desktop에 적합합니다. 프로젝트의 테이블에 대해 읽기 전용 문 하나를 보내면, PlaidCloud는 실행하기 전에 문이 읽는 모든 테이블을 클라이언트 소유자가 볼 수 있는 행으로 필터링합니다. 연결하기 전에 BI 피드 클라이언트를 만들어 프로젝트에 추가하십시오. [BI 도구 연결](/ko/integrations/bi-tools/)을 참조하십시오.
+
+## 연결 세부 정보
+
+| 설정 | 값 |
+| --- | --- |
+| 엔드포인트 | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| 사용자 이름 | 클라이언트 ID |
+| 암호 | 클라이언트 시크릿 |
+| 프로젝트 | `project_id`: JDBC URL의 일부 또는 ADBC 옵션 `adbc.flight.sql.rpc.call_header.project_id` |
+
+프로젝트의 **JDBC URL**은 **액세스 및 공유** 페이지의 **BI 피드 클라이언트** 카드에 복사할 수 있는 형태로 표시됩니다. 연결은 항상 443 포트에서 암호화됩니다.
+
+연결 하나는 프로젝트 하나를 읽습니다. 다른 프로젝트를 읽으려면 해당 프로젝트의 ID로 다시 연결하십시오.
+
+## Python
+
+`pip install adbc-driver-flightsql pyarrow`로 ADBC Flight SQL 드라이버를 설치한 다음 클라이언트의 ID와 시크릿으로 연결합니다. 여기서는 환경 변수에서 읽습니다.
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+피드는 트랜잭션을 실행하지 않으므로 `autocommit=True`로 연결하십시오. `sales`는 Arrow 테이블입니다.
+
+- **pandas:** `sales.to_pandas()`
+- **polars:** `polars.from_arrow(sales)`
+- **DuckDB:** `duckdb.sql("SELECT * FROM sales")`처럼 이름으로 쿼리합니다.
+
+큰 결과는 `cursor.fetch_record_batch()`를 사용하면 한꺼번에 읽지 않고 배치 단위로 읽습니다.
+
+## DBeaver
+
+DBeaver에는 Apache Arrow Flight SQL 드라이버가 포함되어 있지 않으므로 한 번 추가하십시오.
+
+1. **Database** > **Driver Manager** > **New**를 선택합니다.
+2. 드라이버 이름을 지정하고(예: `Arrow Flight SQL`) **Class Name**을 `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver`로 설정합니다.
+3. **Libraries**에서 **Add Artifact**를 선택하고 `org.apache.arrow:flight-sql-jdbc-driver`를 입력하거나, **Add File**을 선택하고 드라이버의 `.jar` 파일을 고릅니다. **OK**를 선택합니다.
+
+그런 다음 연결합니다.
+
+1. **Database** > **New Database Connection**을 선택하고 추가한 드라이버를 고릅니다.
+2. **URL**로 연결합니다. 프로젝트의 **JDBC URL**을 붙여넣은 다음 클라이언트 ID를 사용자 이름으로, 시크릿을 암호로 입력합니다.
+3. **Finish**를 선택합니다. 프로젝트의 테이블은 `plaid` 스키마에 있습니다.
+
+직접 작성한 Java 프로그램에서는 `--add-opens=java.base/java.nio=ALL-UNNAMED`를 사용하여 Java를 시작하십시오. 이 옵션이 없으면 드라이버가 연결되고 일반 문은 실행되지만, `?` 매개변수가 있는 문은 `sun.misc.Unsafe or java.nio.DirectByteBuffer.<init>(long, int) not available` 오류와 함께 실패합니다. DBeaver는 이미 이 옵션으로 시작됩니다.
+
+## Tableau Desktop과 Tableau Server
+
+1. Apache Arrow Flight SQL JDBC 드라이버(`flight-sql-jdbc-driver`, `.jar` 파일)를 다운로드하여 Tableau의 드라이버 폴더에 넣습니다. Windows에서는 `C:\Program Files\Tableau\Drivers`, Mac에서는 `~/Library/Tableau/Drivers`입니다. 그런 다음 Tableau를 다시 시작합니다.
+2. **Connect**에서 **To a Server** > **Other Databases (JDBC)** 를 선택합니다.
+3. 프로젝트의 **JDBC URL**을 **URL**로 입력하고 **Dialect**로 **PostgreSQL**을 선택한 다음, 클라이언트 ID와 시크릿을 **Username**과 **Password**로 입력하고 **Sign In**을 선택합니다.
+4. 프로젝트의 테이블은 `plaid` 스키마에 있습니다.
+
+게시된 통합 문서나 데이터 원본을 새로 고치려면 Tableau Server에도 동일한 드라이버가 자체 드라이버 폴더에 설치되어 있어야 합니다.
+
+## 보낼 수 있는 SQL
+
+피드는 PostgreSQL 스타일의 SQL을 읽으며 한 번에 읽기 전용 문 하나를 받습니다.
+
+- **문 하나:** `SELECT`, `WITH … SELECT` 또는 이들의 `UNION`, `INTERSECT`, `EXCEPT`. 재귀 `WITH`는 거부됩니다.
+- **프로젝트의 테이블(이름으로):** 테이블 이름을 단독으로 쓰거나 `plaid."Sales"`처럼 `plaid` 스키마에서 씁니다. 그 밖의 스키마나 카탈로그는 거부됩니다.
+- **따옴표:** 따옴표가 없는 이름은 대소문자와 관계없이 일치하므로 `sales`는 `Sales`와 일치합니다. 따옴표가 있는 이름은 정확히 일치해야 합니다. 공백이나 구두점이 있는 이름은 `"Sales 2024"` 또는 `"Cost Center Name"`처럼 따옴표로 묶으십시오.
+- **일반적인 절:** 조인, 하위 쿼리, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, `OFFSET`, `FETCH`, `DISTINCT`, `CASE`, `CAST`, 윈도 함수.
+- **함수:** 일반적인 텍스트, 숫자, 날짜, 집계, 윈도 함수. `UPPER`, `LOWER`, `TRIM`, `SUBSTRING`, `REPLACE`, `CONCAT`, `ROUND`, `ABS`, `COALESCE`, `NULLIF`, `EXTRACT`, `DATE_TRUNC`, `CURRENT_DATE`, `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `ROW_NUMBER`, `RANK`, `LAG`, `LEAD`를 포함합니다.
+- **매개변수:** `?` 표식에는 각각 숫자, 텍스트, 참 또는 거짓, 날짜, 타임스탬프 또는 NULL을 지정할 수 있습니다.
+- **길이:** 매개변수를 써 넣은 상태로 최대 65,536자입니다.
+
+빈 값은 프로젝트의 웨어하우스가 정렬하는 방식대로 정렬됩니다. 순서가 중요하면 `NULLS FIRST` 또는 `NULLS LAST`를 쓰십시오.
+
+웨어하우스가 세션이나 시계에 대해 아는 단어와 같은 이름의 열은 `"user"` 또는 `"current_date"`처럼 따옴표로 묶으십시오. 따옴표가 없으면 그 단어가 열로 읽히지 않을 수 있습니다. 피드가 이를 거부하거나, `current_date`가 오늘 날짜를 읽는 것처럼 웨어하우스가 세션 자체의 값을 읽을 수 있습니다. `user`, `system_user`, `current_role`, `current_database`, `sysdate`, `systimestamp`는 따옴표 없이 쓰면 항상 거부되며, 따옴표로 묶으라는 메시지가 표시됩니다.
+
+피드는 쓰기나 잠금을 수행하는 모든 것(`INSERT`, `UPDATE`, `DELETE`, `MERGE`, `SELECT … INTO`), `VALUES`, `UNNEST`, `LATERAL`, 파일 읽기, 타임 트래블, `TABLESAMPLE`, `PIVOT`, 목록에 없는 모든 함수를 거부합니다. 거부 메시지는 "Nothing was run:"으로 시작하고 거부된 항목을 알려 주므로 해당 부분을 다시 작성할 수 있습니다.
+
+<Aside type="note">
+문이 직접, 조인, 하위 쿼리 또는 `WITH`에서 읽는 모든 테이블은 문의 나머지 부분이 보기 전에 클라이언트 소유자가 읽을 수 있는 행으로 필터링됩니다.
+</Aside>
+
+## 클라이언트에 표시되는 내용
+
+- **스키마:** 카탈로그 없이 `plaid` 스키마 하나입니다.
+- **테이블:** 클라이언트의 역할에 표시되는 프로젝트의 테이블이며 프로젝트에서의 이름으로 표시됩니다. 대소문자만 다른 두 이름은 각각 밑줄과 해당 테이블에서 만든 짧은 코드를 받습니다. 뷰는 포함되지 않습니다.
+- **열:** 프로젝트에서의 이름으로 표시되며 공백도 포함되므로 `"FULL YEAR"` 또는 `"Cost Center Name"`처럼 씁니다. `FULL_YEAR`로 표시하는 OData와 다릅니다.
+- **키:** 테이블의 업데이트 키가 기본 키이며, 업데이트 키가 없는 테이블에는 기본 키가 없습니다. 테이블에는 외래 키가 없습니다.
+
+타임스탬프는 UTC로 전달됩니다.
+
+## 제한과 메시지
+
+행 수 제한은 없으며 결과는 끝날 때까지 스트리밍됩니다. 로그인 메시지는 [BI 도구 연결](/ko/integrations/bi-tools/#도구가-로그인할-수-없거나-테이블이-보이지-않는-경우)에 나열되어 있습니다. 다음은 Flight SQL에만 해당하는 메시지입니다.
+
+| 메시지 | 조치 사항 |
+| --- | --- |
+| Name the project to read with the project_id connection property … | JDBC URL에 `project_id`를 추가하거나 ADBC 옵션 `adbc.flight.sql.rpc.call_header.project_id`를 설정하십시오. |
+| This session reads another project. Connect again to read this one. | 연결 하나는 프로젝트 하나를 읽습니다. 다른 프로젝트에는 다른 연결을 여십시오. |
+| This session has ended. Connect again. | 연결의 세션은 사용하지 않으면 8시간 후, 시작 후 24시간이 지나면 종료됩니다. 다시 연결하십시오. |
+| This client was disabled or its secret has changed since this session began. Connect again. | 현재 시크릿으로 다시 연결하십시오. 클라이언트가 비활성화된 경우에는 먼저 사용하도록 설정하십시오. 삭제된 클라이언트나 소유자의 계정이 비활성화된 클라이언트는 연결할 수 없습니다. |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | 문 하나는 최대 한 시간 동안 실행할 수 있습니다. 필터링하거나 집계하여 더 적게 반환하십시오. |
+| Nothing was run: … | 문에 피드가 받아들이지 않는 내용이 있습니다. [보낼 수 있는 SQL](#보낼-수-있는-sql)을 참조하십시오. |
+| The warehouse could not run the statement: … | 프로젝트의 웨어하우스가 표시된 이유로 문을 거부했습니다. |

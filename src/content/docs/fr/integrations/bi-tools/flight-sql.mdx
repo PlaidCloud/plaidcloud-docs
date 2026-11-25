@@ -1,0 +1,129 @@
+---
+title: Se connecter avec Arrow Flight SQL
+description: Interrogez les tables d'un projet avec votre propre SQL depuis Python, DBeaver et Tableau Desktop via Arrow Flight SQL, avec l'accès aux lignes du propriétaire du client appliqué à chaque table lue par une instruction.
+sidebar:
+  label: Arrow Flight SQL (Python, DBeaver, Tableau Desktop)
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/flight-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL reçoit une instruction SQL et renvoie son résultat en flux au format Arrow. Il convient aux outils de données Python, aux clients SQL comme DBeaver et à Tableau Desktop. Vous envoyez une seule instruction en lecture seule sur les tables du projet, et PlaidCloud filtre chaque table qu'elle lit pour ne conserver que les lignes que le propriétaire du client peut voir, avant de l'exécuter. Avant de vous connecter, créez un client de flux BI et ajoutez-le au projet ; consultez [Connecter des outils BI](/fr/integrations/bi-tools/).
+
+## Détails de la connexion
+
+| Paramètre | Valeur |
+| --- | --- |
+| Point de terminaison | `grpc+tls://flightsql.<workspace host>:443` |
+| URL JDBC | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| Nom d'utilisateur | L'ID du client |
+| Mot de passe | Le secret du client |
+| Projet | `project_id` : partie de l'URL JDBC, ou option ADBC `adbc.flight.sql.rpc.call_header.project_id` |
+
+L'**URL JDBC** du projet se trouve sur la carte **Clients de flux BI** de sa page **Accès et partage**, prête à être copiée. La connexion est toujours chiffrée, sur le port 443.
+
+Une connexion lit un seul projet. Pour en lire un autre, reconnectez-vous avec l'ID de ce projet.
+
+## Python
+
+Installez le pilote ADBC Flight SQL avec `pip install adbc-driver-flightsql pyarrow`, puis connectez-vous avec l'ID et le secret du client, lus ici depuis des variables d'environnement :
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+Le flux n'exécute aucune transaction : connectez-vous donc avec `autocommit=True`. `sales` est une table Arrow :
+
+- **pandas :** `sales.to_pandas()`
+- **polars :** `polars.from_arrow(sales)`
+- **DuckDB :** interrogez-la par son nom, comme dans `duckdb.sql("SELECT * FROM sales")`
+
+Pour un résultat volumineux, `cursor.fetch_record_batch()` le lit lot par lot plutôt qu'en une seule fois.
+
+## DBeaver
+
+DBeaver n'inclut pas le pilote Apache Arrow Flight SQL ; ajoutez-le une seule fois :
+
+1. Choisissez **Database** > **Driver Manager** > **New**.
+2. Nommez le pilote, par exemple `Arrow Flight SQL`, et définissez **Class Name** sur `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver`.
+3. Sous **Libraries**, choisissez **Add Artifact** et saisissez `org.apache.arrow:flight-sql-jdbc-driver`, ou choisissez **Add File** et sélectionnez le fichier `.jar` du pilote. Choisissez **OK**.
+
+Connectez-vous ensuite :
+
+1. Choisissez **Database** > **New Database Connection** et sélectionnez le pilote que vous avez ajouté.
+2. Connectez-vous par **URL** : collez l'**URL JDBC** du projet, puis saisissez l'ID du client comme nom d'utilisateur et le secret comme mot de passe.
+3. Choisissez **Finish**. Les tables du projet se trouvent dans le schéma `plaid`.
+
+Dans votre propre programme Java, démarrez Java avec `--add-opens=java.base/java.nio=ALL-UNNAMED`. Sans cette option, le pilote se connecte et exécute les instructions simples, mais une instruction avec des paramètres `?` échoue avec `sun.misc.Unsafe or java.nio.DirectByteBuffer.<init>(long, int) not available`. DBeaver démarre déjà avec cette option.
+
+## Tableau Desktop et Tableau Server
+
+1. Téléchargez le pilote JDBC Apache Arrow Flight SQL (`flight-sql-jdbc-driver`, un fichier `.jar`) et placez-le dans le dossier des pilotes de Tableau : `C:\Program Files\Tableau\Drivers` sous Windows, ou `~/Library/Tableau/Drivers` sur Mac. Redémarrez ensuite Tableau.
+2. Sous **Connect**, choisissez **To a Server** > **Other Databases (JDBC)**.
+3. Saisissez l'**URL JDBC** du projet comme **URL**, choisissez **PostgreSQL** comme **Dialect**, saisissez l'ID et le secret du client comme **Username** et **Password**, puis choisissez **Sign In**.
+4. Les tables du projet se trouvent dans le schéma `plaid`.
+
+Pour actualiser un classeur ou une source de données publiés, Tableau Server a besoin du même pilote installé dans son propre dossier des pilotes.
+
+## Le SQL que vous pouvez envoyer
+
+Le flux lit du SQL de style PostgreSQL et accepte une seule instruction en lecture seule à la fois :
+
+- **Une seule instruction :** un `SELECT`, un `WITH … SELECT`, ou un `UNION`, `INTERSECT` ou `EXCEPT` de ceux-ci. Un `WITH` récursif est refusé.
+- **Les tables du projet, par leur nom :** écrivez le nom d'une table seul, ou dans le schéma `plaid`, comme dans `plaid."Sales"`. Tout autre schéma ou catalogue est refusé.
+- **Guillemets :** un nom sans guillemets correspond quelle que soit sa casse, comme `sales` correspond à `Sales`. Un nom entre guillemets doit correspondre exactement ; mettez entre guillemets un nom contenant des espaces ou de la ponctuation, comme dans `"Sales 2024"` ou `"Cost Center Name"`.
+- **Les clauses usuelles :** jointures, sous-requêtes, `GROUP BY`, `HAVING`, `ORDER BY`, `LIMIT`, `OFFSET`, `FETCH`, `DISTINCT`, `CASE`, `CAST` et fonctions de fenêtrage.
+- **Fonctions :** les fonctions courantes de texte, de nombre, de date, d'agrégation et de fenêtrage, dont `UPPER`, `LOWER`, `TRIM`, `SUBSTRING`, `REPLACE`, `CONCAT`, `ROUND`, `ABS`, `COALESCE`, `NULLIF`, `EXTRACT`, `DATE_TRUNC`, `CURRENT_DATE`, `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `ROW_NUMBER`, `RANK`, `LAG` et `LEAD`.
+- **Paramètres :** marqueurs `?`, chacun recevant un nombre, un texte, vrai ou faux, une date, un horodatage, ou NULL.
+- **Longueur :** jusqu'à 65 536 caractères, paramètres inclus.
+
+Les valeurs vides sont triées comme l'entrepôt du projet les trie. Écrivez `NULLS FIRST` ou `NULLS LAST` lorsque l'ordre compte.
+
+Mettez entre guillemets une colonne nommée comme un mot que l'entrepôt associe à la session ou à l'horloge, comme dans `"user"` ou `"current_date"`. Sans guillemets, le mot peut ne pas lire votre colonne : le flux peut le refuser, ou l'entrepôt peut lire la valeur propre à la session, comme `current_date` lit la date du jour. `user`, `system_user`, `current_role`, `current_database`, `sysdate` et `systimestamp` sont toujours refusés sans guillemets, avec un message vous demandant de les mettre entre guillemets.
+
+Le flux refuse tout ce qui écrit ou verrouille (`INSERT`, `UPDATE`, `DELETE`, `MERGE`, `SELECT … INTO`), `VALUES`, `UNNEST`, `LATERAL`, la lecture de fichiers, le time travel, `TABLESAMPLE`, `PIVOT`, et toute fonction absente de sa liste. Un refus commence par « Nothing was run: » et nomme ce qui a été refusé, ce qui vous permet de réécrire cette partie.
+
+<Aside type="note">
+Chaque table lue par une instruction, que ce soit directement, dans une jointure, une sous-requête ou un `WITH`, est filtrée pour ne conserver que les lignes que le propriétaire du client peut lire avant que le reste de l'instruction ne la voie.
+</Aside>
+
+## Ce que voient les clients
+
+- **Schéma :** un seul schéma, `plaid`, sans catalogue.
+- **Tables :** les tables du projet affichées pour le rôle du client, sous leur nom dans le projet. Deux noms qui ne diffèrent que par la casse reçoivent chacun un tiret bas et un court code issu de leur table. Les vues ne sont pas incluses.
+- **Colonnes :** sous leur nom dans le projet, espaces compris, comme dans `"FULL YEAR"` ou `"Cost Center Name"`. C'est différent d'OData, qui affiche `FULL_YEAR`.
+- **Clés :** les clés de mise à jour d'une table sont sa clé primaire, et une table qui n'en a aucune n'a pas de clé primaire. Les tables n'ont pas de clés étrangères.
+
+Les horodatages arrivent en UTC.
+
+## Limites et messages
+
+Il n'y a pas de limite de lignes : un résultat est diffusé en flux jusqu'à sa fin. Les messages de connexion sont listés dans [Connecter des outils BI](/fr/integrations/bi-tools/#quand-un-outil-ne-peut-pas-se-connecter-ou-ne-voit-aucune-table). Ceux-ci sont propres à Flight SQL :
+
+| Message | Que faire |
+| --- | --- |
+| Name the project to read with the project_id connection property … | Ajoutez `project_id` à l'URL JDBC, ou définissez l'option ADBC `adbc.flight.sql.rpc.call_header.project_id`. |
+| This session reads another project. Connect again to read this one. | Une connexion lit un seul projet. Ouvrez une autre connexion pour l'autre projet. |
+| This session has ended. Connect again. | La session d'une connexion se termine après 8 heures d'inactivité, et 24 heures après son début. Reconnectez-vous. |
+| This client was disabled or its secret has changed since this session began. Connect again. | Reconnectez-vous avec le secret actuel. Si le client a été désactivé, activez-le d'abord. Un client supprimé, ou dont le compte du propriétaire est désactivé, ne peut pas se connecter. |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | Une instruction peut s'exécuter une heure au maximum. Filtrez-la ou agrégez-la pour qu'elle renvoie moins de données. |
+| Nothing was run: … | L'instruction contient quelque chose que le flux n'accepte pas ; consultez [Le SQL que vous pouvez envoyer](#le-sql-que-vous-pouvez-envoyer). |
+| The warehouse could not run the statement: … | L'entrepôt du projet a refusé l'instruction, pour la raison indiquée. |

@@ -1,0 +1,204 @@
+---
+title: Se connecter avec OData
+description: Connectez Power BI, Excel et Tableau au flux OData en lecture seule d'un projet, gardez les grandes tables sous la limite de lignes grâce aux filtres et à l'actualisation incrémentielle de Power BI, et découvrez les options de requête, les types et les noms qu'utilise le flux.
+sidebar:
+  label: OData (Power BI, Excel, Tableau)
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/odata.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Le flux OData sert les tables d'un projet comme un service OData v4. Power BI, Excel et Tableau le lisent avec leur propre connecteur OData, sans rien à installer. Avant de vous connecter, créez un client de flux BI et ajoutez-le au projet ; consultez [Connecter des outils BI](/fr/integrations/bi-tools/).
+
+L'adresse du flux est l'**URL du flux** du projet, sur la carte **Clients de flux BI** de la page **Accès et partage** du projet :
+
+```text
+https://odata.<workspace host>/v1/projects/<project id>/
+```
+
+Chaque outil se connecte avec l'authentification de base : l'ID du client comme nom d'utilisateur et le secret du client comme mot de passe.
+
+<Aside type="caution">
+Saisissez l'ID et le secret du client uniquement là où l'outil demande des identifiants. N'appelez pas `Web.Contents` dans une requête Power Query (M) pour récupérer un jeton ou envoyer vous-même le secret : le flux n'a besoin d'aucun jeton, et tout ce qui est écrit dans une requête est enregistré dans le rapport ou le classeur, où toute personne qui ouvre le fichier peut le lire.
+</Aside>
+
+## Power BI Desktop
+
+1. Choisissez **Get data** > **OData feed**.
+2. Collez l'**URL du flux** du projet et choisissez **OK**.
+3. Lorsque Power BI demande des identifiants, choisissez **Basic**, saisissez l'ID du client comme **User name** et le secret comme **Password**, puis choisissez **Connect**.
+4. Dans **Navigator**, choisissez les tables à charger.
+
+Power BI importe les tables. Un flux OData n'offre pas DirectQuery.
+
+Pour une table de plus de 1 000 000 de lignes qui n'est pas [servie par pages](#tables-servies-par-pages), filtrez-la ou configurez l'[actualisation incrémentielle](#utiliser-lactualisation-incrémentielle-dans-power-bi) avant de la charger ; consultez [Garder chaque lecture sous la limite de lignes](#garder-chaque-lecture-sous-la-limite-de-lignes).
+
+## Power BI Service
+
+Publiez le rapport depuis Power BI Desktop, puis donnez au modèle sémantique les identifiants du client :
+
+1. Dans les paramètres du modèle sémantique, ouvrez **Data source credentials** et choisissez **Edit credentials** pour la source OData.
+2. Choisissez **Basic** comme **Authentication method**, saisissez l'ID et le secret du client, puis connectez-vous.
+3. Configurez une actualisation planifiée.
+
+Power BI Service actualise directement le flux : aucune passerelle de données locale n'est nécessaire. Il se connecte depuis les adresses cloud de Microsoft ; l'espace de travail doit donc autoriser toutes les adresses ; consultez [Activer l'accès externe](/fr/integrations/bi-tools/#activer-laccès-externe).
+
+Lorsque vous régénérez le secret du client, saisissez aussi le nouveau ici, sinon la prochaine actualisation échoue.
+
+Power BI Service lit le flux à environ un million de lignes par minute : une table de dix millions de lignes demande donc environ dix minutes d'actualisation ; la vitesse dépend de la table et de l'entrepôt. Lorsque le flux refuse une actualisation, par exemple après la régénération du secret ou le retrait du client du projet, Power BI Service réessaie plusieurs fois avant de signaler l'échec, ce qui peut prendre un quart d'heure.
+
+## Excel
+
+1. Dans l'onglet **Data**, choisissez **Get Data** > **From Other Sources** > **From OData Feed**.
+2. Collez l'**URL du flux** du projet et choisissez **OK**.
+3. Choisissez **Basic**, saisissez l'ID du client comme **User name** et le secret comme **Password**, puis choisissez **Connect**.
+4. Dans **Navigator**, choisissez les tables, puis **Load**.
+
+Une feuille de calcul contient au plus 1 048 576 lignes. Chargez plutôt une table plus volumineuse dans le modèle de données avec **Load To...**.
+
+## Tableau
+
+Dans Tableau Desktop :
+
+1. Sous **Connect**, choisissez **To a Server** > **OData**.
+2. Collez l'**URL du flux** du projet comme **Server**.
+3. Sous **Authentication**, choisissez **Username and Password**, saisissez l'ID et le secret du client, puis choisissez **Sign In**.
+
+Dans Tableau Cloud, choisissez le connecteur **OData** lorsque vous vous connectez aux données, et saisissez la même **URL du flux**, le même ID et le même secret de client.
+
+Tableau lit un flux OData dans un extrait. Avant de lire une table en entier, il commence à la lire et s'arrête en cours de route pour prélever un échantillon : chaque table est donc lue plus d'une fois. Pour actualiser l'extrait sur Tableau Cloud, publiez la source de données avec ses identifiants intégrés. Tableau Cloud se connecte depuis ses propres adresses, que l'espace de travail doit autoriser ; consultez [Activer l'accès externe](/fr/integrations/bi-tools/#activer-laccès-externe).
+
+Sur Lakehouse v2, Tableau Desktop suit jusqu'au bout une [lecture paginée](#tables-servies-par-pages) : il lit donc une table servie par pages quelle que soit sa taille. Sinon, lisez une table plus volumineuse que la limite de lignes avec [Flight SQL](/fr/integrations/bi-tools/flight-sql/#tableau-desktop-et-tableau-server) depuis Tableau Desktop ou Tableau Server, qui n'a pas de limite de lignes.
+
+## Garder chaque lecture sous la limite de lignes
+
+Une requête renvoie au plus 1 000 000 de lignes. Sauf si la table est [servie par pages](#tables-servies-par-pages), une lecture qui en renverrait davantage échoue avec ce message plutôt que de s'arrêter court sans rien dire :
+
+> This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
+
+Pour rester sous la limite :
+
+- **Filtrez dans Power Query sur une valeur ou une plage.** Un filtre qui conserve les lignes égales à une valeur, ou comprises entre deux nombres ou deux dates, est envoyé au flux : seules les lignes qui le passent sont lues.
+- **Utilisez l'actualisation incrémentielle dans Power BI.** Chaque actualisation lit alors une plage de dates à la fois ; consultez [ci-dessous](#utiliser-lactualisation-incrémentielle-dans-power-bi).
+
+### Ce que Power BI et Excel envoient au flux
+
+Power Query, dans Power BI et dans Excel, confie certaines étapes au flux et fait le reste lui-même :
+
+- **Fait par le flux :** les filtres sur une valeur, une plage de nombres ou une plage de dates ; le choix des colonnes ; le tri ; et la conservation des premières lignes.
+- **Fait par Power Query :** un filtre de texte tel que **Contains** (`Text.Contains`), et le comptage des lignes (`Table.RowCount`). Power Query lit toute la table et la traite localement : sur une grande table, filtrez donc plutôt sur une valeur ou une plage.
+- **Après une étape que le flux ne sait pas faire,** comme une colonne ajoutée, Power Query lit toute la table et termine lui-même la requête, sans erreur. Placez vos filtres avant une telle étape.
+
+Avant chaque lecture qu'il envoie, Power Query lit aussi les 1 000 premières lignes de la même requête.
+
+### Tables servies par pages
+
+Sur Lakehouse v2 (StarRocks), une table qui compte plus de lignes que la limite peut être servie par pages. Chaque page se termine par un lien vers la suivante, que Power BI, Excel et Tableau Desktop suivent d'eux-mêmes. Les pages diffèrent par leur taille : chacune contient au moins la moitié de la limite de lignes et jamais plus que la limite, et la dernière contient ce qui reste. Chaque page lit la table telle qu'elle était lors de la lecture de la première page : une écriture pendant l'actualisation ne fait donc ni perdre ni répéter une ligne.
+
+Une lecture paginée doit récupérer chaque page dans les 15 minutes qui suivent la précédente, et se terminer dans les 6 heures qui suivent la première. Sinon, ou si la version de la table qu'elle lit n'est plus conservée, comme lorsque la table est remplacée, l'actualisation échoue avec un message qui vous demande d'actualiser à nouveau.
+
+Une lecture n'est pas paginée sur Lakehouse v1 (Databend) ni sur votre propre entrepôt Snowflake ou Databricks, ni lorsqu'elle trie avec `$orderby`, demande avec `$top` au plus la limite de lignes, ou lit une table qui a sa propre colonne nommée `_row_id`. Elle ne l'est pas non plus lorsque PlaidCloud ne peut pas épingler la version de la table qu'elle lit, comme lorsque le catalogue du lakehouse ne répond pas à temps. Une seule requête la renvoie alors, jusqu'à la limite de lignes.
+
+## Utiliser l'actualisation incrémentielle dans Power BI
+
+Pour une grande table, configurez l'actualisation incrémentielle. Power BI actualise alors la table une plage de dates à la fois, de sorte que chaque requête reste sous la limite de lignes.
+
+1. Dans Power Query, créez deux paramètres nommés `RangeStart` et `RangeEnd`, de type **Date/Time**.
+2. Filtrez la colonne de date ou d'horodatage de la table pour ne garder que les lignes à partir de `RangeStart` inclus et avant `RangeEnd`.
+3. Définissez la stratégie d'actualisation incrémentielle de la table dans Power BI Desktop, puis publiez.
+
+Les paramètres sont de simples dates et heures, mais le flux envoie les horodatages en UTC avec leur fuseau horaire, et les dates sans heure. Comparez donc une colonne d'horodatage avec `DateTime.AddZone(RangeStart, 0)`, et une colonne de date avec `Date.From(RangeStart)`, plutôt qu'avec `RangeStart` lui-même. Une colonne d'horodatage comparée à `RangeStart` lui-même fait échouer l'actualisation avec `We cannot apply operator < to types DateTime and DateTimeZone.`
+
+Par exemple :
+
+```text
+let
+    Source = OData.Feed("https://odata.<workspace host>/v1/projects/<project id>/", null, [Implementation = "2.0"]),
+    Orders = Source{[Name = "Orders"]}[Data],
+    InRange = Table.SelectRows(Orders, each [OrderDate] >= DateTime.AddZone(RangeStart, 0) and [OrderDate] < DateTime.AddZone(RangeEnd, 0))
+in
+    InRange
+```
+
+Power BI transforme le filtre en `$filter` du flux : l'actualisation de chaque plage ne lit donc que ses propres lignes. Placez le filtre juste après le choix de la table, avant toute étape qui ne peut pas être transmise au flux.
+
+## Options de requête
+
+| Option | Ce que fait le flux |
+| --- | --- |
+| `$select` | Renvoie uniquement les propriétés nommées. |
+| `$filter` | Renvoie uniquement les lignes qui passent le filtre ; consultez [Filtres](#filtres). |
+| `$orderby` | Trie selon une ou plusieurs propriétés, chacune `asc` ou `desc`. Les valeurs vides viennent en premier en ordre croissant et en dernier en ordre décroissant. |
+| `$top` | Renvoie au plus ce nombre de lignes. |
+| `$skip` | Ignore ce nombre de lignes, avec `$orderby` uniquement. |
+| `/$count` | `<entity set>/$count` renvoie, en texte brut, le nombre de lignes que `$filter` conserve. |
+| `$format` | JSON uniquement. |
+
+Le flux ne répond pas à `$expand`, `$search`, `$apply` ni `$count=true` (utilisez plutôt `/$count`), ni à `$skip` sans `$orderby`, ni à `$orderby` sur une expression. Power BI et Excel récupèrent alors la table sans cette option et appliquent eux-mêmes l'étape.
+
+### Filtres
+
+`$filter` accepte :
+
+- **Comparaisons :** `eq`, `ne`, `gt`, `ge`, `lt`, `le` et `in`. `eq null` et `ne null` trouvent les valeurs vides et renseignées.
+- **Logique et arithmétique :** `and`, `or`, `not`, `add`, `sub`, `mul`, `div` et `mod`.
+- **Fonctions de texte :** `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat` et `matchesPattern`.
+- **Fonctions de date et d'heure :** `year`, `month`, `day`, `hour`, `minute`, `second`, `date` et `now`.
+- **Fonctions numériques :** `round`, `floor` et `ceiling`.
+
+Écrivez une date sous la forme `2024-01-31`, un horodatage sous la forme `2024-01-31T09:00:00Z` (un horodatage avec un autre décalage est lu comme le même instant en UTC), et le texte entre apostrophes, une apostrophe à l'intérieur étant doublée : `'O''Neil'`. Un nombre décimal est comparé exactement tel qu'il est écrit, jusqu'à 38 chiffres, et un entier doit tenir sur 64 bits.
+
+`cast`, `isof`, `time`, les durées, les fonctions de géographie et l'arithmétique sur les dates et les heures ne sont pas pris en charge.
+
+Voilà ce que le flux comprend lorsqu'un outil le lui envoie. Power BI et Excel n'en envoient qu'une partie ; consultez [Ce que Power BI et Excel envoient au flux](#ce-que-power-bi-et-excel-envoient-au-flux).
+
+## Ce que sert le flux
+
+### Tables et noms
+
+Chaque table que le client peut lire est un ensemble d'entités, et chacune de ses colonnes une propriété. Les vues ne sont pas incluses.
+
+Les noms proviennent des noms de la table et de la colonne :
+
+- Un nom composé des lettres A à Z, de chiffres et de tirets bas, commençant par une lettre ou un tiret bas, est utilisé tel quel.
+- Dans tout autre nom, chaque suite d'autres caractères, comme des espaces ou de la ponctuation, devient un seul tiret bas, et aucun n'est laissé à l'une ou l'autre extrémité. Les lettres au-delà de A à Z sont conservées, mais un nom qui ne commence pas par A à Z ou un tiret bas reçoit un tiret bas devant. Ainsi `Sales 2024 (EMEA)` devient `Sales_2024_EMEA`, `2024 Sales` devient `_2024_Sales`, et une colonne `Cost Center Name` devient `Cost_Center_Name`.
+- Le nom d'une table est coupé à 125 caractères et celui d'une colonne à 128.
+
+Les noms sont comparés sans tenir compte de la casse, comme Power BI les compare. Lorsque deux noms seraient identiques, comme `Sales` et `SALES`, ou `Sales 2024` et `Sales_2024`, chacun reçoit un tiret bas et un court code issu de sa propre table ou colonne, tel que `Sales_1a2b3c4d`. Le code reste le même d'une actualisation à l'autre. En revanche, lorsqu'un renommage fait entrer le nom d'une table en collision avec celui d'une autre, les deux reçoivent un code, et un rapport qui lit l'une ou l'autre par son nom simple ne trouve rien ; renommez l'une des tables pour résoudre le problème.
+
+### Clés
+
+La clé de chaque ensemble d'entités est constituée des clés de mise à jour de la table, lorsqu'elle en a et qu'aucune n'est un nombre à virgule flottante ni binaire. Sinon, c'est la première colonne de la table qui n'est ni l'un ni l'autre, ou à défaut sa première colonne. La clé n'a pas besoin d'être unique ni renseignée : Power BI et Excel chargent une table dont les valeurs de clé sont répétées ou vides.
+
+### Types
+
+| La colonne contient | Type OData |
+| --- | --- |
+| Vrai ou faux | `Edm.Boolean` |
+| Nombres entiers | `Edm.Int16`, `Edm.Int32` ou `Edm.Int64`, selon la taille |
+| Nombres décimaux, y compris les montants monétaires | `Edm.Decimal`, avec la précision et l'échelle de la colonne |
+| Nombres à virgule flottante | `Edm.Double` |
+| Texte | `Edm.String`, avec la longueur maximale de la colonne lorsqu'elle en a une |
+| Dates | `Edm.Date` |
+| Horodatages | `Edm.DateTimeOffset`, en UTC |
+| Heures de la journée | `Edm.TimeOfDay` |
+| Intervalles de jours et d'heures | `Edm.Duration` |
+| Binaire | `Edm.Binary` |
+| JSON, listes, structures, UUID, entiers de plus de 64 bits, intervalles avec des mois, et tout le reste | `Edm.String`, contenant la valeur sous forme de texte |
+
+Le flux envoie les nombres décimaux et les entiers de 64 bits exactement, chiffre pour chiffre. Power BI et Excel conservent toutefois les nombres sous forme de doubles, qui gardent environ 15 chiffres significatifs : un nombre décimal qui en compte davantage perd ses derniers chiffres, et un entier supérieur à 9 007 199 254 740 992 aussi. Pour les montants monétaires, changez le type de la colonne dans Power Query en **Fixed decimal number**, qui conserve exactement quatre décimales.
+
+## Quand une lecture échoue
+
+Les messages de connexion sont listés dans [Connecter des outils BI](/fr/integrations/bi-tools/#quand-un-outil-ne-peut-pas-se-connecter-ou-ne-voit-aucune-table). Une fois connecté :
+
+| Message | Que faire |
+| --- | --- |
+| This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh. | Consultez [Garder chaque lecture sous la limite de lignes](#garder-chaque-lecture-sous-la-limite-de-lignes). |
+| This feed has no entity set … | La table a disparu, a été renommée, est désormais masquée pour le rôle du client, ou son nom [entre maintenant en collision avec un autre](#tables-et-noms). Actualisez la liste des tables de l'outil. |
+| … not a property of … | La requête nomme une colonne que la table n'a plus, ou n'utilise pas son nom dans le flux. |
+| The $filter is not valid … | L'outil a envoyé un filtre que le flux ne peut pas lire. Le message indique ce qu'il n'a pas pu lire. |
+| This next link has expired … | Une [lecture paginée](#tables-servies-par-pages) a attendu plus de 15 minutes entre deux pages. Actualisez à nouveau. |
+| This read began more than 6 hours ago … | Une lecture paginée a duré plus de 6 heures. Actualisez à nouveau. |
+| The table changed while this feed was reading it, or was written to a moment ago. Refresh to read it again. | Une lecture paginée a perdu la version de la table qu'elle lisait, comme lorsque la table est remplacée. Actualisez à nouveau. |

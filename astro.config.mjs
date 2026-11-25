@@ -788,6 +788,12 @@ export default defineConfig({
 							items: [{ autogenerate: { directory: 'integrations/ai-architecture' } }],
 						},
 						'integrations/microsoft-365-copilot',
+						{
+							label: 'BI Tools',
+							translations: { de: 'BI-Tools', es: 'Herramientas de BI', fr: 'Outils BI', 'pt-BR': 'Ferramentas de BI', 'pt-PT': 'Ferramentas de BI', pl: 'Narzędzia BI', ja: 'BI ツール', ko: 'BI 도구', 'zh-CN': 'BI 工具' },
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'integrations/bi-tools' } }],
+						},
 						{ label: 'PySpark', collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
 					],
 				},
