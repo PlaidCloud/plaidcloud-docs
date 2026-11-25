@@ -41,9 +41,11 @@ Publish the report from Power BI Desktop, then give the semantic model the clien
 2. Choose **Basic** as the **Authentication method**, enter the client ID and secret, and sign in.
 3. Set up a scheduled refresh.
 
-Power BI Service refreshes the feed directly: no on-premises data gateway is needed. It connects from Microsoft's cloud addresses, so the workspace's **Allowed CIDRs** must be blank; see [Turn on External Access](/integrations/bi-tools/#turn-on-external-access).
+Power BI Service refreshes the feed directly: no on-premises data gateway is needed. It connects from Microsoft's cloud addresses, so the workspace must allow every address; see [Turn on External Access](/integrations/bi-tools/#turn-on-external-access).
 
 When you regenerate the client's secret, enter the new one here too, or the next refresh fails.
+
+A refresh reads roughly a million rows a minute, so a table of ten million rows takes about ten minutes. When the feed refuses a refresh, as after the secret is regenerated or the client is taken off the project, Power BI Service tries again a few times before it reports the failure, so a refused refresh can take up to a quarter of an hour to fail.
 
 ## Excel
 
@@ -62,9 +64,11 @@ In Tableau Desktop:
 2. Paste the project's **Feed URL** as the **Server**.
 3. Under **Authentication**, choose **Username and Password**, enter the client ID and secret, and choose **Sign In**.
 
-Tableau reads an OData feed into an extract. To refresh it on Tableau Cloud, publish the data source with its credentials embedded. Tableau Cloud connects from its own addresses, which must be in the workspace's **Allowed CIDRs**, or the list must be blank.
+In Tableau Cloud, choose the **OData** connector when you connect to data, and enter the same **Feed URL**, client ID and secret.
 
-For a table larger than the row cap, use [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
+Tableau reads an OData feed into an extract. Before it reads a table in full, it starts reading it and stops part-way to take a sample, so each table is read more than once. To refresh the extract on Tableau Cloud, publish the data source with its credentials embedded. Tableau Cloud connects from its own addresses, which the workspace must allow; see [Turn on External Access](/integrations/bi-tools/#turn-on-external-access).
+
+On Lakehouse v2, Tableau follows a [paged read](#tables-served-in-pages) to the end, so it can read a table larger than the row cap. On Lakehouse v1, read such a table with [Flight SQL](/integrations/bi-tools/flight-sql/#tableau-desktop-and-tableau-server) from Tableau Desktop or Tableau Server, which has no row cap.
 
 ## Keep Each Read Under the Row Cap
 
@@ -89,7 +93,7 @@ Each refresh also reads a sample of 1,000 rows before it reads the table.
 
 ### Tables Served in Pages
 
-On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI and Excel follow on their own. Pages differ in size: each holds at least half the row cap and never more than the cap, and the last holds whatever is left. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row. A read sorted with `$orderby` is never paged.
+On Lakehouse v2 (StarRocks), a table with more rows than the cap can be served in pages instead. Each page ends with a link to the next, which Power BI, Excel and Tableau follow on their own. Pages differ in size: each holds at least half the row cap and never more than the cap, and the last holds whatever is left. Every page reads the table as it was when the first page was read, so a write during the refresh neither drops nor repeats a row. A read sorted with `$orderby` is never paged.
 
 A paged read must fetch each page within 15 minutes of the one before, and finish within 6 hours of the first. Otherwise, or if the version of the table it is reading is no longer kept, as when the table is replaced, the refresh fails with a message that asks you to refresh again.
 
@@ -103,7 +107,9 @@ For a large table, set up incremental refresh. Power BI then refreshes the table
 2. Filter the table's date or timestamp column to the rows on or after `RangeStart` and before `RangeEnd`.
 3. Set the table's incremental refresh policy in Power BI Desktop, then publish.
 
-The parameters are plain dates and times, but the feed sends timestamps in UTC with their time zone, and dates without a time. So compare a timestamp column with `DateTime.AddZone(RangeStart, 0)`, and a date column with `Date.From(RangeStart)`, rather than with `RangeStart` itself:
+The parameters are plain dates and times, but the feed sends timestamps in UTC with their time zone, and dates without a time. So compare a timestamp column with `DateTime.AddZone(RangeStart, 0)`, and a date column with `Date.From(RangeStart)`, rather than with `RangeStart` itself. A timestamp column compared with `RangeStart` itself fails the refresh with `We cannot apply operator < to types DateTime and DateTimeZone.`
+
+For example:
 
 ```text
 let
