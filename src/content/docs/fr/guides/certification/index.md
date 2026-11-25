@@ -15,7 +15,7 @@ La certification PlaidCloud prouve ce que vous savez faire grâce à des labs pr
 | **Fondations** | Aucun parcours | Réussir le lab Fondations |
 | **Praticien** | **Ingénierie des données**, **Modélisation** ou **Analytique** | Réussir le lab Praticien du parcours |
 | **Expert** | **Ingénierie des données**, **Modélisation** ou **Analytique** | Réussir le lab Expert du parcours, qui est chronométré |
-| **Principal** | Aucun parcours | Détenir trois badges Expert et réussir un examen par PlaidCloud d'une implémentation en production |
+| **Maître** | Aucun parcours | Détenir trois badges Expert et réussir un examen par PlaidCloud d'une implémentation en production |
 
 Les parcours **Opérations financières** et **Administration et sécurité** sont indiqués comme **Bientôt disponible**. Ils n'ont pas encore de labs.
 
@@ -28,7 +28,8 @@ Ouvrez le menu utilisateur dans le coin supérieur droit et choisissez **Certifi
 - une bannière avec votre objectif, lorsqu'un administrateur de l'espace de travail en a défini un, indiquant si vous détenez déjà ce badge ;
 - **Vos badges**, avec la date d'obtention de chaque badge et sa date d'expiration ;
 - **Labs**, une grille de chaque parcours croisé avec **Fondations**, **Praticien** et **Expert**. Chaque cellule affiche **Démarrer le lab**, **Obtenu** pour un badge que vous détenez, ou, dans l'espace de travail de certification, la date à laquelle le lab est de nouveau disponible après une [attente](#lattente-de-7-jours). La ligne de votre objectif est marquée **votre objectif**, et un objectif Fondations ou Principal marque **Tous les parcours** ;
-- **Principal**, avec le nombre de badges Expert, sur trois, que vous détenez.
+- **Maître**, avec le nombre de badges Expert, sur trois, que vous détenez ;
+- **Guide de certification ›**, qui ouvre ce guide.
 
 **Retour à l'accueil** ferme le volet.
 
@@ -40,18 +41,18 @@ La première fois, PlaidCloud vous envoie un e-mail pour définir un mot de pass
 
 Si vous n'appartenez à aucun espace de travail PlaidCloud, contactez PlaidCloud, et nous vous invitons dans l'espace de travail de certification.
 
-Démarrer un lab, en abandonner un et obtenir un badge nécessitent tous une adresse e-mail vérifiée, car vos badges lui sont rattachés.
+Démarrer un lab, en abandonner un et obtenir un badge nécessitent tous une adresse e-mail vérifiée, car vos badges lui sont rattachés. Dans tout autre espace de travail, **Démarrer le lab** exige que votre adresse e-mail soit vérifiée dans cet espace de travail. Là, **Démarrer le lab** et **Partager depuis l'espace de travail de certification** n'ouvrent l'espace de travail de certification qu'un nombre limité de fois par jour pour chaque adresse e-mail ; au-delà, réessayez le lendemain.
 
 ## Fonctionnement d'un lab
 
 1. Choisissez **Démarrer le lab** dans l'espace de travail de certification. PlaidCloud crée le projet du lab pour vous ; vous seul pouvez l'ouvrir.
 2. Le volet affiche le lab : son titre, l'heure à laquelle vous l'avez démarré, **Votre tâche**, ainsi que **Soumettre pour notation**, **Ouvrir le projet** et **Abandonner**. Tant qu'un lab est ouvert, le volet l'affiche à la place de vos badges et de la grille.
 3. Choisissez **Ouvrir le projet** et réalisez la tâche.
-4. Choisissez **Soumettre pour notation**. La notation exécute le workflow du lab, puis vérifie ce que cette exécution a produit ; elle peut donc durer aussi longtemps que l'exécution.
+4. Choisissez **Soumettre pour notation**. La notation exécute le workflow du lab, puis vérifie ce que cette exécution a produit ; elle peut donc durer aussi longtemps que l'exécution. Elle s'exécute en arrière-plan : le volet affiche **Évaluation de votre lab en cours** et vérifie le résultat, et **Soumettre pour notation** et **Abandonner** sont indisponibles jusqu'à la fin de la notation. Vous pouvez quitter le volet, ou PlaidCloud, pendant la notation ; lorsque vous rouvrez **Certifications**, il continue d'attendre le résultat, ou l'affiche si la notation est terminée. Si le volet ne peut pas joindre le serveur pendant une longue notation, il ajoute *Impossible de joindre le serveur ; nouvelle tentative en cours…* et continue de vérifier.
    - Si tous les contrôles réussissent, le badge est à vous, et le projet du lab est supprimé.
    - Si un contrôle échoue, **Dernier résultat** liste chaque contrôle comme **Réussi** ou **Échec**. Un contrôle échoué indique ce qui n'allait pas et comporte un lien **Guide ›** vers le guide qui traite du sujet. Corrigez votre projet et soumettez à nouveau.
 
-Vous pouvez soumettre autant de fois que vous le souhaitez tant que le lab est ouvert. Soumettre alors que le workflow du lab est déjà en cours d'exécution ne note rien ; attendez la fin de l'exécution, puis soumettez à nouveau.
+Vous pouvez soumettre autant de fois que vous le souhaitez tant que le lab est ouvert. Soumettre alors que le workflow du lab est déjà en cours d'exécution ne note rien ; attendez la fin de l'exécution, puis soumettez à nouveau. Si la notation s'arrête avant de se terminer, **Dernier résultat** l'indique ; soumettez à nouveau.
 
 Si tous les contrôles réussissent mais que votre adresse e-mail n'est pas vérifiée, aucun badge n'est attribué. Vérifiez votre adresse e-mail, puis soumettez à nouveau.
 
@@ -59,13 +60,15 @@ Si tous les contrôles réussissent mais que votre adresse e-mail n'est pas vér
 
 Les labs Expert sont chronométrés : la grille **Labs** affiche **Chronométré · 4 h**, et un lab Expert ouvert indique combien de minutes il reste. Le chronomètre démarre lorsque vous démarrez le lab et continue de tourner que vous y travailliez ou non.
 
-Une fois le temps écoulé, le lab ne peut plus être réussi. Votre prochaine soumission met fin à la tentative, supprime le projet du lab et démarre l'attente de 7 jours.
+Une soumission effectuée avant la fin du temps imparti est notée même si la notation se termine après. Si cette notation s'arrête avant de se terminer, ou si tous les contrôles réussissent mais qu'aucun badge ne peut encore être attribué, vous pouvez soumettre à nouveau pendant au moins un jour après la fin du temps imparti.
+
+Sinon, une fois le temps écoulé, le lab ne peut plus être réussi. Votre prochaine soumission met fin à la tentative, supprime le projet du lab et démarre l'attente de 7 jours. Si vous ne soumettez pas à nouveau, le nettoyage nocturne de PlaidCloud met fin à la tentative de la même manière.
 
 Les labs Fondations et Praticien n'ont pas de limite de temps.
 
 ### L'attente de 7 jours
 
-**Abandonner** supprime le projet de votre lab et met fin à la tentative. Vous le confirmez d'abord. Abandonner un lab, ou manquer de temps sur un lab Expert, démarre une attente de 7 jours avant de pouvoir démarrer de nouveau ce lab ; la grille **Labs** affiche la date à laquelle il est de nouveau disponible. Soumettre un lab dont certains contrôles échouent ne démarre pas d'attente.
+**Abandonner** supprime le projet de votre lab et met fin à la tentative. Vous le confirmez d'abord. Si le projet d'un lab ne peut pas être supprimé lorsque sa tentative prend fin, que vous le réussissiez, l'abandonniez ou manquiez de temps, un message l'indique si le volet est ouvert, et le nettoyage nocturne le supprime plus tard. Abandonner un lab, ou manquer de temps sur un lab Expert, démarre une attente de 7 jours avant de pouvoir démarrer de nouveau ce lab ; la grille **Labs** affiche la date à laquelle il est de nouveau disponible. Soumettre un lab dont certains contrôles échouent ne démarre pas d'attente.
 
 ## Expiration
 
@@ -75,7 +78,7 @@ Les badges expirent deux ans après leur obtention. Un badge expiré n'apparaît
 
 Master est le seul badge qui ne s'obtient pas dans un lab. Il nécessite trois badges Expert non expirés et une implémentation en production, examinée par PlaidCloud.
 
-**Demander l'examen Master**, sur la carte **Principal**, devient disponible dès que vous détenez trois badges Expert. Il ouvre **Aide et support** avec un nouveau ticket qui nomme déjà vos badges Expert. Ajoutez les détails de votre implémentation et envoyez-le. L'examen vérifie :
+**Demander l'examen Master**, sur la carte **Maître**, devient disponible dès que vous détenez trois badges Expert. Il ouvre **Aide et support** avec un nouveau ticket qui nomme déjà vos badges Expert. Ajoutez les détails de votre implémentation et envoyez-le. L'examen vérifie :
 
 - qu'il s'agit d'une implémentation en production chez un client ou un partenaire nommé ;
 - que vous l'avez construite ou dirigée ;
@@ -100,7 +103,7 @@ Le partage nécessite une adresse e-mail vérifiée. Tant que la vôtre n'est pa
 
 ## Ce que voient les administrateurs
 
-Les badges sont rattachés à votre adresse e-mail, ils apparaissent donc dans chaque espace de travail dont vous êtes membre avec cette adresse. Dans la liste **Membres** d'un espace de travail, les administrateurs voient les badges et l'objectif de chaque membre, et peuvent attribuer un parcours cible. Ils voient les badges, pas les tentatives ni les résultats des labs. Consultez [Badges et objectifs de certification](/fr/administration/access/member-management/#badges-et-objectifs-de-certification).
+Les badges sont rattachés à votre adresse e-mail, ils apparaissent donc dans chaque espace de travail dont vous êtes membre avec cette adresse. Dans la liste **Membres** d'un espace de travail, les administrateurs voient les badges et l'objectif de chaque membre, et peuvent attribuer un parcours cible. Ils voient les badges, pas les tentatives ni les résultats des labs, et un membre dont l'adresse e-mail n'est pas vérifiée n'affiche aucun badge. Les agents IA connectés via MCP peuvent lire les badges et les objectifs des membres de la même manière. Consultez [Badges et objectifs de certification](/fr/administration/access/member-management/#badges-et-objectifs-de-certification).
 
 ## Parcours d'apprentissage
 

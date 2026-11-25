@@ -27,7 +27,8 @@ Open the user menu in the upper-right corner and choose **Certifications**. The 
 - a banner with your target, when a workspace administrator set one, saying whether you hold that badge yet;
 - **Your badges**, with the date you earned each badge and the date it expires;
 - **Labs**, a grid of each track against **Foundations**, **Practitioner** and **Expert**. Each cell shows **Start lab**, **Earned** for a badge you hold, or, in the certification workspace, the date the lab is available again after a [wait](#the-7-day-wait). The row of your target is marked **your target**, and a Foundations or Master target marks **All tracks**;
-- **Master**, with how many of the three Expert badges you hold.
+- **Master**, with how many of the three Expert badges you hold;
+- **Certification guide ›**, which opens this guide.
 
 **Back to home** closes the pane.
 
@@ -39,18 +40,18 @@ The first time, PlaidCloud sends you an email to set a password for the certific
 
 If you don't belong to any PlaidCloud workspace, contact PlaidCloud, and we invite you to the certification workspace.
 
-Starting a lab, abandoning one, and earning a badge all need a verified email address, because your badges belong to it.
+Starting a lab, abandoning one, and earning a badge all need a verified email address, because your badges belong to it. In any other workspace, **Start lab** needs your email address to be verified in that workspace. There, **Start lab** and **Share from the certification workspace** open the certification workspace only a limited number of times a day for each email address; past that, try again the next day.
 
 ## How a Lab Works
 
 1. Choose **Start lab** in the certification workspace. PlaidCloud creates the lab's project for you; only you can open it.
 2. The pane shows the lab: its title, when you started it, **Your task**, and **Submit for grading**, **Open project** and **Abandon**. While a lab is open, the pane shows it instead of your badges and the grid.
 3. Choose **Open project** and do the task.
-4. Choose **Submit for grading**. Grading runs the lab's workflow, then checks what that run produced, so it can take as long as the run.
+4. Choose **Submit for grading**. Grading runs the lab's workflow, then checks what that run produced, so it can take as long as the run. It runs in the background: the pane shows **Grading your lab** and checks for the result, and **Submit for grading** and **Abandon** are unavailable until grading ends. You can leave the pane, or PlaidCloud, while it grades; when you open **Certifications** again, it carries on waiting for the result, or shows it if grading has ended. If the pane can't reach the server during a long grading, it adds *Can't reach the server; still trying…* and keeps checking.
    - If every check passes, the badge is yours, and the lab project is deleted.
    - If any check fails, **Last result** lists each check as **Passed** or **Failed**. A failed check says what was wrong and has a **Guide ›** link to the guide that covers it. Fix your project and submit again.
 
-You can submit as often as you like while the lab is open. Submitting while the lab's workflow is already running grades nothing; wait for the run to finish, then submit again.
+You can submit as often as you like while the lab is open. Submitting while the lab's workflow is already running grades nothing; wait for the run to finish, then submit again. If grading stops before it finishes, **Last result** says so; submit again.
 
 If every check passes but your email address isn't verified, no badge is awarded. Verify your email address, then submit again.
 
@@ -58,13 +59,15 @@ If every check passes but your email address isn't verified, no badge is awarded
 
 Expert labs are timed: the **Labs** grid shows **Timed · 4 h**, and an open Expert lab shows how many minutes are left. The clock starts when you start the lab and keeps running whether or not you're working on it.
 
-Once the time is up, the lab can't be passed. Your next submit ends the attempt, deletes the lab project and starts the 7-day wait.
+A submission you make before the time is up is graded even if grading ends after it. If that grading stops before it finishes, or every check passes but no badge can be awarded yet, you can still submit again for at least a day after the time is up.
+
+Otherwise, once the time is up, the lab can't be passed. Your next submit ends the attempt, deletes the lab project and starts the 7-day wait. If you don't submit again, PlaidCloud's nightly cleanup ends the attempt the same way.
 
 Foundations and Practitioner labs have no time limit.
 
 ### The 7-Day Wait
 
-**Abandon** deletes your lab project and ends the attempt. You confirm it first. Abandoning a lab, or running out of time on an Expert lab, starts a 7-day wait before you can start that lab again; the **Labs** grid shows the date it's available again. Submitting a lab that fails some checks doesn't start a wait.
+**Abandon** deletes your lab project and ends the attempt. You confirm it first. If a lab project can't be deleted when its attempt ends, whether you pass, abandon it or run out of time, a message says so if the pane is open, and the nightly cleanup deletes it later. Abandoning a lab, or running out of time on an Expert lab, starts a 7-day wait before you can start that lab again; the **Labs** grid shows the date it's available again. Submitting a lab that fails some checks doesn't start a wait.
 
 ## Expiry
 
@@ -99,7 +102,7 @@ Sharing needs a verified email address. Until yours is verified, **Your badges**
 
 ## What Administrators See
 
-Badges belong to your email address, so they show in every workspace where you're a member with that address. In a workspace's **Members** list, administrators see each member's badges and target, and can assign a target track. They see badges, not lab attempts or results. See [Certification Badges and Targets](/administration/access/member-management/#certification-badges-and-targets).
+Badges belong to your email address, so they show in every workspace where you're a member with that address. In a workspace's **Members** list, administrators see each member's badges and target, and can assign a target track. They see badges, not lab attempts or results, and a member whose email address isn't verified shows no badges. AI agents connected over MCP can read members' badges and targets in the same way. See [Certification Badges and Targets](/administration/access/member-management/#certification-badges-and-targets).
 
 ## Learning Paths
 
