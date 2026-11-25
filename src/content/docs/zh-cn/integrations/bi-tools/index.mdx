@@ -1,0 +1,125 @@
+---
+title: 连接 BI 工具
+description: 通过只读的 OData 数据源或 Arrow Flight SQL，从 Power BI、Excel、Tableau、Python 和 DBeaver 读取项目的表，读取范围为客户端所有者可读取的内容，并应用行访问权限。
+sidebar:
+  label: 概览
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/index.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Power BI、Excel、Tableau、Python、DBeaver 及其他工具可以通过 PlaidCloud 的 BI 数据源直接读取项目的表。该数据源是只读的，提供两种接入方式：
+
+- **OData**：Power BI、Excel 和 Tableau 使用自带的 OData 连接器即可读取的数据源。
+- **Arrow Flight SQL**：接收您自己的 SQL 语句，并以 Arrow 格式返回结果，适用于 Python、DBeaver 和 Tableau Desktop。
+
+每个工具使用 BI 数据源客户端登录，即您创建并添加到项目的客户端 ID 和密钥。客户端读取项目的权限与其所有者相同。
+
+## 应该使用哪种连接？
+
+| 工具 | 连接方式 |
+| --- | --- |
+| Power BI Desktop | [OData](/zh-cn/integrations/bi-tools/odata/#power-bi-desktop) |
+| Power BI Service | [OData](/zh-cn/integrations/bi-tools/odata/#power-bi-service) |
+| Excel | [OData](/zh-cn/integrations/bi-tools/odata/#excel) |
+| Tableau Cloud | [OData](/zh-cn/integrations/bi-tools/odata/#tableau) |
+| Tableau Desktop 和 Tableau Server | 通过 Arrow Flight SQL JDBC 驱动程序使用[Flight SQL](/zh-cn/integrations/bi-tools/flight-sql/#tableau-desktop-和-tableau-server)，或使用[OData](/zh-cn/integrations/bi-tools/odata/#tableau) |
+| Python，配合 pandas、polars 或 DuckDB | 通过 ADBC 使用[Flight SQL](/zh-cn/integrations/bi-tools/flight-sql/#python) |
+| DBeaver | [Flight SQL](/zh-cn/integrations/bi-tools/flight-sql/#dbeaver) |
+
+两种方式读取相同的表，应用相同的行访问权限，并使用同一个客户端。OData 单次请求最多返回 1,000,000 行。在 Lakehouse v2 上，较大的表可以[分页提供](/zh-cn/integrations/bi-tools/odata/#分页提供的表)；否则请使用筛选器或增量刷新来读取。Flight SQL 没有行数上限。
+
+OData 和 Flight SQL 对表和列的命名方式不同。OData 会把名称中的空格和标点转换为下划线，因此列 `FULL YEAR` 显示为 `FULL_YEAR`。Flight SQL 保留项目给出的名称，因此在 SQL 中需要加引号：`"FULL YEAR"`。
+
+## 开启外部访问
+
+只有工作区开启了外部数据库访问，BI 数据源才可用。PlaidCloud 会为您设置，并同时设置允许连接的地址范围：请联系 PlaidCloud 支持团队来开启或更改这些范围。参见[工作区配置](/zh-cn/administration/control-plane/workspace-configuration/#lakehouse)。
+
+允许的地址范围决定哪些地址可以访问 BI 数据源：
+
+- 请提供您的工具所连接的来源范围（如办公室或 VPN），采用 CIDR 格式。
+- 在云端刷新的服务（如 Tableau Cloud）从其自身的地址连接，这些地址也必须被允许。
+- 如果未设置任何范围，数据源接受来自任何地址的连接，仅由客户端密钥提供保护。
+- 拒绝的地址范围不适用于 BI 数据源。
+
+<Aside type="note">
+Power BI Service 从 Microsoft 的共享云地址刷新，这些地址数量太多，无法逐一列出。要从 Power BI Service 刷新，请请求 PlaidCloud 支持团队不设置任何范围，这样数据源会接受所有地址，仅由客户端密钥提供保护。
+</Aside>
+
+## 创建 BI 数据源客户端
+
+1. 在 Analyze 中，打开**工具**并选择**已注册的系统（OAuth 客户端）**。
+2. 选择**注册新系统（OAuth 客户端）**。
+3. 输入**名称**，并在**类型**下选择 **BI / 外部数据源**。
+4. 选择**创建**。
+5. **BI 数据源客户端密钥**窗口会显示**客户端 ID** 和**客户端密钥**。请立即复制这两项：密钥不会再次显示。
+
+该窗口还会显示数据源的地址，其中项目 ID 的位置是占位符。每个项目的**访问与共享**页面会显示该项目自己的地址，可直接复制。
+
+在**已注册的系统（OAuth 客户端）**中，BI 数据源客户端在**类型**列显示 **BI / 外部数据源**。与 API 客户端不同，它没有可复制的配置，其密钥也无法再次读取。如果密钥丢失，或可能被他人看到，请在该客户端所在行选择**重新生成密钥**，然后选择**重新生成**。新密钥与创建时一样只显示一次，旧密钥会立即失效，因此所有使用它的工具都会失败，直到您为其提供新密钥。
+
+要阻止客户端读取任何内容，请编辑它并清除**已启用**，或将其删除。
+
+## 将客户端添加到项目
+
+新客户端在添加到项目之前不会读取任何内容。
+
+1. 打开项目的[项目主页](/zh-cn/guides/projects/project-home/#访问与共享)并选择**访问与共享**。
+2. 在 **BI 数据源客户端**卡片上，选择**添加客户端 ›**。
+3. 选择 **BI 数据源客户端**及其**角色**：**探索者**或**管理者**。
+4. 选择**添加**。
+
+<Aside type="caution" title="客户端只能看到向其角色显示的表">
+管理者客户端只有在表的**管理者**框已勾选时才能看到该表，探索者客户端只有在表的**探索者**框已勾选时才能看到。两个框都未勾选的表，任何客户端都无法读取，因此在每个表的两个框都未勾选的项目中，工具可以登录但不会列出任何表。架构师在项目的**表**选项卡上勾选这些框，参见[为查看角色标记表](/zh-cn/guides/projects/managing-tables-and-views/#为查看角色标记表)。
+</Aside>
+
+客户端不能是架构师。架构师无论各框如何设置都能看到所有表，因此客户端的角色以及该角色在每个表上的框，就是您选择哪些表进入数据源的方式。
+
+要添加客户端，您需要能够更改项目的访问权限，即项目的架构师或工作区管理员，并且只能添加您自己拥有的客户端。如果您没有任何客户端，窗口会说明这一点，并提供**打开已注册的系统**。无法添加客户端时，卡片会说明原因。
+
+卡片会列出读取该项目的客户端及其角色：项目的架构师或工作区管理员可以看到全部客户端，其他人只能看到自己的客户端。卡片还会显示项目的**数据源 URL**（用于 OData）和 **JDBC URL**（用于 Flight SQL）。客户端所在行的**移除**会将其从项目中移除。项目的架构师或工作区管理员可以移除任何客户端，所有者可以移除自己的客户端。
+
+## 客户端读取的内容
+
+BI 数据源客户端以其所有者（即创建它的人）的身份读取：
+
+- **表**：向其角色显示的项目的表，参见[上文](#将客户端添加到项目)。不包括视图。
+- **行**：仅限所有者的[行访问](/zh-cn/administration/access/managing-security-groups-and-assignments/#管理行访问)允许的行。即使所有者是项目的架构师，这一点也同样成立：通过数据源读取时，由所有者的安全组决定行。
+- **所有者必须仍具备权限**：所有者必须仍能打开项目并读取其表。如果他们失去项目的访问权限，或其账户被停用，客户端会在一分钟内停止工作。
+- **只读**：客户端发送的任何内容都无法更改数据。
+
+<Aside type="caution">
+任何拥有客户端 ID 和密钥的人，都会以所有者的身份读取项目。请像对待密码一样对待密钥：将其保存在工具自己的凭据设置中，如果可能已被他人看到，请重新生成。该密钥仅适用于 BI 数据源：REST API、JSON-RPC 和 MCP 服务器会拒绝它。
+</Aside>
+
+## 连接详细信息
+
+请从项目的 **BI 数据源客户端**卡片复制地址，而不要手动输入。表中的 `<workspace host>` 是您打开 PlaidCloud 时使用的地址。
+
+| | OData | Flight SQL |
+| --- | --- | --- |
+| 地址 | `https://odata.<workspace host>/v1/projects/<project id>/` | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| 用户名 | 客户端 ID | 客户端 ID |
+| 密码 | 客户端密钥 | 客户端密钥 |
+| 项目 | 地址的一部分 | `project_id` 连接属性 |
+
+## 工具无法登录或看不到表时
+
+如果工具完全无法访问数据源，请请求 PlaidCloud 支持团队检查工作区是否已开启外部数据库访问，并允许该工具所连接的地址。连接成功后，以下消息会说明问题所在：
+
+| 工具显示的内容 | 操作 |
+| --- | --- |
+| 可以登录，但不列出任何表。 | 客户端只能看到向其角色显示的表。请在客户端应读取的每个表上，勾选**管理者**或**探索者**框（取决于客户端的角色），参见[将客户端添加到项目](#将客户端添加到项目)。 |
+| Sign in with the client id and secret of a BI feed client. | 工具未发送用户名和密码。请选择基本（用户名和密码）身份验证。 |
+| The client id or secret is wrong, or the client is not a BI feed client. | 请检查客户端 ID 和密钥。已停用或已删除的客户端、API 客户端，以及所有者账户已停用的客户端，也会得到同样的消息。 |
+| This client may not read this project. | 在**访问与共享**中将客户端添加到项目。如果它已在项目中，则其所有者可能已无法打开该项目。 |
+| Too many requests. Try again later. (OData)<br />Too many attempts. Try again in … seconds. (Flight SQL) | 短时间内有过多登录尝试来自同一地址。请等待，然后使用正确的密钥重试。 |
+| PlaidCloud could not check these credentials just now. Try again shortly. | PlaidCloud 一侧出现的暂时性问题。请重试。 |
+| The gateway is busy. Try again shortly. (OData)<br />The gateway is busy. Try again in 30 seconds. (Flight SQL) | 数据源正在同时处理尽可能多的读取请求。请重试。 |
+
+## 后续步骤
+
+- [使用 OData 连接](/zh-cn/integrations/bi-tools/odata/)：Power BI、Excel 和 Tableau，增量刷新，以及数据源提供的内容。
+- [使用 Arrow Flight SQL 连接](/zh-cn/integrations/bi-tools/flight-sql/)：Python、DBeaver 和 Tableau Desktop，以及可以发送的 SQL。

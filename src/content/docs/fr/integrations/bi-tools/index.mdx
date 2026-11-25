@@ -1,0 +1,125 @@
+---
+title: Connecter des outils BI
+description: Lisez les tables d'un projet depuis Power BI, Excel, Tableau, Python et DBeaver grâce à un flux OData en lecture seule ou à Arrow Flight SQL, comme le propriétaire du client peut les lire, avec l'accès aux lignes appliqué.
+sidebar:
+  label: Vue d'ensemble
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/index.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Power BI, Excel, Tableau, Python, DBeaver et d'autres outils peuvent lire directement les tables d'un projet via le flux BI de PlaidCloud. Le flux est en lecture seule et offre deux points d'entrée :
+
+- **OData**, un flux que Power BI, Excel et Tableau lisent avec le connecteur OData dont ils disposent déjà.
+- **Arrow Flight SQL**, qui reçoit votre propre instruction SQL et renvoie le résultat au format Arrow, pour Python, DBeaver et Tableau Desktop.
+
+Chaque outil se connecte avec un client de flux BI, un ID et un secret de client que vous créez et ajoutez à un projet. Le client lit le projet comme vous, son propriétaire, pouvez le lire.
+
+## Quelle connexion utiliser ?
+
+| Outil | Se connecter avec |
+| --- | --- |
+| Power BI Desktop | [OData](/fr/integrations/bi-tools/odata/#power-bi-desktop) |
+| Power BI Service | [OData](/fr/integrations/bi-tools/odata/#power-bi-service) |
+| Excel | [OData](/fr/integrations/bi-tools/odata/#excel) |
+| Tableau Cloud | [OData](/fr/integrations/bi-tools/odata/#tableau) |
+| Tableau Desktop et Tableau Server | [Flight SQL](/fr/integrations/bi-tools/flight-sql/#tableau-desktop-et-tableau-server), via le pilote JDBC Arrow Flight SQL, ou [OData](/fr/integrations/bi-tools/odata/#tableau) |
+| Python, avec pandas, polars ou DuckDB | [Flight SQL](/fr/integrations/bi-tools/flight-sql/#python), via ADBC |
+| DBeaver | [Flight SQL](/fr/integrations/bi-tools/flight-sql/#dbeaver) |
+
+Les deux lisent les mêmes tables, avec le même accès aux lignes, au moyen du même client. OData renvoie au plus 1 000 000 de lignes par requête. Sur Lakehouse v2, une table plus volumineuse peut être [servie par pages](/fr/integrations/bi-tools/odata/#tables-servies-par-pages) ; sinon, elle se lit avec un filtre ou avec l'actualisation incrémentielle. Flight SQL n'a pas de limite de lignes.
+
+OData et Flight SQL nomment les tables et les colonnes différemment. OData transforme les espaces et la ponctuation d'un nom en tirets bas : une colonne `FULL YEAR` devient donc `FULL_YEAR`. Flight SQL conserve le nom que lui donne le projet ; en SQL, vous le mettez donc entre guillemets : `"FULL YEAR"`.
+
+## Activer l'accès externe
+
+Le flux BI n'est disponible que lorsque l'accès externe à la base de données est activé pour l'espace de travail. PlaidCloud le définit pour vous, avec les plages d'adresses autorisées à se connecter : contactez l'assistance PlaidCloud pour l'activer ou pour modifier les plages. Consultez [Configuration de l'espace de travail](/fr/administration/control-plane/workspace-configuration/#lakehouse).
+
+Les plages d'adresses autorisées déterminent quelles adresses peuvent atteindre le flux BI :
+
+- Demandez les plages depuis lesquelles vos outils se connectent, comme vos bureaux ou votre VPN, au format CIDR.
+- Un service qui actualise dans le cloud, comme Tableau Cloud, se connecte depuis ses propres adresses, qui doivent elles aussi être autorisées.
+- Si aucune plage n'est définie, le flux accepte les connexions depuis n'importe quelle adresse, protégé uniquement par le secret du client.
+- Les plages d'adresses refusées ne s'appliquent pas au flux BI.
+
+<Aside type="note">
+Power BI Service actualise depuis les adresses cloud partagées de Microsoft, trop nombreuses pour être listées. Pour actualiser depuis Power BI Service, demandez à l'assistance PlaidCloud de ne définir aucune plage, afin que le flux accepte toutes les adresses et que le secret du client soit sa seule protection.
+</Aside>
+
+## Créer un client de flux BI
+
+1. Dans Analyze, ouvrez **Outils** et choisissez **Systèmes enregistrés (clients OAuth)**.
+2. Choisissez **Enregistrer un nouveau système (client OAuth)**.
+3. Saisissez un **Nom**, et sous **Type** choisissez **BI / flux de données externe**.
+4. Choisissez **Créer**.
+5. La fenêtre **Secret du client de flux BI** affiche l'**ID client** et le **Secret client**. Copiez-les maintenant : le secret n'est plus affiché ensuite.
+
+La même fenêtre affiche les adresses du flux, avec un espace réservé à l'endroit où va l'ID d'un projet. La page **Accès et partage** de chaque projet affiche les adresses propres à ce projet, prêtes à être copiées.
+
+Dans **Systèmes enregistrés (clients OAuth)**, un client de flux BI affiche **BI / flux de données externe** dans la colonne **Type**. Contrairement à un client API, il n'a aucune configuration à copier, et son secret ne peut pas être relu. Si le secret est perdu ou a pu être vu par quelqu'un d'autre, choisissez **Régénérer le secret** sur la ligne du client, puis **Régénérer**. Le nouveau secret est affiché une seule fois, comme à la création, et l'ancien cesse aussitôt de fonctionner : tous les outils qui l'utilisent échouent donc tant que vous ne leur donnez pas le nouveau.
+
+Pour empêcher un client de rien lire, modifiez-le et décochez **Activé**, ou supprimez-le.
+
+## Ajouter le client à un projet
+
+Un nouveau client ne lit rien tant que vous ne l'avez pas ajouté à un projet.
+
+1. Ouvrez l'[Accueil](/fr/guides/projects/project-home/#accès-et-partage) du projet et choisissez **Accès et partage**.
+2. Sur la carte **Clients de flux BI**, choisissez **Ajouter un client ›**.
+3. Choisissez le **Client de flux BI** et son **Rôle** : **Explorateur** ou **Gestionnaire**.
+4. Choisissez **Ajouter**.
+
+<Aside type="caution" title="Un client ne voit que les tables affichées pour son rôle">
+Un client Gestionnaire ne voit une table que si la case **Gestionnaire** de la table est cochée, et un client Explorateur seulement si sa case **Explorateur** est cochée. Aucun client ne lit une table dont les deux cases sont décochées : sur un projet où chaque table a les deux cases décochées, l'outil se connecte mais ne liste aucune table. Un Architecte coche les cases dans l'onglet **Tables** du projet ; consultez [Marquer une table pour les rôles de consultation](/fr/guides/projects/managing-tables-and-views/#marquer-une-table-pour-les-rôles-de-consultation).
+</Aside>
+
+Un client ne peut pas être Architecte. Un Architecte voit toutes les tables, quelles que soient leurs cases : le rôle du client et la case de ce rôle sur chaque table sont donc la façon de choisir quelles tables entrent dans le flux.
+
+Pour ajouter un client, vous devez pouvoir modifier l'accès au projet, comme le fait son Architecte ou un administrateur de l'espace de travail, et vous ne pouvez ajouter que des clients dont vous êtes propriétaire. Si vous n'en avez aucun, la fenêtre l'indique et propose **Ouvrir Systèmes enregistrés**. Lorsque vous ne pouvez pas ajouter de client, la carte en explique la raison.
+
+La carte liste les clients qui lisent le projet, chacun avec son rôle : tous pour l'Architecte du projet ou un administrateur de l'espace de travail, et seulement les vôtres pour toute autre personne. Elle affiche aussi l'**URL du flux** du projet, pour OData, et son **URL JDBC**, pour Flight SQL. **Supprimer** sur la ligne d'un client le retire du projet. L'Architecte du projet ou un administrateur de l'espace de travail peut supprimer n'importe quel client, et un propriétaire peut supprimer les siens.
+
+## Ce que lit un client
+
+Un client de flux BI lit en tant que son propriétaire, la personne qui l'a créé :
+
+- **Tables :** les tables du projet affichées pour son rôle, [comme ci-dessus](#ajouter-le-client-à-un-projet). Les vues ne sont pas incluses.
+- **Lignes :** uniquement les lignes que l'[accès aux lignes](/fr/administration/access/managing-security-groups-and-assignments/#gérer-laccès-aux-lignes) du propriétaire autorise. C'est vrai même lorsque le propriétaire est l'Architecte du projet : via le flux, ce sont les groupes de sécurité du propriétaire qui déterminent les lignes.
+- **Tant que le propriétaire le peut :** le propriétaire doit toujours pouvoir ouvrir le projet et lire ses tables. S'il perd l'accès au projet, ou si son compte est désactivé, le client cesse de fonctionner en moins d'une minute.
+- **Lecture seule :** rien de ce qu'envoie un client ne peut modifier les données.
+
+<Aside type="caution">
+Toute personne qui détient l'ID et le secret du client lit le projet en tant que propriétaire. Traitez le secret comme un mot de passe : conservez-le dans les paramètres d'identifiants de l'outil, et régénérez-le s'il a pu être vu par quelqu'un d'autre. Le secret ne fonctionne qu'avec le flux BI : l'API REST, JSON-RPC et le serveur MCP le refusent.
+</Aside>
+
+## Détails de la connexion
+
+Copiez les adresses depuis la carte **Clients de flux BI** du projet plutôt que de les saisir. Dans le tableau, `<workspace host>` est l'adresse à laquelle vous ouvrez PlaidCloud.
+
+| | OData | Flight SQL |
+| --- | --- | --- |
+| Adresse | `https://odata.<workspace host>/v1/projects/<project id>/` | `grpc+tls://flightsql.<workspace host>:443` |
+| URL JDBC | | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| Nom d'utilisateur | L'ID du client | L'ID du client |
+| Mot de passe | Le secret du client | Le secret du client |
+| Projet | Partie de l'adresse | La propriété de connexion `project_id` |
+
+## Quand un outil ne peut pas se connecter ou ne voit aucune table
+
+Si l'outil n'atteint pas du tout le flux, demandez à l'assistance PlaidCloud de vérifier que l'accès externe à la base de données est activé pour l'espace de travail et qu'il autorise l'adresse depuis laquelle l'outil se connecte. Une fois la connexion établie, ces messages indiquent ce qui ne va pas :
+
+| Ce qu'affiche l'outil | Que faire |
+| --- | --- |
+| Il se connecte, mais ne liste aucune table. | Le client ne voit que les tables affichées pour son rôle. Cochez la case **Gestionnaire** ou **Explorateur**, selon le rôle du client, sur chaque table qu'il doit lire ; consultez [Ajouter le client à un projet](#ajouter-le-client-à-un-projet). |
+| Sign in with the client id and secret of a BI feed client. | L'outil n'a envoyé ni nom d'utilisateur ni mot de passe. Choisissez l'authentification de base (nom d'utilisateur et mot de passe). |
+| The client id or secret is wrong, or the client is not a BI feed client. | Vérifiez l'ID et le secret du client. Le même message répond à un client désactivé ou supprimé, à un client API, et à un client dont le compte du propriétaire est désactivé. |
+| This client may not read this project. | Ajoutez le client au projet dans **Accès et partage**. S'il y figure déjà, son propriétaire ne peut peut-être plus ouvrir le projet. |
+| Too many requests. Try again later. (OData)<br />Too many attempts. Try again in … seconds. (Flight SQL) | Trop de tentatives de connexion sont venues d'une même adresse en peu de temps. Patientez, puis réessayez avec le bon secret. |
+| PlaidCloud could not check these credentials just now. Try again shortly. | Un problème passager côté PlaidCloud. Réessayez. |
+| The gateway is busy. Try again shortly. (OData)<br />The gateway is busy. Try again in 30 seconds. (Flight SQL) | Le flux traite autant de lectures qu'il le peut à la fois. Réessayez. |
+
+## Étapes suivantes
+
+- [Se connecter avec OData](/fr/integrations/bi-tools/odata/) : Power BI, Excel et Tableau, l'actualisation incrémentielle et ce que sert le flux.
+- [Se connecter avec Arrow Flight SQL](/fr/integrations/bi-tools/flight-sql/) : Python, DBeaver et Tableau Desktop, et le SQL que vous pouvez envoyer.

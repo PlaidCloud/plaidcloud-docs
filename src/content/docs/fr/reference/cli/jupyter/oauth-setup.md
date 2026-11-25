@@ -13,7 +13,7 @@ PlaidCloud dispose d'une API REST utilisable par toute application capable d'env
 
 Les jetons OAuth sont générés depuis l'application PlaidCloud. Pour afficher la liste des jetons OAuth qui vous sont attribués et en générer de nouveaux, accédez à `Analyze > Tools > Registered Systems`.
 
-Vous pouvez alors consulter les jetons existants ou en créer un nouveau.
+Vous pouvez alors consulter les jetons existants ou en créer un nouveau. Utilisez un client dont le **Type** est **Client API** : un client **BI / flux de données externe** fonctionne uniquement avec le flux BI.
 
 ## Télécharger le fichier de configuration OAuth de PlaidCloud
 Sélectionnez « Register a New System ».

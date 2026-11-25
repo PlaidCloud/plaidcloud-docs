@@ -1,0 +1,204 @@
+---
+title: Połączenie przez OData
+description: Połącz Power BI, Excel i Tableau z kanałem OData projektu tylko do odczytu, utrzymuj duże tabele w limicie wierszy za pomocą filtrów i odświeżania przyrostowego Power BI oraz poznaj opcje zapytań, typy i nazwy używane przez kanał.
+sidebar:
+  label: OData (Power BI, Excel, Tableau)
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/odata.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Kanał OData udostępnia tabele projektu jako usługę OData v4. Power BI, Excel i Tableau odczytują go za pomocą własnego łącznika OData, bez niczego do zainstalowania. Zanim się połączysz, utwórz klienta kanału danych BI i dodaj go do projektu; zobacz [Połącz narzędzia BI](/pl/integrations/bi-tools/).
+
+Adres kanału to **Adres URL kanału** projektu, na karcie **Klienci kanału danych BI** na stronie **Dostęp i udostępnianie** projektu:
+
+```text
+https://odata.<workspace host>/v1/projects/<project id>/
+```
+
+Każde narzędzie loguje się za pomocą uwierzytelniania podstawowego: identyfikator klienta jako nazwa użytkownika i sekret klienta jako hasło.
+
+<Aside type="caution">
+Wpisuj identyfikator i sekret klienta tylko tam, gdzie narzędzie prosi o poświadczenia. Nie wywołuj `Web.Contents` w zapytaniu Power Query (M), aby pobrać token lub samodzielnie wysłać sekret: kanał nie potrzebuje tokenu, a wszystko, co zapisano w zapytaniu, jest zapisywane w raporcie lub skoroszycie, gdzie każdy, kto otworzy plik, może to odczytać.
+</Aside>
+
+## Power BI Desktop
+
+1. Wybierz **Get data** > **OData feed**.
+2. Wklej **Adres URL kanału** projektu i wybierz **OK**.
+3. Gdy Power BI poprosi o poświadczenia, wybierz **Basic**, wpisz identyfikator klienta jako **User name** i sekret jako **Password**, a następnie wybierz **Connect**.
+4. W **Navigator** wybierz tabele do załadowania.
+
+Power BI importuje tabele. Kanał OData nie oferuje DirectQuery.
+
+W przypadku tabeli z ponad 1 000 000 wierszy, która nie jest [udostępniana stronami](#tabele-udostępniane-stronami), przefiltruj ją lub skonfiguruj [odświeżanie przyrostowe](#używaj-odświeżania-przyrostowego-w-power-bi) przed załadowaniem; zobacz [Utrzymuj każdy odczyt w limicie wierszy](#utrzymuj-każdy-odczyt-w-limicie-wierszy).
+
+## Power BI Service
+
+Opublikuj raport z Power BI Desktop, a następnie podaj modelowi semantycznemu poświadczenia klienta:
+
+1. W ustawieniach modelu semantycznego otwórz **Data source credentials** i wybierz **Edit credentials** dla źródła OData.
+2. Jako **Authentication method** wybierz **Basic**, wpisz identyfikator i sekret klienta i zaloguj się.
+3. Skonfiguruj zaplanowane odświeżanie.
+
+Power BI Service odświeża kanał bezpośrednio: brama danych lokalnych nie jest potrzebna. Łączy się z adresów chmury Microsoftu, więc obszar roboczy musi dopuszczać każdy adres; zobacz [Włącz dostęp zewnętrzny](/pl/integrations/bi-tools/#włącz-dostęp-zewnętrzny).
+
+Gdy ponownie wygenerujesz sekret klienta, wpisz nowy również tutaj, w przeciwnym razie następne odświeżenie się nie powiedzie.
+
+Power BI Service odczytuje kanał z szybkością około miliona wierszy na minutę, więc tabela z dziesięcioma milionami wierszy odświeża się około dziesięciu minut; tempo zależy od tabeli i hurtowni danych. Gdy kanał odrzuca odświeżenie, na przykład po ponownym wygenerowaniu sekretu lub odłączeniu klienta od projektu, Power BI Service ponawia próbę kilka razy, zanim zgłosi błąd, co może zająć kwadrans.
+
+## Excel
+
+1. Na karcie **Data** wybierz **Get Data** > **From Other Sources** > **From OData Feed**.
+2. Wklej **Adres URL kanału** projektu i wybierz **OK**.
+3. Wybierz **Basic**, wpisz identyfikator klienta jako **User name** i sekret jako **Password**, a następnie wybierz **Connect**.
+4. W **Navigator** wybierz tabele, a następnie **Load**.
+
+Arkusz mieści najwyżej 1 048 576 wierszy. Większą tabelę załaduj zamiast tego do modelu danych za pomocą **Load To...**.
+
+## Tableau
+
+W Tableau Desktop:
+
+1. W sekcji **Connect** wybierz **To a Server** > **OData**.
+2. Wklej **Adres URL kanału** projektu jako **Server**.
+3. W sekcji **Authentication** wybierz **Username and Password**, wpisz identyfikator i sekret klienta, a następnie wybierz **Sign In**.
+
+W Tableau Cloud wybierz łącznik **OData** podczas łączenia z danymi i wpisz ten sam **Adres URL kanału**, identyfikator i sekret klienta.
+
+Tableau odczytuje kanał OData do ekstraktu. Zanim odczyta tabelę w całości, zaczyna ją odczytywać i zatrzymuje się w połowie, aby pobrać próbkę, więc każda tabela jest odczytywana więcej niż raz. Aby odświeżać ekstrakt w Tableau Cloud, opublikuj źródło danych z osadzonymi poświadczeniami. Tableau Cloud łączy się z własnych adresów, które obszar roboczy musi dopuszczać; zobacz [Włącz dostęp zewnętrzny](/pl/integrations/bi-tools/#włącz-dostęp-zewnętrzny).
+
+Na Lakehouse v2 Tableau Desktop podąża za [odczytem stronicowanym](#tabele-udostępniane-stronami) do końca, więc odczytuje tabelę udostępnianą stronami niezależnie od jej rozmiaru. W przeciwnym razie tabelę większą niż limit wierszy odczytuj przez [Flight SQL](/pl/integrations/bi-tools/flight-sql/#tableau-desktop-i-tableau-server) z Tableau Desktop lub Tableau Server, który nie ma limitu wierszy.
+
+## Utrzymuj każdy odczyt w limicie wierszy
+
+Jedno żądanie zwraca najwyżej 1 000 000 wierszy. Jeśli tabela nie jest [udostępniana stronami](#tabele-udostępniane-stronami), odczyt, który zwróciłby więcej, kończy się niepowodzeniem z tym komunikatem, zamiast urywać się po cichu:
+
+> This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
+
+Aby zmieścić się w limicie:
+
+- **Filtruj w Power Query według wartości lub zakresu.** Filtr zachowujący wiersze równe wartości lub zawarte między dwiema liczbami albo datami jest wysyłany do kanału, więc odczytywane są tylko wiersze, które go spełniają.
+- **Używaj odświeżania przyrostowego w Power BI.** Każde odświeżenie odczytuje wtedy jeden zakres dat naraz; zobacz [poniżej](#używaj-odświeżania-przyrostowego-w-power-bi).
+
+### Co Power BI i Excel wysyłają do kanału
+
+Power Query, w Power BI i w Excelu, przekazuje kanałowi niektóre kroki, a resztę wykonuje sam:
+
+- **Wykonuje kanał:** filtry według wartości, zakresu liczb lub zakresu dat; wybieranie kolumn; sortowanie; oraz zachowywanie początkowych wierszy.
+- **Wykonuje Power Query:** filtr tekstowy, taki jak **Contains** (`Text.Contains`), oraz liczenie wierszy (`Table.RowCount`). Power Query odczytuje całą tabelę i przetwarza ją lokalnie, więc w dużej tabeli filtruj raczej według wartości lub zakresu.
+- **Po kroku, którego kanał nie potrafi wykonać,** takim jak dodana kolumna, Power Query odczytuje całą tabelę i kończy zapytanie samodzielnie, bez błędu. Umieść swoje filtry przed każdym takim krokiem.
+
+Przed każdym wysłanym odczytem Power Query odczytuje też pierwsze 1000 wierszy tego samego zapytania.
+
+### Tabele udostępniane stronami
+
+Na Lakehouse v2 (StarRocks) tabela z liczbą wierszy większą niż limit może być zamiast tego udostępniana stronami. Każda strona kończy się łączem do następnej, za którym Power BI, Excel i Tableau Desktop podążają samodzielnie. Strony różnią się rozmiarem: każda zawiera co najmniej połowę limitu wierszy i nigdy więcej niż limit, a ostatnia zawiera to, co zostało. Każda strona odczytuje tabelę w stanie z chwili odczytu pierwszej strony, więc zapis w trakcie odświeżania nie pomija ani nie powtarza żadnego wiersza.
+
+Odczyt stronicowany musi pobrać każdą stronę w ciągu 15 minut od poprzedniej i zakończyć się w ciągu 6 godzin od pierwszej. W przeciwnym razie, albo jeśli wersja odczytywanej tabeli nie jest już przechowywana, na przykład gdy tabela zostaje zastąpiona, odświeżenie kończy się niepowodzeniem z komunikatem z prośbą o ponowne odświeżenie.
+
+Odczyt nie jest stronicowany na Lakehouse v1 (Databend) ani we własnej hurtowni danych Snowflake lub Databricks, ani gdy sortuje za pomocą `$orderby`, prosi za pomocą `$top` o nie więcej niż limit wierszy albo odczytuje tabelę z własną kolumną o nazwie `_row_id`. Nie jest też stronicowany, gdy PlaidCloud nie może przypiąć wersji odczytywanej tabeli, na przykład gdy katalog lakehouse nie odpowiada na czas. Jedno żądanie zwraca ją wtedy, do limitu wierszy.
+
+## Używaj odświeżania przyrostowego w Power BI
+
+W przypadku dużej tabeli skonfiguruj odświeżanie przyrostowe. Power BI odświeża wtedy tabelę jeden zakres dat naraz, więc każde żądanie mieści się w limicie wierszy.
+
+1. W Power Query utwórz dwa parametry o nazwach `RangeStart` i `RangeEnd`, typu **Date/Time**.
+2. Przefiltruj kolumnę daty lub znacznika czasu tabeli do wierszy od `RangeStart` włącznie do `RangeEnd` wyłącznie.
+3. Ustaw zasadę odświeżania przyrostowego tabeli w Power BI Desktop, a następnie opublikuj.
+
+Parametry to zwykłe daty i godziny, ale kanał wysyła znaczniki czasu w UTC wraz ze strefą czasową, a daty bez godziny. Dlatego porównuj kolumnę znacznika czasu z `DateTime.AddZone(RangeStart, 0)`, a kolumnę daty z `Date.From(RangeStart)`, a nie z samym `RangeStart`. Kolumna znacznika czasu porównana z samym `RangeStart` powoduje niepowodzenie odświeżenia z komunikatem `We cannot apply operator < to types DateTime and DateTimeZone.`
+
+Na przykład:
+
+```text
+let
+    Source = OData.Feed("https://odata.<workspace host>/v1/projects/<project id>/", null, [Implementation = "2.0"]),
+    Orders = Source{[Name = "Orders"]}[Data],
+    InRange = Table.SelectRows(Orders, each [OrderDate] >= DateTime.AddZone(RangeStart, 0) and [OrderDate] < DateTime.AddZone(RangeEnd, 0))
+in
+    InRange
+```
+
+Power BI zamienia filtr na `$filter` kanału, więc odświeżenie każdego zakresu odczytuje tylko jego własne wiersze. Umieść filtr bezpośrednio po wybraniu tabeli, przed każdym krokiem, którego nie można przekazać kanałowi.
+
+## Opcje zapytań
+
+| Opcja | Co robi kanał |
+| --- | --- |
+| `$select` | Zwraca tylko wymienione właściwości. |
+| `$filter` | Zwraca tylko wiersze, które go spełniają; zobacz [Filtry](#filtry). |
+| `$orderby` | Sortuje według jednej lub kilku właściwości, każda `asc` lub `desc`. Puste wartości są na początku przy sortowaniu rosnącym i na końcu przy malejącym. |
+| `$top` | Zwraca najwyżej tyle wierszy. |
+| `$skip` | Pomija tyle wierszy, tylko z `$orderby`. |
+| `/$count` | `<entity set>/$count` zwraca, ile wierszy zachowuje `$filter`, jako zwykły tekst. |
+| `$format` | Tylko JSON. |
+
+Kanał nie obsługuje `$expand`, `$search`, `$apply` ani `$count=true` (zapytaj zamiast tego `/$count`), ani `$skip` bez `$orderby`, ani `$orderby` na wyrażeniu. Power BI i Excel pobierają wtedy tabelę bez tej opcji i same stosują krok.
+
+### Filtry
+
+`$filter` przyjmuje:
+
+- **Porównania:** `eq`, `ne`, `gt`, `ge`, `lt`, `le` i `in`. `eq null` i `ne null` wyszukują puste i wypełnione wartości.
+- **Logikę i arytmetykę:** `and`, `or`, `not`, `add`, `sub`, `mul`, `div` i `mod`.
+- **Funkcje tekstowe:** `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat` i `matchesPattern`.
+- **Funkcje daty i czasu:** `year`, `month`, `day`, `hour`, `minute`, `second`, `date` i `now`.
+- **Funkcje liczbowe:** `round`, `floor` i `ceiling`.
+
+Datę zapisuj jako `2024-01-31`, znacznik czasu jako `2024-01-31T09:00:00Z` (znacznik z innym przesunięciem jest odczytywany jako ta sama chwila w UTC), a tekst w apostrofach, z podwojonym apostrofem w środku: `'O''Neil'`. Liczba dziesiętna jest porównywana dokładnie tak, jak zapisana, do 38 cyfr, a liczba całkowita musi mieścić się w 64 bitach.
+
+`cast`, `isof`, `time`, czasy trwania, funkcje geograficzne i arytmetyka na datach i czasach nie są obsługiwane.
+
+Tyle odpowiada kanał, gdy narzędzie to wyśle. Power BI i Excel wysyłają tylko część tego; zobacz [Co Power BI i Excel wysyłają do kanału](#co-power-bi-i-excel-wysyłają-do-kanału).
+
+## Co udostępnia kanał
+
+### Tabele i nazwy
+
+Każda tabela, którą może odczytać klient, jest zbiorem jednostek, a każda jej kolumna właściwością. Widoki nie są uwzględniane.
+
+Nazwy pochodzą z nazw tabeli i kolumny:
+
+- Nazwa złożona z liter od A do Z, cyfr i podkreślników, zaczynająca się od litery lub podkreślnika, jest używana bez zmian.
+- W każdej innej nazwie każdy ciąg innych znaków, takich jak spacje lub znaki interpunkcyjne, zamienia się w jedno podkreślenie, a na żadnym końcu żadne nie zostaje. Litery spoza A–Z są zachowywane, ale nazwa, która nie zaczyna się od A–Z ani od podkreślnika, otrzymuje z przodu podkreślenie. Tak więc `Sales 2024 (EMEA)` staje się `Sales_2024_EMEA`, `2024 Sales` staje się `_2024_Sales`, a kolumna `Cost Center Name` staje się `Cost_Center_Name`.
+- Nazwa tabeli jest obcinana do 125 znaków, a nazwa kolumny do 128.
+
+Nazwy są porównywane bez rozróżniania wielkości liter, tak jak porównuje je Power BI. Gdy dwie nazwy byłyby takie same, na przykład `Sales` i `SALES` albo `Sales 2024` i `Sales_2024`, każda z nich otrzymuje podkreślenie i krótki kod utworzony z jej własnej tabeli lub kolumny, taki jak `Sales_1a2b3c4d`. Kod pozostaje taki sam od jednego odświeżenia do następnego. Ale gdy zmiana nazwy sprawia, że nazwa jednej tabeli koliduje z nazwą innej, obie otrzymują kod, a raport odczytujący którąkolwiek po zwykłej nazwie nic nie znajduje; zmień nazwę jednej z tabel, aby to usunąć.
+
+### Klucze
+
+Kluczem każdego zbioru jednostek są klucze aktualizacji tabeli, gdy je ma i żaden z nich nie jest liczbą zmiennoprzecinkową ani danymi binarnymi. W przeciwnym razie jest to pierwsza kolumna tabeli, która nie jest żadnym z tych typów, a gdy takiej brak, jej pierwsza kolumna. Klucz nie musi być unikatowy ani wypełniony: Power BI i Excel ładują tabelę z powtarzającymi się lub pustymi wartościami klucza.
+
+### Typy
+
+| Kolumna zawiera | Typ OData |
+| --- | --- |
+| Prawdę lub fałsz | `Edm.Boolean` |
+| Liczby całkowite | `Edm.Int16`, `Edm.Int32` lub `Edm.Int64`, zależnie od rozmiaru |
+| Liczby dziesiętne, w tym waluty | `Edm.Decimal`, z precyzją i skalą kolumny |
+| Liczby zmiennoprzecinkowe | `Edm.Double` |
+| Tekst | `Edm.String`, z maksymalną długością kolumny, gdy ją ma |
+| Daty | `Edm.Date` |
+| Znaczniki czasu | `Edm.DateTimeOffset`, w UTC |
+| Pory dnia | `Edm.TimeOfDay` |
+| Przedziały dni i czasu | `Edm.Duration` |
+| Dane binarne | `Edm.Binary` |
+| JSON, listy, struktury, UUID, liczby całkowite szersze niż 64 bity, przedziały z miesiącami i wszystko inne | `Edm.String`, przechowujący wartość jako tekst |
+
+Kanał wysyła liczby dziesiętne i 64-bitowe liczby całkowite dokładnie, cyfra po cyfrze. Power BI i Excel przechowują jednak liczby jako liczby podwójnej precyzji, które zachowują około 15 cyfr znaczących: liczba dziesiętna z większą liczbą cyfr traci ostatnie, podobnie jak liczba całkowita powyżej 9 007 199 254 740 992. W przypadku kwot zmień typ kolumny w Power Query na **Fixed decimal number**, który dokładnie zachowuje cztery miejsca po przecinku.
+
+## Gdy odczyt się nie powiedzie
+
+Komunikaty logowania są wymienione w [Połącz narzędzia BI](/pl/integrations/bi-tools/#gdy-narzędzie-nie-może-się-zalogować-lub-nie-widzi-tabel). Po zalogowaniu:
+
+| Komunikat | Co zrobić |
+| --- | --- |
+| This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh. | Zobacz [Utrzymuj każdy odczyt w limicie wierszy](#utrzymuj-każdy-odczyt-w-limicie-wierszy). |
+| This feed has no entity set … | Tabela zniknęła, zmieniono jej nazwę, jest teraz ukryta przed rolą klienta albo jej nazwa [koliduje teraz z inną](#tabele-i-nazwy). Odśwież listę tabel w narzędziu. |
+| … not a property of … | Zapytanie wskazuje kolumnę, której tabela już nie ma, albo nie używa jej nazwy z kanału. |
+| The $filter is not valid … | Narzędzie wysłało filtr, którego kanał nie może odczytać. Komunikat podaje, czego nie mógł odczytać. |
+| This next link has expired … | [Odczyt stronicowany](#tabele-udostępniane-stronami) czekał między stronami dłużej niż 15 minut. Odśwież ponownie. |
+| This read began more than 6 hours ago … | Odczyt stronicowany trwał dłużej niż 6 godzin. Odśwież ponownie. |
+| The table changed while this feed was reading it, or was written to a moment ago. Refresh to read it again. | Odczyt stronicowany utracił wersję odczytywanej tabeli, na przykład gdy tabela została zastąpiona. Odśwież ponownie. |

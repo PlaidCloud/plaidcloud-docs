@@ -1,0 +1,125 @@
+---
+title: Conectar herramientas de BI
+description: Lea las tablas de un proyecto desde Power BI, Excel, Tableau, Python y DBeaver mediante un feed OData de solo lectura o Arrow Flight SQL, tal como el propietario del cliente puede leerlas, con el acceso a filas aplicado.
+sidebar:
+  label: Resumen
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/index.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Power BI, Excel, Tableau, Python, DBeaver y otras herramientas pueden leer directamente las tablas de un proyecto a través del feed de BI de PlaidCloud. El feed es de solo lectura y ofrece dos vías de acceso:
+
+- **OData**, un feed que Power BI, Excel y Tableau leen con el conector de OData que ya tienen.
+- **Arrow Flight SQL**, que recibe su propia instrucción SQL y devuelve el resultado como Arrow, para Python, DBeaver y Tableau Desktop.
+
+Cada herramienta inicia sesión con un cliente de feed de BI, un ID de cliente y un secreto que usted crea y agrega a un proyecto. El cliente lee el proyecto como usted, su propietario, puede leerlo.
+
+## ¿Qué conexión debo usar?
+
+| Herramienta | Conectar con |
+| --- | --- |
+| Power BI Desktop | [OData](/es/integrations/bi-tools/odata/#power-bi-desktop) |
+| Power BI Service | [OData](/es/integrations/bi-tools/odata/#power-bi-service) |
+| Excel | [OData](/es/integrations/bi-tools/odata/#excel) |
+| Tableau Cloud | [OData](/es/integrations/bi-tools/odata/#tableau) |
+| Tableau Desktop y Tableau Server | [Flight SQL](/es/integrations/bi-tools/flight-sql/#tableau-desktop-y-tableau-server), mediante el controlador JDBC de Arrow Flight SQL, u [OData](/es/integrations/bi-tools/odata/#tableau) |
+| Python, con pandas, polars o DuckDB | [Flight SQL](/es/integrations/bi-tools/flight-sql/#python), mediante ADBC |
+| DBeaver | [Flight SQL](/es/integrations/bi-tools/flight-sql/#dbeaver) |
+
+Ambos leen las mismas tablas, con el mismo acceso a filas, usando el mismo cliente. OData devuelve como máximo 1.000.000 de filas en una solicitud. En Lakehouse v2, una tabla más grande puede [servirse por páginas](/es/integrations/bi-tools/odata/#tablas-servidas-por-páginas); de lo contrario, se lee con un filtro o con actualización incremental. Flight SQL no tiene límite de filas.
+
+OData y Flight SQL nombran las tablas y las columnas de forma distinta. OData convierte en guiones bajos los espacios y los signos de puntuación de un nombre, de modo que una columna `FULL YEAR` es `FULL_YEAR`. Flight SQL conserva el nombre que le da el proyecto, así que en SQL se escribe entre comillas: `"FULL YEAR"`.
+
+## Activar el acceso externo
+
+El feed de BI solo está disponible cuando el espacio de trabajo tiene activado el acceso a bases de datos externas. PlaidCloud lo establece por usted, junto con los rangos de direcciones que pueden conectarse: comuníquese con el soporte de PlaidCloud para activarlo o para cambiar los rangos. Consulte [Configuración del espacio de trabajo](/es/administration/control-plane/workspace-configuration/#lakehouse).
+
+Los rangos de direcciones permitidos deciden qué direcciones pueden llegar al feed de BI:
+
+- Solicite los rangos desde los que se conectan sus herramientas, como sus oficinas o su VPN, en formato CIDR.
+- Un servicio que actualiza en la nube, como Tableau Cloud, se conecta desde sus propias direcciones, que también deben estar permitidas.
+- Si no hay rangos definidos, el feed acepta conexiones desde cualquier dirección, protegido únicamente por el secreto del cliente.
+- Los rangos de direcciones denegados no se aplican al feed de BI.
+
+<Aside type="note">
+Power BI Service actualiza desde las direcciones de nube compartidas de Microsoft, que son demasiadas para enumerarlas. Para actualizar desde Power BI Service, pida al soporte de PlaidCloud que no defina ningún rango, de modo que el feed acepte todas las direcciones y solo el secreto del cliente lo proteja.
+</Aside>
+
+## Crear un cliente de feed de BI
+
+1. En Analyze, abra **Herramientas** y elija **Sistemas registrados (clientes OAuth)**.
+2. Elija **Registrar un sistema nuevo (cliente OAuth)**.
+3. Ingrese un **Nombre** y, en **Tipo**, elija **BI / feed de datos externo**.
+4. Elija **Crear**.
+5. La ventana **Secreto del cliente de feed de BI** muestra el **ID de cliente** y el **Secreto de cliente**. Cópielos ahora: el secreto no se vuelve a mostrar.
+
+La misma ventana muestra las direcciones del feed, con un marcador donde va el ID de un proyecto. La página **Acceso y uso compartido** de cada proyecto muestra las direcciones propias de ese proyecto, listas para copiar.
+
+En **Sistemas registrados (clientes OAuth)**, un cliente de feed de BI muestra **BI / feed de datos externo** en la columna **Tipo**. A diferencia de un cliente de API, no tiene configuración para copiar, y su secreto no puede volver a leerse. Si el secreto se pierde o alguien más pudo haberlo visto, elija **Regenerar secreto** en la fila del cliente y luego **Regenerar**. El secreto nuevo se muestra una sola vez, como al crearlo, y el anterior deja de funcionar de inmediato, así que toda herramienta que lo use falla hasta que le dé el nuevo.
+
+Para que un cliente deje de leer cualquier cosa, edítelo y desmarque **Habilitado**, o elimínelo.
+
+## Agregar el cliente a un proyecto
+
+Un cliente nuevo no lee nada hasta que lo agrega a un proyecto.
+
+1. Abra el [Inicio](/es/guides/projects/project-home/#acceso-y-uso-compartido) del proyecto y elija **Acceso y uso compartido**.
+2. En la tarjeta **Clientes de feed de BI**, elija **Agregar cliente ›**.
+3. Elija el **Cliente de feed de BI** y su **Rol**: **Explorador** o **Gerente**.
+4. Elija **Agregar**.
+
+<Aside type="caution" title="Un cliente ve solo las tablas que se muestran a su rol">
+Un cliente Gerente ve una tabla solo cuando la casilla **Gerente** de la tabla está marcada, y un cliente Explorador solo cuando su casilla **Explorador** está marcada. Ningún cliente lee una tabla con ambas casillas desmarcadas, de modo que en un proyecto donde todas las tablas las tienen desmarcadas, la herramienta inicia sesión pero no muestra ninguna tabla. Un Arquitecto marca las casillas en la pestaña **Tablas** del proyecto; consulte [Marcar una tabla para los roles de visualización](/es/guides/projects/managing-tables-and-views/#marcar-una-tabla-para-los-roles-de-visualización).
+</Aside>
+
+Un cliente no puede ser Arquitecto. Un Arquitecto ve todas las tablas, sean cuales sean sus casillas, así que el rol del cliente y la casilla de ese rol en cada tabla son lo que le permite elegir qué tablas entran en el feed.
+
+Para agregar un cliente debe poder cambiar el acceso al proyecto, como lo hace su Arquitecto o un administrador del espacio de trabajo, y solo puede agregar clientes de su propiedad. Si no tiene ninguno, la ventana lo indica y ofrece **Abrir Sistemas registrados**. Cuando no puede agregar un cliente, la tarjeta explica el motivo.
+
+La tarjeta enumera los clientes que leen el proyecto, cada uno con su rol: todos ellos para el Arquitecto del proyecto o un administrador del espacio de trabajo, y solo los suyos para cualquier otra persona. También muestra la **URL del feed** del proyecto, para OData, y la **URL de JDBC**, para Flight SQL. **Quitar** en la fila de un cliente lo retira del proyecto. El Arquitecto del proyecto o un administrador del espacio de trabajo puede quitar cualquier cliente, y un propietario puede quitar los suyos.
+
+## Lo que lee un cliente
+
+Un cliente de feed de BI lee como su propietario, la persona que lo creó:
+
+- **Tablas:** las tablas del proyecto que se muestran a su rol, como [arriba](#agregar-el-cliente-a-un-proyecto). Las vistas no se incluyen.
+- **Filas:** solo las filas que permite el [acceso a filas](/es/administration/access/managing-security-groups-and-assignments/#administración-del-acceso-a-filas) del propietario. Esto se cumple incluso cuando el propietario es el Arquitecto del proyecto: a través del feed, los grupos de seguridad del propietario deciden las filas.
+- **Mientras el propietario pueda:** el propietario debe seguir pudiendo abrir el proyecto y leer sus tablas. Si pierde el acceso al proyecto, o su cuenta se desactiva, el cliente deja de funcionar en un minuto.
+- **Solo lectura:** nada de lo que envíe un cliente puede cambiar los datos.
+
+<Aside type="caution">
+Cualquier persona con el ID y el secreto del cliente lee el proyecto como el propietario. Trate el secreto como una contraseña: manténgalo en la configuración de credenciales de la propia herramienta y regenérelo si alguien más pudo haberlo visto. El secreto funciona solo con el feed de BI: la API REST, JSON-RPC y el servidor MCP lo rechazan.
+</Aside>
+
+## Detalles de la conexión
+
+Copie las direcciones de la tarjeta **Clientes de feed de BI** del proyecto en lugar de escribirlas. En la tabla, `<workspace host>` es la dirección en la que abre PlaidCloud.
+
+| | OData | Flight SQL |
+| --- | --- | --- |
+| Dirección | `https://odata.<workspace host>/v1/projects/<project id>/` | `grpc+tls://flightsql.<workspace host>:443` |
+| URL de JDBC | | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| Nombre de usuario | El ID de cliente | El ID de cliente |
+| Contraseña | El secreto de cliente | El secreto de cliente |
+| Proyecto | Parte de la dirección | La propiedad de conexión `project_id` |
+
+## Cuando una herramienta no puede iniciar sesión o no ve tablas
+
+Si la herramienta no puede llegar al feed en absoluto, pida al soporte de PlaidCloud que compruebe que el espacio de trabajo tiene activado el acceso a bases de datos externas y permite la dirección desde la que se conecta la herramienta. Una vez que se conecta, estos mensajes indican qué falla:
+
+| Lo que muestra la herramienta | Qué hacer |
+| --- | --- |
+| Inicia sesión, pero no muestra ninguna tabla. | El cliente ve solo las tablas que se muestran a su rol. Marque la casilla **Gerente** o **Explorador**, la que corresponda al rol del cliente, en cada tabla que deba leer; consulte [Agregar el cliente a un proyecto](#agregar-el-cliente-a-un-proyecto). |
+| Sign in with the client id and secret of a BI feed client. | La herramienta no envió nombre de usuario ni contraseña. Elija la autenticación básica (nombre de usuario y contraseña). |
+| The client id or secret is wrong, or the client is not a BI feed client. | Compruebe el ID y el secreto del cliente. El mismo mensaje responde a un cliente que se desactivó o se eliminó, a un cliente de API y a un cliente cuyo propietario tiene la cuenta desactivada. |
+| This client may not read this project. | Agregue el cliente al proyecto en **Acceso y uso compartido**. Si ya está allí, es posible que su propietario ya no pueda abrir el proyecto. |
+| Too many requests. Try again later. (OData)<br />Too many attempts. Try again in … seconds. (Flight SQL) | Demasiados intentos de inicio de sesión provinieron de una misma dirección en poco tiempo. Espere y vuelva a intentarlo con el secreto correcto. |
+| PlaidCloud could not check these credentials just now. Try again shortly. | Un problema pasajero del lado de PlaidCloud. Vuelva a intentarlo. |
+| The gateway is busy. Try again shortly. (OData)<br />The gateway is busy. Try again in 30 seconds. (Flight SQL) | El feed está atendiendo todas las lecturas que puede a la vez. Vuelva a intentarlo. |
+
+## Pasos siguientes
+
+- [Conectar con OData](/es/integrations/bi-tools/odata/): Power BI, Excel y Tableau, actualización incremental y lo que sirve el feed.
+- [Conectar con Arrow Flight SQL](/es/integrations/bi-tools/flight-sql/): Python, DBeaver y Tableau Desktop, y el SQL que puede enviar.

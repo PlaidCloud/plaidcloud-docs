@@ -13,7 +13,7 @@ PlaidCloud 提供 REST API，任何能够发送 HTTP 请求的应用程序都可
 
 OAuth 令牌在 PlaidCloud 应用中生成。要查看分配给您的当前 OAuth 令牌列表并生成新令牌，请前往 `Analyze > Tools > Registered Systems`。
 
-进入后，可以查看现有令牌，也可以选择创建新令牌。
+进入后，可以查看现有令牌，也可以选择创建新令牌。请使用**类型**为 **API 客户端**的客户端：**BI / 外部数据源**客户端只适用于 BI 数据源。
 
 ## 下载 OAuth PlaidCloud 配置文件
 选择“Register a New System”。

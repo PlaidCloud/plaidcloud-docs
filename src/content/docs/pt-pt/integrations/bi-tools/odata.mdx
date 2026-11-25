@@ -1,0 +1,204 @@
+---
+title: Ligar com o OData
+description: Ligue o Power BI, o Excel e o Tableau ao feed OData só de leitura de um projeto, mantenha as tabelas grandes abaixo do limite de linhas com filtros e com a atualização incremental do Power BI, e consulte as opções de consulta, os tipos e os nomes que o feed utiliza.
+sidebar:
+  label: OData (Power BI, Excel, Tableau)
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/odata.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O feed OData serve as tabelas de um projeto como um serviço OData v4. O Power BI, o Excel e o Tableau leem-no com o seu próprio conector OData, sem nada para instalar. Antes de se ligar, crie um cliente de feed de BI e adicione-o ao projeto; consulte [Ligar ferramentas de BI](/pt-pt/integrations/bi-tools/).
+
+O endereço do feed é o **URL do feed** do projeto, no cartão **Clientes de feed de BI** da página **Acesso e partilha** do projeto:
+
+```text
+https://odata.<workspace host>/v1/projects/<project id>/
+```
+
+Todas as ferramentas iniciam sessão com autenticação básica: o ID do cliente como nome de utilizador e o segredo do cliente como palavra-passe.
+
+<Aside type="caution">
+Introduza o ID e o segredo do cliente apenas onde a ferramenta pede credenciais. Não chame `Web.Contents` numa consulta do Power Query (M) para obter um token nem para enviar o segredo por si: o feed não precisa de token, e tudo o que for escrito numa consulta fica guardado no relatório ou no livro, onde qualquer pessoa que abra o ficheiro o pode ler.
+</Aside>
+
+## Power BI Desktop
+
+1. Escolha **Get data** > **OData feed**.
+2. Cole o **URL do feed** do projeto e escolha **OK**.
+3. Quando o Power BI pedir credenciais, escolha **Básico**, introduza o ID do cliente em **Nome de utilizador** e o segredo em **Palavra-passe**, e escolha **Ligar**.
+4. Em **Navigator**, escolha as tabelas a carregar.
+
+O Power BI importa as tabelas. Um feed OData não oferece DirectQuery.
+
+Para uma tabela com mais de 1 000 000 de linhas que não seja [servida por páginas](#tabelas-servidas-por-páginas), filtre-a ou configure a [atualização incremental](#utilizar-a-atualização-incremental-no-power-bi) antes de a carregar; consulte [Manter cada leitura abaixo do limite de linhas](#manter-cada-leitura-abaixo-do-limite-de-linhas).
+
+## Power BI Service
+
+Publique o relatório a partir do Power BI Desktop e, depois, dê ao modelo semântico as credenciais do cliente:
+
+1. Nas definições do modelo semântico, abra **Data source credentials** e escolha **Edit credentials** para a origem OData.
+2. Escolha **Básico** como **Authentication method**, introduza o ID e o segredo do cliente e inicie sessão.
+3. Configure uma atualização agendada.
+
+O Power BI Service atualiza o feed diretamente: não é necessário nenhum gateway de dados local. Liga-se a partir dos endereços da nuvem da Microsoft, pelo que a área de trabalho tem de permitir todos os endereços; consulte [Ativar o acesso externo](/pt-pt/integrations/bi-tools/#ativar-o-acesso-externo).
+
+Quando gerar novamente o segredo do cliente, introduza também aqui o novo, ou a atualização seguinte falha.
+
+O Power BI Service lê o feed a cerca de um milhão de linhas por minuto, pelo que uma tabela de dez milhões de linhas demora cerca de dez minutos a atualizar; o ritmo depende da tabela e do armazém de dados. Quando o feed recusa uma atualização, como depois de o segredo ser gerado novamente ou de o cliente ser retirado do projeto, o Power BI Service tenta várias vezes antes de comunicar a falha, o que pode demorar um quarto de hora.
+
+## Excel
+
+1. No separador **Dados**, escolha **Get Data** > **From Other Sources** > **From OData Feed**.
+2. Cole o **URL do feed** do projeto e escolha **OK**.
+3. Escolha **Básico**, introduza o ID do cliente em **Nome de utilizador** e o segredo em **Palavra-passe**, e escolha **Ligar**.
+4. Em **Navigator**, escolha as tabelas e, depois, **Carregar**.
+
+Uma folha de cálculo tem no máximo 1 048 576 linhas. Carregue uma tabela maior para o Modelo de Dados com **Load To...**.
+
+## Tableau
+
+No Tableau Desktop:
+
+1. Em **Ligar**, escolha **To a Server** > **OData**.
+2. Cole o **URL do feed** do projeto como **Servidor**.
+3. Em **Autenticação**, escolha **Username and Password**, introduza o ID e o segredo do cliente e escolha **Sign In**.
+
+No Tableau Cloud, escolha o conector **OData** quando se ligar aos dados e introduza o mesmo **URL do feed**, o mesmo ID e o mesmo segredo do cliente.
+
+O Tableau lê um feed OData para uma extração. Antes de ler uma tabela por inteiro, começa a lê-la e para a meio para recolher uma amostra, pelo que cada tabela é lida mais do que uma vez. Para atualizar a extração no Tableau Cloud, publique a origem de dados com as credenciais incorporadas. O Tableau Cloud liga-se a partir dos seus próprios endereços, que a área de trabalho tem de permitir; consulte [Ativar o acesso externo](/pt-pt/integrations/bi-tools/#ativar-o-acesso-externo).
+
+No Lakehouse v2, o Tableau Desktop segue uma [leitura por páginas](#tabelas-servidas-por-páginas) até ao fim, pelo que lê uma tabela servida por páginas seja qual for o seu tamanho. Caso contrário, leia uma tabela maior do que o limite de linhas com o [Flight SQL](/pt-pt/integrations/bi-tools/flight-sql/#tableau-desktop-e-tableau-server) a partir do Tableau Desktop ou do Tableau Server, que não tem limite de linhas.
+
+## Manter cada leitura abaixo do limite de linhas
+
+Um pedido devolve no máximo 1 000 000 de linhas. A menos que a tabela seja [servida por páginas](#tabelas-servidas-por-páginas), uma leitura que devolveria mais falha com esta mensagem, em vez de parar a meio sem avisar:
+
+> This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
+
+Para ficar abaixo do limite:
+
+- **Filtre no Power Query por um valor ou um intervalo.** Um filtro que mantém as linhas iguais a um valor, ou entre dois números ou datas, é enviado ao feed, pelo que só são lidas as linhas que passam.
+- **Utilize a atualização incremental no Power BI.** Cada atualização lê então um intervalo de datas de cada vez; consulte [abaixo](#utilizar-a-atualização-incremental-no-power-bi).
+
+### O que o Power BI e o Excel enviam ao feed
+
+O Power Query, no Power BI e no Excel, entrega alguns passos ao feed e faz o resto por si:
+
+- **Feito pelo feed:** filtros por um valor, por um intervalo de números ou por um intervalo de datas; escolha de colunas; ordenação; e manutenção das primeiras linhas.
+- **Feito pelo Power Query:** um filtro de texto como **Contém** (`Text.Contains`) e a contagem de linhas (`Table.RowCount`). O Power Query lê a tabela inteira e trabalha sobre ela localmente, pelo que, numa tabela grande, filtre antes por um valor ou um intervalo.
+- **Depois de um passo que o feed não consegue fazer,** como uma coluna adicionada, o Power Query lê a tabela inteira e conclui a consulta por si, sem erro. Coloque os seus filtros antes de qualquer passo desse tipo.
+
+Antes de cada leitura que envia, o Power Query lê também as primeiras 1000 linhas da mesma consulta.
+
+### Tabelas servidas por páginas
+
+No Lakehouse v2 (StarRocks), uma tabela com mais linhas do que o limite pode ser servida por páginas. Cada página termina com uma ligação para a seguinte, que o Power BI, o Excel e o Tableau Desktop seguem por si. As páginas diferem em tamanho: cada uma tem pelo menos metade do limite de linhas e nunca mais do que o limite, e a última tem o que sobrar. Cada página lê a tabela tal como estava quando a primeira página foi lida, pelo que uma escrita durante a atualização não elimina nem repete nenhuma linha.
+
+Uma leitura por páginas tem de obter cada página no prazo de 15 minutos após a anterior e terminar no prazo de 6 horas após a primeira. Caso contrário, ou se a versão da tabela que está a ler já não for mantida, como quando a tabela é substituída, a atualização falha com uma mensagem que lhe pede que atualize novamente.
+
+Uma leitura não é feita por páginas no Lakehouse v1 (Databend) nem no seu próprio armazém de dados Snowflake ou Databricks, nem quando ordena com `$orderby`, pede com `$top` não mais do que o limite de linhas, ou lê uma tabela com uma coluna própria chamada `_row_id`. Também não é feita por páginas quando o PlaidCloud não consegue fixar a versão da tabela que lê, como quando o catálogo do lakehouse não responde a tempo. Um pedido devolve-a então por inteiro, até ao limite de linhas.
+
+## Utilizar a atualização incremental no Power BI
+
+Para uma tabela grande, configure a atualização incremental. O Power BI atualiza então a tabela um intervalo de datas de cada vez, pelo que cada pedido fica abaixo do limite de linhas.
+
+1. No Power Query, crie dois parâmetros chamados `RangeStart` e `RangeEnd`, do tipo **Date/Time**.
+2. Filtre a coluna de data ou de carimbo de data/hora da tabela para as linhas em ou depois de `RangeStart` e antes de `RangeEnd`.
+3. Defina a política de atualização incremental da tabela no Power BI Desktop e, depois, publique.
+
+Os parâmetros são datas e horas simples, mas o feed envia os carimbos de data/hora em UTC com o respetivo fuso horário, e as datas sem hora. Por isso, compare uma coluna de carimbo de data/hora com `DateTime.AddZone(RangeStart, 0)` e uma coluna de data com `Date.From(RangeStart)`, em vez de com o próprio `RangeStart`. Uma coluna de carimbo de data/hora comparada com o próprio `RangeStart` faz a atualização falhar com `We cannot apply operator < to types DateTime and DateTimeZone.`
+
+Por exemplo:
+
+```text
+let
+    Source = OData.Feed("https://odata.<workspace host>/v1/projects/<project id>/", null, [Implementation = "2.0"]),
+    Orders = Source{[Name = "Orders"]}[Data],
+    InRange = Table.SelectRows(Orders, each [OrderDate] >= DateTime.AddZone(RangeStart, 0) and [OrderDate] < DateTime.AddZone(RangeEnd, 0))
+in
+    InRange
+```
+
+O Power BI transforma o filtro no `$filter` do feed, pelo que a atualização de cada intervalo lê apenas as suas próprias linhas. Coloque o filtro logo a seguir à escolha da tabela, antes de qualquer passo que não possa ser passado ao feed.
+
+## Opções de consulta
+
+| Opção | O que o feed faz |
+| --- | --- |
+| `$select` | Devolve apenas as propriedades indicadas. |
+| `$filter` | Devolve apenas as linhas que passam; consulte [Filtros](#filtros). |
+| `$orderby` | Ordena por uma ou mais propriedades, cada uma `asc` ou `desc`. Os valores vazios ficam primeiro em ordem ascendente e por último em ordem descendente. |
+| `$top` | Devolve no máximo esse número de linhas. |
+| `$skip` | Ignora esse número de linhas, apenas com `$orderby`. |
+| `/$count` | `<entity set>/$count` devolve quantas linhas o `$filter` mantém, como texto simples. |
+| `$format` | Apenas JSON. |
+
+O feed não responde a `$expand`, `$search`, `$apply` nem `$count=true` (utilize antes `/$count`), nem a `$skip` sem `$orderby`, nem a `$orderby` sobre uma expressão. O Power BI e o Excel obtêm então a tabela sem essa opção e aplicam o passo por si.
+
+### Filtros
+
+`$filter` aceita:
+
+- **Comparações:** `eq`, `ne`, `gt`, `ge`, `lt`, `le` e `in`. `eq null` e `ne null` encontram valores vazios e preenchidos.
+- **Lógica e aritmética:** `and`, `or`, `not`, `add`, `sub`, `mul`, `div` e `mod`.
+- **Funções de texto:** `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat` e `matchesPattern`.
+- **Funções de data e hora:** `year`, `month`, `day`, `hour`, `minute`, `second`, `date` e `now`.
+- **Funções numéricas:** `round`, `floor` e `ceiling`.
+
+Escreva uma data como `2024-01-31`, um carimbo de data/hora como `2024-01-31T09:00:00Z` (um com outro desvio é lido como o mesmo momento em UTC) e o texto entre aspas simples, com a aspa interior duplicada: `'O''Neil'`. Um decimal é comparado exatamente como escrito, até 38 dígitos, e um número inteiro tem de caber em 64 bits.
+
+`cast`, `isof`, `time`, durações, funções de geografia e aritmética sobre datas e horas não são suportados.
+
+Isto é o que o feed responde quando uma ferramenta lho envia. O Power BI e o Excel enviam apenas parte disto; consulte [O que o Power BI e o Excel enviam ao feed](#o-que-o-power-bi-e-o-excel-enviam-ao-feed).
+
+## O que o feed serve
+
+### Tabelas e nomes
+
+Cada tabela que o cliente pode ler é um conjunto de entidades, e cada uma das suas colunas uma propriedade. As vistas não estão incluídas.
+
+Os nomes vêm dos nomes da tabela e da coluna:
+
+- Um nome composto pelas letras de A a Z, dígitos e sublinhados, que começa por uma letra ou um sublinhado, é utilizado tal como está.
+- Em qualquer outro nome, cada sequência de outros carateres, como espaços ou pontuação, passa a um só sublinhado, e nenhum fica em qualquer das extremidades. As letras para além de A a Z são mantidas, mas um nome que não comece por A a Z ou por um sublinhado recebe um sublinhado à frente. Assim, `Sales 2024 (EMEA)` passa a `Sales_2024_EMEA`, `2024 Sales` passa a `_2024_Sales` e uma coluna `Cost Center Name` passa a `Cost_Center_Name`.
+- O nome de uma tabela é cortado aos 125 carateres e o de uma coluna aos 128.
+
+Os nomes são comparados sem distinguir maiúsculas de minúsculas, como o Power BI os compara. Quando dois nomes seriam iguais, como `Sales` e `SALES`, ou `Sales 2024` e `Sales_2024`, cada um recebe um sublinhado e um código curto criado a partir da sua própria tabela ou coluna, como `Sales_1a2b3c4d`. O código mantém-se igual de uma atualização para a seguinte. Mas quando uma mudança de nome faz o nome de uma tabela colidir com o de outra, ambas recebem um código, e um relatório que leia qualquer uma pelo nome simples não encontra nada; mude o nome de uma das tabelas para o resolver.
+
+### Chaves
+
+A chave de cada conjunto de entidades são as chaves de atualização da tabela, quando as tem e nenhuma delas é um número de vírgula flutuante nem binário. Caso contrário, é a primeira coluna da tabela que não seja nenhuma dessas ou, na falta desta, a sua primeira coluna. A chave não tem de ser única nem de estar preenchida: o Power BI e o Excel carregam uma tabela com valores de chave repetidos ou vazios.
+
+### Tipos
+
+| A coluna contém | Tipo OData |
+| --- | --- |
+| Verdadeiro ou falso | `Edm.Boolean` |
+| Números inteiros | `Edm.Int16`, `Edm.Int32` ou `Edm.Int64`, consoante o tamanho |
+| Decimais, incluindo moeda | `Edm.Decimal`, com a precisão e a escala da coluna |
+| Números de vírgula flutuante | `Edm.Double` |
+| Texto | `Edm.String`, com o comprimento máximo da coluna quando o tem |
+| Datas | `Edm.Date` |
+| Carimbos de data/hora | `Edm.DateTimeOffset`, em UTC |
+| Horas do dia | `Edm.TimeOfDay` |
+| Intervalos de dias e de tempo | `Edm.Duration` |
+| Binário | `Edm.Binary` |
+| JSON, listas, estruturas, UUID, números inteiros com mais de 64 bits, intervalos com meses e tudo o resto | `Edm.String`, com o valor como texto |
+
+O feed envia os decimais e os números inteiros de 64 bits exatamente, dígito a dígito. O Power BI e o Excel guardam, porém, os números como doubles, que mantêm cerca de 15 algarismos significativos: um decimal com mais perde os últimos algarismos, tal como um número inteiro acima de 9 007 199 254 740 992. Para dinheiro, altere o tipo da coluna no Power Query para **Fixed decimal number**, que mantém exatamente quatro casas decimais.
+
+## Quando uma leitura falha
+
+As mensagens de início de sessão estão listadas em [Ligar ferramentas de BI](/pt-pt/integrations/bi-tools/#quando-uma-ferramenta-não-consegue-iniciar-sessão-ou-não-vê-tabelas). Depois de iniciar sessão:
+
+| Mensagem | O que fazer |
+| --- | --- |
+| This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh. | Consulte [Manter cada leitura abaixo do limite de linhas](#manter-cada-leitura-abaixo-do-limite-de-linhas). |
+| This feed has no entity set … | A tabela desapareceu, mudou de nome, está agora oculta para a função de acesso do cliente, ou o seu nome [colide agora com o de outra](#tabelas-e-nomes). Atualize a lista de tabelas da ferramenta. |
+| … not a property of … | A consulta indica uma coluna que a tabela já não tem, ou que não utiliza o seu nome no feed. |
+| The $filter is not valid … | A ferramenta enviou um filtro que o feed não consegue ler. A mensagem indica o que não conseguiu ler. |
+| This next link has expired … | Uma [leitura por páginas](#tabelas-servidas-por-páginas) esperou mais de 15 minutos entre páginas. Atualize novamente. |
+| This read began more than 6 hours ago … | Uma leitura por páginas demorou mais de 6 horas. Atualize novamente. |
+| The table changed while this feed was reading it, or was written to a moment ago. Refresh to read it again. | Uma leitura por páginas perdeu a versão da tabela que estava a ler, como quando a tabela é substituída. Atualize novamente. |

@@ -1,0 +1,129 @@
+---
+title: 使用 Arrow Flight SQL 连接
+description: 通过 Arrow Flight SQL，从 Python、DBeaver 和 Tableau Desktop 用您自己的 SQL 查询项目的表，语句读取的每个表都会应用客户端所有者的行访问权限。
+sidebar:
+  label: Arrow Flight SQL（Python、DBeaver、Tableau Desktop）
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/flight-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Arrow Flight SQL 接收一条 SQL 语句，并以 Arrow 格式流式返回结果。它适用于 Python 数据工具、DBeaver 等 SQL 客户端以及 Tableau Desktop。您针对项目的表发送一条只读语句，PlaidCloud 会在运行前，把语句读取的每个表筛选为客户端所有者可查看的行。连接之前，请先创建 BI 数据源客户端并将其添加到项目，参见[连接 BI 工具](/zh-cn/integrations/bi-tools/)。
+
+## 连接详细信息
+
+| 设置 | 值 |
+| --- | --- |
+| 端点 | `grpc+tls://flightsql.<workspace host>:443` |
+| JDBC URL | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| 用户名 | 客户端 ID |
+| 密码 | 客户端密钥 |
+| 项目 | `project_id`：JDBC URL 的一部分，或 ADBC 选项 `adbc.flight.sql.rpc.call_header.project_id` |
+
+项目的 **JDBC URL** 位于其**访问与共享**页面的 **BI 数据源客户端**卡片上，可直接复制。连接始终加密，使用 443 端口。
+
+一个连接只读取一个项目。要读取另一个项目，请使用该项目的 ID 重新连接。
+
+## Python
+
+使用 `pip install adbc-driver-flightsql pyarrow` 安装 ADBC Flight SQL 驱动程序，然后使用客户端的 ID 和密钥连接，这里从环境变量中读取：
+
+```python
+import os
+
+import adbc_driver_flightsql.dbapi as flightsql
+
+with flightsql.connect(
+    "grpc+tls://flightsql.<workspace host>:443",
+    db_kwargs={
+        "username": os.environ["PLAIDCLOUD_CLIENT_ID"],
+        "password": os.environ["PLAIDCLOUD_CLIENT_SECRET"],
+        "adbc.flight.sql.rpc.call_header.project_id": "<project id>",
+    },
+    autocommit=True,
+) as connection, connection.cursor() as cursor:
+    cursor.execute(
+        'SELECT region, SUM(amount) AS total FROM "Sales" WHERE fiscal_year = ? GROUP BY region',
+        parameters=(2024,),
+    )
+    sales = cursor.fetch_arrow_table()
+```
+
+数据源不运行事务，因此请使用 `autocommit=True` 连接。`sales` 是一个 Arrow 表：
+
+- **pandas**：`sales.to_pandas()`
+- **polars**：`polars.from_arrow(sales)`
+- **DuckDB**：按名称查询，如 `duckdb.sql("SELECT * FROM sales")`
+
+对于较大的结果，`cursor.fetch_record_batch()` 会逐批读取，而不是一次读取全部。
+
+## DBeaver
+
+DBeaver 不包含 Apache Arrow Flight SQL 驱动程序，因此需要先添加一次：
+
+1. 选择 **Database** > **Driver Manager** > **New**。
+2. 为驱动程序命名，例如 `Arrow Flight SQL`，并将 **Class Name** 设置为 `org.apache.arrow.driver.jdbc.ArrowFlightJdbcDriver`。
+3. 在 **Libraries** 中，选择 **Add Artifact** 并输入 `org.apache.arrow:flight-sql-jdbc-driver`，或选择 **Add File** 并选取驱动程序的 `.jar` 文件。选择 **OK**。
+
+然后连接：
+
+1. 选择 **Database** > **New Database Connection**，并选取您添加的驱动程序。
+2. 通过 **URL** 连接：粘贴项目的 **JDBC URL**，然后输入客户端 ID 作为用户名，输入密钥作为密码。
+3. 选择 **Finish**。项目的表位于 `plaid` 架构中。
+
+在您自己的 Java 程序中，请使用 `--add-opens=java.base/java.nio=ALL-UNNAMED` 启动 Java。没有该选项时，驱动程序可以连接并运行普通语句，但带有 `?` 参数的语句会失败，并报错 `sun.misc.Unsafe or java.nio.DirectByteBuffer.<init>(long, int) not available`。DBeaver 启动时已带有该选项。
+
+## Tableau Desktop 和 Tableau Server
+
+1. 下载 Apache Arrow Flight SQL JDBC 驱动程序（`flight-sql-jdbc-driver`，一个 `.jar` 文件），并将其放入 Tableau 的驱动程序文件夹：Windows 上为 `C:\Program Files\Tableau\Drivers`，Mac 上为 `~/Library/Tableau/Drivers`。然后重新启动 Tableau。
+2. 在 **Connect** 下，选择 **To a Server** > **Other Databases (JDBC)**。
+3. 将项目的 **JDBC URL** 输入为 **URL**，将 **Dialect** 选择为 **PostgreSQL**，将客户端 ID 和密钥分别输入为 **Username** 和 **Password**，然后选择 **Sign In**。
+4. 项目的表位于 `plaid` 架构中。
+
+要刷新已发布的工作簿或数据源，Tableau Server 需要在其自己的驱动程序文件夹中安装相同的驱动程序。
+
+## 可以发送的 SQL
+
+数据源读取 PostgreSQL 风格的 SQL，每次接受一条只读语句：
+
+- **一条语句**：`SELECT`、`WITH … SELECT`，或它们的 `UNION`、`INTERSECT` 或 `EXCEPT`。递归的 `WITH` 会被拒绝。
+- **按名称引用项目的表**：单独写表名，或写在 `plaid` 架构中，如 `plaid."Sales"`。任何其他架构或目录都会被拒绝。
+- **引号**：不带引号的名称不区分大小写，`sales` 会匹配 `Sales`。带引号的名称必须完全匹配；包含空格或标点的名称要加引号，如 `"Sales 2024"` 或 `"Cost Center Name"`。
+- **常用子句**：联接、子查询、`GROUP BY`、`HAVING`、`ORDER BY`、`LIMIT`、`OFFSET`、`FETCH`、`DISTINCT`、`CASE`、`CAST` 和窗口函数。
+- **函数**：常见的文本、数字、日期、聚合和窗口函数，包括 `UPPER`、`LOWER`、`TRIM`、`SUBSTRING`、`REPLACE`、`CONCAT`、`ROUND`、`ABS`、`COALESCE`、`NULLIF`、`EXTRACT`、`DATE_TRUNC`、`CURRENT_DATE`、`COUNT`、`SUM`、`AVG`、`MIN`、`MAX`、`ROW_NUMBER`、`RANK`、`LAG` 和 `LEAD`。
+- **参数**：`?` 标记，每个标记可赋值为数字、文本、真或假、日期、时间戳或 NULL。
+- **长度**：最多 65,536 个字符，参数已代入计算在内。
+
+空值的排序方式与项目的仓库一致。排序顺序重要时，请写明 `NULLS FIRST` 或 `NULLS LAST`。
+
+如果某列的名称与仓库用于表示会话或时钟的词相同，请为它加引号，如 `"user"` 或 `"current_date"`。不加引号时，该词可能无法读取您的列：数据源可能拒绝它，或者仓库可能读取会话自身的值，例如 `current_date` 会读取今天的日期。`user`、`system_user`、`current_role`、`current_database`、`sysdate` 和 `systimestamp` 不加引号时一律被拒绝，并提示您为它们加引号。
+
+数据源会拒绝任何写入或加锁的操作（`INSERT`、`UPDATE`、`DELETE`、`MERGE`、`SELECT … INTO`）、`VALUES`、`UNNEST`、`LATERAL`、读取文件、时间旅行、`TABLESAMPLE`、`PIVOT`，以及不在其函数列表中的任何函数。拒绝消息以 "Nothing was run:" 开头并指出被拒绝的内容，便于您改写该部分。
+
+<Aside type="note">
+语句读取的每个表，无论是直接读取，还是通过联接、子查询或 `WITH` 读取，都会先筛选为客户端所有者可读取的行，语句的其余部分才能看到。
+</Aside>
+
+## 客户端看到的内容
+
+- **架构**：只有一个架构 `plaid`，没有目录。
+- **表**：向客户端角色显示的项目的表，使用其在项目中的名称。仅大小写不同的两个名称，会各自加上下划线和由其表生成的短代码。不包括视图。
+- **列**：使用其在项目中的名称，包括空格，如 `"FULL YEAR"` 或 `"Cost Center Name"`。这与 OData 不同，OData 显示为 `FULL_YEAR`。
+- **键**：表的更新键即其主键，没有更新键的表没有主键。表没有外键。
+
+时间戳以 UTC 返回。
+
+## 限制与消息
+
+没有行数上限：结果会持续流式返回直到结束。登录消息列在[连接 BI 工具](/zh-cn/integrations/bi-tools/#工具无法登录或看不到表时)中。以下消息是 Flight SQL 特有的：
+
+| 消息 | 操作 |
+| --- | --- |
+| Name the project to read with the project_id connection property … | 将 `project_id` 添加到 JDBC URL，或设置 ADBC 选项 `adbc.flight.sql.rpc.call_header.project_id`。 |
+| This session reads another project. Connect again to read this one. | 一个连接只读取一个项目。请为另一个项目打开另一个连接。 |
+| This session has ended. Connect again. | 连接的会话在闲置 8 小时后结束，或在开始 24 小时后结束。请重新连接。 |
+| This client was disabled or its secret has changed since this session began. Connect again. | 请使用当前密钥重新连接。如果客户端已被停用，请先启用它。已删除的客户端，或其所有者账户已停用的客户端，无法连接。 |
+| The statement ran past the gateway's 3,600-second limit and was stopped. | 一条语句最多可运行一小时。请筛选或聚合以返回更少的数据。 |
+| Nothing was run: … | 语句包含数据源不接受的内容，参见[可以发送的 SQL](#可以发送的-sql)。 |
+| The warehouse could not run the statement: … | 项目的仓库拒绝了该语句，原因见消息。 |

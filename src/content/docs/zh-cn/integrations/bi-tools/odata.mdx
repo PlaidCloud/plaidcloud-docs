@@ -1,0 +1,204 @@
+---
+title: 使用 OData 连接
+description: 将 Power BI、Excel 和 Tableau 连接到项目的只读 OData 数据源，通过筛选器和 Power BI 增量刷新让大表保持在行数上限之内，并了解数据源使用的查询选项、类型和名称。
+sidebar:
+  label: OData（Power BI、Excel、Tableau）
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/odata.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+OData 数据源将项目的表作为 OData v4 服务提供。Power BI、Excel 和 Tableau 使用各自的 OData 连接器读取，无需安装任何内容。连接之前，请先创建 BI 数据源客户端并将其添加到项目，参见[连接 BI 工具](/zh-cn/integrations/bi-tools/)。
+
+数据源的地址是项目的**数据源 URL**，位于项目**访问与共享**页面的 **BI 数据源客户端**卡片上：
+
+```text
+https://odata.<workspace host>/v1/projects/<project id>/
+```
+
+每个工具都使用基本身份验证登录：客户端 ID 作为用户名，客户端密钥作为密码。
+
+<Aside type="caution">
+只在工具要求输入凭据的地方输入客户端 ID 和密钥。请勿在 Power Query (M)查询中调用 `Web.Contents` 来获取令牌或自行发送密钥：数据源不需要令牌，而且写在查询中的任何内容都会保存在报表或工作簿中，任何打开该文件的人都能读取。
+</Aside>
+
+## Power BI Desktop
+
+1. 选择 **Get data** > **OData feed**。
+2. 粘贴项目的**数据源 URL**并选择 **OK**。
+3. 当 Power BI 要求输入凭据时，选择 **Basic**，将客户端 ID 输入为 **User name**，将密钥输入为 **Password**，然后选择 **Connect**。
+4. 在 **Navigator** 中，选择要加载的表。
+
+Power BI 会导入这些表。OData 数据源不提供 DirectQuery。
+
+对于行数超过 1,000,000 且未[分页提供](#分页提供的表)的表，请在加载之前先对其进行筛选，或设置[增量刷新](#在-power-bi-中使用增量刷新)，参见[将每次读取控制在行数上限之内](#将每次读取控制在行数上限之内)。
+
+## Power BI Service
+
+从 Power BI Desktop 发布报表，然后为语义模型提供客户端的凭据：
+
+1. 在语义模型的设置中，打开 **Data source credentials**，并为 OData 源选择 **Edit credentials**。
+2. 将 **Authentication method** 选择为 **Basic**，输入客户端 ID 和密钥，然后登录。
+3. 设置计划刷新。
+
+Power BI Service 直接刷新数据源：不需要本地数据网关。它从 Microsoft 的云地址连接，因此工作区必须允许所有地址，参见[开启外部访问](/zh-cn/integrations/bi-tools/#开启外部访问)。
+
+重新生成客户端的密钥后，也请在此处输入新密钥，否则下一次刷新会失败。
+
+Power BI Service 读取数据源的速度大约为每分钟一百万行，因此一千万行的表大约需要十分钟刷新，具体速度取决于表和仓库。当数据源拒绝刷新时（例如重新生成密钥之后，或客户端被移出项目之后），Power BI Service 会重试数次才报告失败，这可能需要一刻钟。
+
+## Excel
+
+1. 在 **Data** 选项卡上，选择 **Get Data** > **From Other Sources** > **From OData Feed**。
+2. 粘贴项目的**数据源 URL**并选择 **OK**。
+3. 选择 **Basic**，将客户端 ID 输入为 **User name**，将密钥输入为 **Password**，然后选择 **Connect**。
+4. 在 **Navigator** 中，选择表，然后选择 **Load**。
+
+一个工作表最多容纳 1,048,576 行。较大的表请改用 **Load To...** 加载到数据模型。
+
+## Tableau
+
+在 Tableau Desktop 中：
+
+1. 在 **Connect** 下，选择 **To a Server** > **OData**。
+2. 将项目的**数据源 URL**粘贴为 **Server**。
+3. 在 **Authentication** 下，选择 **Username and Password**，输入客户端 ID 和密钥，然后选择 **Sign In**。
+
+在 Tableau Cloud 中，连接数据时选择 **OData** 连接器，并输入相同的**数据源 URL**、客户端 ID 和密钥。
+
+Tableau 会将 OData 数据源读入提取。在完整读取表之前，它会先开始读取并在中途停止以获取样本，因此每个表会被读取多次。要在 Tableau Cloud 上刷新提取，请在嵌入凭据的情况下发布数据源。Tableau Cloud 从其自身的地址连接，工作区必须允许这些地址，参见[开启外部访问](/zh-cn/integrations/bi-tools/#开启外部访问)。
+
+在 Lakehouse v2 上，Tableau Desktop 会沿着[分页读取](#分页提供的表)一直读到末尾，因此无论大小，它都能读取分页提供的表。否则，对于大于行数上限的表，请在 Tableau Desktop 或 Tableau Server 中使用没有行数上限的[Flight SQL](/zh-cn/integrations/bi-tools/flight-sql/#tableau-desktop-和-tableau-server)读取。
+
+## 将每次读取控制在行数上限之内
+
+一次请求最多返回 1,000,000 行。除非表是[分页提供](#分页提供的表)的，否则会返回更多行的读取将失败并给出下面的消息，而不是悄悄地提前停止：
+
+> This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh.
+
+要保持在上限之内：
+
+- **在 Power Query 中按值或范围筛选。** 保留等于某个值、或介于两个数字或日期之间的行的筛选器会发送给数据源，因此只会读取符合条件的行。
+- **在 Power BI 中使用增量刷新。** 这样每次刷新一次只读取一个日期范围，参见[下文](#在-power-bi-中使用增量刷新)。
+
+### Power BI 和 Excel 发送给数据源的内容
+
+Power BI 和 Excel 中的 Power Query 会把某些步骤交给数据源处理，其余的由自己完成：
+
+- **由数据源完成：** 按值、数字范围或日期范围筛选；选择列；排序；以及保留前若干行。
+- **由 Power Query 完成：** 文本筛选器（如 **Contains**，即 `Text.Contains`）以及统计行数（`Table.RowCount`）。Power Query 会读取整个表并在本地处理，因此对于大表，请改为按值或范围筛选。
+- **在数据源无法完成的步骤之后**，例如添加列，Power Query 会读取整个表并自行完成查询，且不报错。请将筛选器放在任何此类步骤之前。
+
+在发送每次读取之前，Power Query 还会读取同一查询的前 1,000 行。
+
+### 分页提供的表
+
+在 Lakehouse v2 (StarRocks)上，行数超过上限的表可以改为分页提供。每一页的末尾都有指向下一页的链接，Power BI、Excel 和 Tableau Desktop 会自动沿着链接读取。各页大小不一：每页至少包含行数上限的一半，且不超过上限，最后一页包含剩余的行。每一页读取的都是读取第一页时的表，因此刷新期间的写入既不会丢失行，也不会重复行。
+
+分页读取必须在上一页之后 15 分钟内获取每一页，并在第一页之后 6 小时内完成。否则，或者它正在读取的表版本已不再保留（例如表被替换时），刷新会失败，并给出要求您再次刷新的消息。
+
+在 Lakehouse v1 (Databend)或您自己的 Snowflake 或 Databricks 仓库上，读取不会分页；使用 `$orderby` 排序、使用 `$top` 请求不超过行数上限的行数，或读取带有自己的名为 `_row_id` 的列的表时，也不会分页。当 PlaidCloud 无法固定其读取的表版本时（例如湖仓目录未及时响应），同样不会分页。此时一次请求会返回该表，最多返回到行数上限。
+
+## 在 Power BI 中使用增量刷新
+
+对于大表，请设置增量刷新。这样 Power BI 一次只刷新表的一个日期范围，每次请求都保持在行数上限之内。
+
+1. 在 Power Query 中，创建两个名为 `RangeStart` 和 `RangeEnd` 的参数，类型为 **Date/Time**。
+2. 将表的日期或时间戳列筛选为晚于或等于 `RangeStart`、早于 `RangeEnd` 的行。
+3. 在 Power BI Desktop 中设置表的增量刷新策略，然后发布。
+
+这些参数是普通的日期和时间，但数据源发送的时间戳为带时区的 UTC，日期则不带时间。因此，请用 `DateTime.AddZone(RangeStart, 0)` 与时间戳列比较，用 `Date.From(RangeStart)` 与日期列比较，而不是直接使用 `RangeStart`。时间戳列直接与 `RangeStart` 比较会使刷新失败，并报错 `We cannot apply operator < to types DateTime and DateTimeZone.`
+
+例如：
+
+```text
+let
+    Source = OData.Feed("https://odata.<workspace host>/v1/projects/<project id>/", null, [Implementation = "2.0"]),
+    Orders = Source{[Name = "Orders"]}[Data],
+    InRange = Table.SelectRows(Orders, each [OrderDate] >= DateTime.AddZone(RangeStart, 0) and [OrderDate] < DateTime.AddZone(RangeEnd, 0))
+in
+    InRange
+```
+
+Power BI 会将筛选器转换为数据源的 `$filter`，因此每个范围的刷新只读取自己的行。请将筛选器紧接在选择表之后，放在任何无法传递给数据源的步骤之前。
+
+## 查询选项
+
+| 选项 | 数据源的行为 |
+| --- | --- |
+| `$select` | 只返回指定的属性。 |
+| `$filter` | 只返回符合条件的行，参见[筛选器](#筛选器)。 |
+| `$orderby` | 按一个或多个属性排序，每个属性可为 `asc` 或 `desc`。空值升序时排在最前，降序时排在最后。 |
+| `$top` | 最多返回指定数量的行。 |
+| `$skip` | 跳过指定数量的行，仅可与 `$orderby` 一起使用。 |
+| `/$count` | `<entity set>/$count` 以纯文本形式返回 `$filter` 保留的行数。 |
+| `$format` | 仅支持 JSON。 |
+
+数据源不响应 `$expand`、`$search`、`$apply` 或 `$count=true`（请改用 `/$count`），也不响应没有 `$orderby` 的 `$skip`，以及对表达式的 `$orderby`。此时 Power BI 和 Excel 会在不带该选项的情况下获取表，并自行应用该步骤。
+
+### 筛选器
+
+`$filter` 支持：
+
+- **比较：** `eq`、`ne`、`gt`、`ge`、`lt`、`le` 和 `in`。`eq null` 和 `ne null` 用于查找空值和非空值。
+- **逻辑与算术：** `and`、`or`、`not`、`add`、`sub`、`mul`、`div` 和 `mod`。
+- **文本函数：** `contains`、`startswith`、`endswith`、`length`、`indexof`、`substring`、`tolower`、`toupper`、`trim`、`concat` 和 `matchesPattern`。
+- **日期和时间函数：** `year`、`month`、`day`、`hour`、`minute`、`second`、`date` 和 `now`。
+- **数字函数：** `round`、`floor` 和 `ceiling`。
+
+日期写作 `2024-01-31`，时间戳写作 `2024-01-31T09:00:00Z`（带其他偏移量的时间戳会被读作 UTC 中的同一时刻），文本用单引号括起，其中的引号需写两次：`'O''Neil'`。小数按所写内容精确比较，最多 38 位，整数必须能放入 64 位。
+
+不支持 `cast`、`isof`、`time`、持续时间、地理函数以及对日期和时间的算术运算。
+
+以上是工具发送时数据源能够响应的内容。Power BI 和 Excel 只会发送其中一部分，参见[Power BI 和 Excel 发送给数据源的内容](#power-bi-和-excel-发送给数据源的内容)。
+
+## 数据源提供的内容
+
+### 表和名称
+
+客户端可读取的每个表是一个实体集，其每一列是一个属性。不包括视图。
+
+名称来自表名和列名：
+
+- 由字母 A 到 Z、数字和下划线组成，且以字母或下划线开头的名称，原样使用。
+- 在其他名称中，每一段其他字符（如空格或标点）会变成一个下划线，且两端不保留下划线。A 到 Z 之外的字母会保留，但不以 A 到 Z 或下划线开头的名称，前面会加一个下划线。因此 `Sales 2024 (EMEA)` 变为 `Sales_2024_EMEA`，`2024 Sales` 变为 `_2024_Sales`，列 `Cost Center Name` 变为 `Cost_Center_Name`。
+- 表名最多截取 125 个字符，列名最多截取 128 个字符。
+
+名称比较时忽略大小写，与 Power BI 的比较方式相同。当两个名称会变得相同时（如 `Sales` 和 `SALES`，或 `Sales 2024` 和 `Sales_2024`），每个名称都会加上下划线和由其自身表或列生成的短代码，如 `Sales_1a2b3c4d`。该代码在每次刷新之间保持不变。但是，当重命名使一个表的名称与另一个表的名称冲突时，两者都会采用代码，而按原名称读取其中任一个的报表将找不到内容；请重命名其中一个表以消除冲突。
+
+### 键
+
+每个实体集的键是表的更新键（当表有更新键，且其中没有浮点数或二进制列时）。否则，键是表中第一个既非浮点数也非二进制的列，或者退而求其次，使用表的第一列。键不必唯一或已填写：Power BI 和 Excel 可以加载键值重复或为空的表。
+
+### 类型
+
+| 列包含 | OData 类型 |
+| --- | --- |
+| 真或假 | `Edm.Boolean` |
+| 整数 | `Edm.Int16`、`Edm.Int32` 或 `Edm.Int64`，按大小而定 |
+| 小数，包括货币 | `Edm.Decimal`，带有该列的精度和小数位数 |
+| 浮点数 | `Edm.Double` |
+| 文本 | `Edm.String`，如果该列有最大长度，则带有该长度 |
+| 日期 | `Edm.Date` |
+| 时间戳 | `Edm.DateTimeOffset`，使用 UTC |
+| 一天中的时间 | `Edm.TimeOfDay` |
+| 天和时间的间隔 | `Edm.Duration` |
+| 二进制 | `Edm.Binary` |
+| JSON、列表、结构、UUID、超过 64 位的整数、包含月份的间隔，以及其他任何内容 | `Edm.String`，以文本形式保存该值 |
+
+数据源会精确地逐位发送小数和 64 位整数。不过 Power BI 和 Excel 以双精度浮点数保存数字，只保留约 15 位有效数字：位数更多的小数会丢失末尾几位，大于 9,007,199,254,740,992 的整数也是如此。对于金额，请在 Power Query 中将该列的类型更改为 **Fixed decimal number**，它能精确保留四位小数。
+
+## 读取失败时
+
+登录消息列在[连接 BI 工具](/zh-cn/integrations/bi-tools/#工具无法登录或看不到表时)中。登录之后：
+
+| 消息 | 操作 |
+| --- | --- |
+| This table has more rows than one OData request may return (1,000,000). Filter it with $filter, or use incremental refresh. | 参见[将每次读取控制在行数上限之内](#将每次读取控制在行数上限之内)。 |
+| This feed has no entity set … | 该表已不存在、已重命名、现已对客户端的角色隐藏，或其名称现在[与另一个表冲突](#表和名称)。请刷新工具中的表列表。 |
+| … not a property of … | 查询指定的列已不在表中，或没有使用其在数据源中的名称。 |
+| The $filter is not valid … | 工具发送了数据源无法读取的筛选器。消息会说明无法读取的内容。 |
+| This next link has expired … | [分页读取](#分页提供的表)在两页之间等待了超过 15 分钟。请再次刷新。 |
+| This read began more than 6 hours ago … | 分页读取耗时超过 6 小时。请再次刷新。 |
+| The table changed while this feed was reading it, or was written to a moment ago. Refresh to read it again. | 分页读取丢失了它正在读取的表版本，例如表被替换时。请再次刷新。 |

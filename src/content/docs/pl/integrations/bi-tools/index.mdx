@@ -1,0 +1,125 @@
+---
+title: Połącz narzędzia BI
+description: Odczytuj tabele projektu z Power BI, Excela, Tableau, Pythona i DBeavera przez kanał OData tylko do odczytu lub Arrow Flight SQL, tak jak może je odczytywać właściciel klienta, z zastosowanym Dostępem do wierszy.
+sidebar:
+  label: Przegląd
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/bi-tools/index.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Power BI, Excel, Tableau, Python, DBeaver i inne narzędzia mogą odczytywać tabele projektu bezpośrednio przez kanał danych BI PlaidCloud. Kanał jest tylko do odczytu i oferuje dwa sposoby dostępu:
+
+- **OData**, kanał, który Power BI, Excel i Tableau odczytują za pomocą posiadanego już łącznika OData.
+- **Arrow Flight SQL**, który przyjmuje Twoją własną instrukcję SQL i zwraca wynik w formacie Arrow, dla Pythona, DBeavera i Tableau Desktop.
+
+Każde narzędzie loguje się za pomocą klienta kanału danych BI, czyli identyfikatora i sekretu klienta, które tworzysz i dodajesz do projektu. Klient odczytuje projekt tak, jak możesz go odczytywać Ty, jego właściciel.
+
+## Którego połączenia użyć?
+
+| Narzędzie | Połącz przez |
+| --- | --- |
+| Power BI Desktop | [OData](/pl/integrations/bi-tools/odata/#power-bi-desktop) |
+| Power BI Service | [OData](/pl/integrations/bi-tools/odata/#power-bi-service) |
+| Excel | [OData](/pl/integrations/bi-tools/odata/#excel) |
+| Tableau Cloud | [OData](/pl/integrations/bi-tools/odata/#tableau) |
+| Tableau Desktop i Tableau Server | [Flight SQL](/pl/integrations/bi-tools/flight-sql/#tableau-desktop-i-tableau-server), przez sterownik JDBC Arrow Flight SQL, lub [OData](/pl/integrations/bi-tools/odata/#tableau) |
+| Python, z pandas, polars lub DuckDB | [Flight SQL](/pl/integrations/bi-tools/flight-sql/#python), przez ADBC |
+| DBeaver | [Flight SQL](/pl/integrations/bi-tools/flight-sql/#dbeaver) |
+
+Oba odczytują te same tabele, z tym samym Dostępem do wierszy, przy użyciu tego samego klienta. OData zwraca w jednym żądaniu najwyżej 1 000 000 wierszy. Na Lakehouse v2 większą tabelę można [udostępniać stronami](/pl/integrations/bi-tools/odata/#tabele-udostępniane-stronami); w przeciwnym razie odczytuje się ją z filtrem lub z odświeżaniem przyrostowym. Flight SQL nie ma limitu wierszy.
+
+OData i Flight SQL inaczej nazywają tabele i kolumny. OData zamienia spacje i znaki interpunkcyjne w nazwie na podkreślenia, więc kolumna `FULL YEAR` to `FULL_YEAR`. Flight SQL zachowuje nazwę nadaną przez projekt, więc w SQL ujmujesz ją w cudzysłowy: `"FULL YEAR"`.
+
+## Włącz dostęp zewnętrzny
+
+Kanał danych BI jest dostępny tylko wtedy, gdy obszar roboczy ma włączony zewnętrzny dostęp do bazy danych. Ustawia go dla Ciebie PlaidCloud, wraz z zakresami adresów, z których wolno się łączyć: skontaktuj się z pomocą techniczną PlaidCloud, aby go włączyć lub zmienić zakresy. Zobacz [Konfiguracja obszaru roboczego](/pl/administration/control-plane/workspace-configuration/#lakehouse).
+
+Dozwolone zakresy adresów decydują, które adresy mogą dotrzeć do kanału danych BI:
+
+- Poproś o zakresy, z których łączą się Twoje narzędzia, na przykład z biur lub VPN, w postaci CIDR.
+- Usługa odświeżająca w chmurze, taka jak Tableau Cloud, łączy się z własnych adresów, które również muszą być dozwolone.
+- Gdy nie ustawiono żadnych zakresów, kanał akceptuje połączenia z dowolnego adresu, chroniony wyłącznie sekretem klienta.
+- Zabronione zakresy adresów nie dotyczą kanału danych BI.
+
+<Aside type="note">
+Power BI Service odświeża dane ze współdzielonych adresów chmury Microsoftu, których jest zbyt wiele, by je wymienić. Aby odświeżać z Power BI Service, poproś pomoc techniczną PlaidCloud o nieustawianie żadnych zakresów, tak aby kanał akceptował każdy adres, a chronił go wyłącznie sekret klienta.
+</Aside>
+
+## Utwórz klienta kanału danych BI
+
+1. W Analyze otwórz **Narzędzia** i wybierz **Zarejestrowane systemy (klienci OAuth)**.
+2. Wybierz **Zarejestruj nowy system (klient OAuth)**.
+3. Wpisz **Nazwa** i w polu **Typ** wybierz **BI / zewnętrzny kanał danych**.
+4. Wybierz **Utwórz**.
+5. Okno **Sekret klienta kanału danych BI** pokazuje **Identyfikator klienta** i **Sekret klienta**. Skopiuj oba teraz: sekret nie jest pokazywany ponownie.
+
+To samo okno pokazuje adresy kanału, z symbolem zastępczym w miejscu identyfikatora projektu. Strona **Dostęp i udostępnianie** każdego projektu pokazuje jego własne adresy, gotowe do skopiowania.
+
+W **Zarejestrowane systemy (klienci OAuth)** klient kanału danych BI pokazuje **BI / zewnętrzny kanał danych** w kolumnie **Typ**. W odróżnieniu od klienta API nie ma konfiguracji do skopiowania, a jego sekretu nie można odczytać ponownie. Jeśli sekret zaginął lub mogła go zobaczyć inna osoba, wybierz **Wygeneruj sekret ponownie** w wierszu klienta, a następnie **Wygeneruj ponownie**. Nowy sekret jest pokazywany jednorazowo, tak jak przy tworzeniu, a stary przestaje działać natychmiast, więc każde narzędzie, które go używa, przestaje działać, dopóki nie podasz mu nowego.
+
+Aby klient przestał cokolwiek odczytywać, edytuj go i wyczyść **Włączone** albo go usuń.
+
+## Dodaj klienta do projektu
+
+Nowy klient niczego nie odczytuje, dopóki nie dodasz go do projektu.
+
+1. Otwórz [stronę główną](/pl/guides/projects/project-home/#dostęp-i-udostępnianie) projektu i wybierz **Dostęp i udostępnianie**.
+2. Na karcie **Klienci kanału danych BI** wybierz **Dodaj klienta ›**.
+3. Wybierz **Klient kanału danych BI** i jego **Rola**: **Eksplorator** lub **Menedżer**.
+4. Wybierz **Dodaj**.
+
+<Aside type="caution" title="Klient widzi tylko tabele widoczne dla jego roli">
+Klient z rolą Menedżer widzi tabelę tylko wtedy, gdy pole **Menedżer** tej tabeli jest zaznaczone, a klient z rolą Eksplorator tylko wtedy, gdy zaznaczone jest jej pole **Eksplorator**. Żaden klient nie odczytuje tabeli z oboma niezaznaczonymi polami, więc w projekcie, w którym każda tabela ma oba pola niezaznaczone, narzędzie loguje się, ale nie wyświetla żadnych tabel. Architekt zaznacza pola na karcie **Tabele** projektu; zobacz [Oznacz tabelę dla ról przeglądających](/pl/guides/projects/managing-tables-and-views/#oznaczanie-tabeli-dla-ról-przeglądających).
+</Aside>
+
+Klient nie może być Architektem. Architekt widzi każdą tabelę, niezależnie od jej pól, więc rola klienta i pole tej roli przy każdej tabeli decydują o tym, które tabele trafiają do kanału.
+
+Aby dodać klienta, musisz mieć możliwość zmiany dostępu do projektu, jak Architekt projektu lub administrator obszaru roboczego, i możesz dodawać tylko klientów, których jesteś właścicielem. Jeśli nie masz żadnego, okno informuje o tym i oferuje **Otwórz Zarejestrowane systemy**. Gdy nie możesz dodać klienta, karta podaje powód.
+
+Karta wyświetla listę klientów odczytujących projekt, każdego z jego rolą: wszystkich dla Architekta projektu lub administratora obszaru roboczego, a dla pozostałych tylko Twoich własnych. Pokazuje też **Adres URL kanału** projektu, dla OData, i **Adres URL JDBC**, dla Flight SQL. **Usuń** w wierszu klienta odłącza go od projektu. Architekt projektu lub administrator obszaru roboczego może usunąć dowolnego klienta, a właściciel może usunąć własnego.
+
+## Co odczytuje klient
+
+Klient kanału danych BI odczytuje jako jego właściciel, czyli osoba, która go utworzyła:
+
+- **Tabele:** tabele projektu widoczne dla jego roli, jak [wyżej](#dodaj-klienta-do-projektu). Widoki nie są uwzględniane.
+- **Wiersze:** tylko wiersze, na które pozwala [Dostęp do wierszy](/pl/administration/access/managing-security-groups-and-assignments/#zarządzanie-dostępem-do-wierszy) właściciela. Dotyczy to także sytuacji, gdy właściciel jest Architektem projektu: przez kanał o wierszach decydują grupy zabezpieczeń właściciela.
+- **Dopóki właściciel może:** właściciel nadal musi móc otworzyć projekt i odczytać jego tabele. Jeśli straci dostęp do projektu lub jego konto zostanie wyłączone, klient przestaje działać w ciągu minuty.
+- **Tylko do odczytu:** nic, co wyśle klient, nie może zmienić danych.
+
+<Aside type="caution">
+Każdy, kto ma identyfikator i sekret klienta, odczytuje projekt jako właściciel. Traktuj sekret jak hasło: przechowuj go w ustawieniach poświadczeń samego narzędzia i wygeneruj ponownie, jeśli mogła go zobaczyć inna osoba. Sekret działa tylko z kanałem danych BI: REST API, JSON-RPC i serwer MCP go odrzucają.
+</Aside>
+
+## Szczegóły połączenia
+
+Skopiuj adresy z karty **Klienci kanału danych BI** projektu zamiast je wpisywać. W tabeli `<workspace host>` to adres, pod którym otwierasz PlaidCloud.
+
+| | OData | Flight SQL |
+| --- | --- | --- |
+| Adres | `https://odata.<workspace host>/v1/projects/<project id>/` | `grpc+tls://flightsql.<workspace host>:443` |
+| Adres URL JDBC | | `jdbc:arrow-flight-sql://flightsql.<workspace host>:443/?useEncryption=true&project_id=<project id>` |
+| Nazwa użytkownika | Identyfikator klienta | Identyfikator klienta |
+| Hasło | Sekret klienta | Sekret klienta |
+| Projekt | Część adresu | Właściwość połączenia `project_id` |
+
+## Gdy narzędzie nie może się zalogować lub nie widzi tabel
+
+Jeśli narzędzie w ogóle nie może dotrzeć do kanału, poproś pomoc techniczną PlaidCloud o sprawdzenie, czy obszar roboczy ma włączony zewnętrzny dostęp do bazy danych i dopuszcza adres, z którego łączy się narzędzie. Po nawiązaniu połączenia poniższe komunikaty mówią, co jest nie tak:
+
+| Co pokazuje narzędzie | Co zrobić |
+| --- | --- |
+| Loguje się, ale nie wyświetla żadnych tabel. | Klient widzi tylko tabele widoczne dla jego roli. Zaznacz pole **Menedżer** lub **Eksplorator**, zależnie od roli klienta, przy każdej tabeli, którą ma odczytywać; zobacz [Dodaj klienta do projektu](#dodaj-klienta-do-projektu). |
+| Sign in with the client id and secret of a BI feed client. | Narzędzie nie wysłało nazwy użytkownika ani hasła. Wybierz uwierzytelnianie podstawowe (nazwa użytkownika i hasło). |
+| The client id or secret is wrong, or the client is not a BI feed client. | Sprawdź identyfikator i sekret klienta. Ten sam komunikat dotyczy klienta, który został wyłączony lub usunięty, klienta API oraz klienta, którego właściciel ma wyłączone konto. |
+| This client may not read this project. | Dodaj klienta do projektu na stronie **Dostęp i udostępnianie**. Jeśli już tam jest, jego właściciel mógł utracić możliwość otwierania projektu. |
+| Too many requests. Try again later. (OData)<br />Too many attempts. Try again in … seconds. (Flight SQL) | Z jednego adresu w krótkim czasie napłynęło zbyt wiele prób logowania. Poczekaj, a następnie spróbuj ponownie z właściwym sekretem. |
+| PlaidCloud could not check these credentials just now. Try again shortly. | Przejściowy problem po stronie PlaidCloud. Spróbuj ponownie. |
+| The gateway is busy. Try again shortly. (OData)<br />The gateway is busy. Try again in 30 seconds. (Flight SQL) | Kanał obsługuje tyle odczytów jednocześnie, ile może. Spróbuj ponownie. |
+
+## Następne kroki
+
+- [Połączenie przez OData](/pl/integrations/bi-tools/odata/): Power BI, Excel i Tableau, odświeżanie przyrostowe oraz to, co udostępnia kanał.
+- [Połączenie przez Arrow Flight SQL](/pl/integrations/bi-tools/flight-sql/): Python, DBeaver i Tableau Desktop oraz instrukcje SQL, które możesz wysyłać.
