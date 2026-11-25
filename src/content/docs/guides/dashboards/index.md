@@ -7,6 +7,8 @@ sidebar:
 
 Build interactive dashboards over PlaidCloud project data — charts, metrics, calculated columns, dynamic filters, and embedded data exploration.
 
+Your dashboards, Panel and Dash apps, and JupyterLite notebooks are listed in the **Insights** app, and you can publish any of them to the app menu. See [Using Dashboards](/guides/dashboards/using-dashboards/#the-insights-workspace) and [Publish to the App Menu](/guides/dashboards/publish-to-app-menu/).
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Published project tables and views feed dashboard building blocks — charts, metric tiles, and dynamic filters — that assemble into one interactive dashboard for workspace members to explore." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>

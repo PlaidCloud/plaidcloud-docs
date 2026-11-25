@@ -8,6 +8,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Crie painéis interativos sobre os dados de projetos do PlaidCloud — gráficos, métricas, colunas calculadas, filtros dinâmicos e exploração de dados incorporada.
 
+Seus painéis, apps Panel e Dash e notebooks JupyterLite são listados no app **Insights**, e você pode publicar qualquer um deles no menu de aplicativos. Veja [Uso de painéis](/pt-br/guides/dashboards/using-dashboards/#o-espaço-de-trabalho-do-insights) e [Publicar no menu de aplicativos](/pt-br/guides/dashboards/publish-to-app-menu/).
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Tabelas e visões de projeto publicadas alimentam os blocos de construção do painel — gráficos, blocos de métricas e filtros dinâmicos — que se combinam em um painel interativo para os membros do espaço de trabalho explorarem." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>

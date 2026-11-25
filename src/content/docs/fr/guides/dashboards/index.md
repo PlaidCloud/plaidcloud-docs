@@ -8,6 +8,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Créez des tableaux de bord interactifs sur les données de projet PlaidCloud : graphiques, métriques, colonnes calculées, filtres dynamiques et exploration intégrée des données.
 
+Vos tableaux de bord, vos applications Panel et Dash et vos notebooks JupyterLite sont listés dans l'application **Analyses**, et vous pouvez publier n'importe lequel d'entre eux dans le menu des applications. Consultez [Utiliser les tableaux de bord](/fr/guides/dashboards/using-dashboards/#lespace-analyses) et [Publier dans le menu des applications](/fr/guides/dashboards/publish-to-app-menu/).
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Les tables et vues de projet publiées alimentent les éléments de construction du tableau de bord (graphiques, vignettes de métriques et filtres dynamiques), qui s'assemblent en un tableau de bord interactif que les membres de l'espace de travail peuvent explorer." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
