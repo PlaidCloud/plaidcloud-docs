@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Erstellen Sie interaktive Dashboards über PlaidCloud-Projektdaten – Diagramme, Kennzahlen, berechnete Spalten, dynamische Filter und eingebettete Datenexploration.
 
-Ihre Dashboards, Panel- und Dash-Apps sowie JupyterLite-Notebooks werden in der App **Erkenntnisse** aufgelistet, und Sie können jedes davon im App-Menü veröffentlichen. Siehe [Dashboards verwenden](/de/guides/dashboards/using-dashboards/#der-workspace-erkenntnisse) und [Im App-Menü veröffentlichen](/de/guides/dashboards/publish-to-app-menu/).
+Ihre Dashboards, Panel- und Dash-Apps sowie JupyterLite-Notebooks werden in der App **Erkenntnisse** aufgelistet, und Sie können diejenigen, die Sie verwalten, im App-Menü veröffentlichen. Siehe [Dashboards verwenden](/de/guides/dashboards/using-dashboards/#der-workspace-erkenntnisse) und [Im App-Menü veröffentlichen](/de/guides/dashboards/publish-to-app-menu/).
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Veröffentlichte Projekttabellen und -ansichten speisen die Bausteine eines Dashboards – Diagramme, Kennzahl-Kacheln und dynamische Filter –, die sich zu einem interaktiven Dashboard zusammenfügen, das Workspace-Mitglieder erkunden können." style="width:100%;max-width:680px;height:auto;">

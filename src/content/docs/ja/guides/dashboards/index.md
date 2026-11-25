@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 PlaidCloud のプロジェクトデータを対象に、チャート、メトリック、計算列、動的フィルター、埋め込みのデータ探索を備えたインタラクティブなダッシュボードを構築します。
 
-ダッシュボード、Panelアプリ、Dashアプリ、JupyterLiteノートブックは**インサイト**アプリに一覧表示され、そのいずれもアプリメニューに公開できます。[ダッシュボードの使い方](/ja/guides/dashboards/using-dashboards/#インサイトのワークスペース)と[アプリメニューへの公開](/ja/guides/dashboards/publish-to-app-menu/)を参照してください。
+ダッシュボード、Panelアプリ、Dashアプリ、JupyterLiteノートブックは**インサイト**アプリに一覧表示され、管理しているものをアプリメニューに公開できます。[ダッシュボードの使い方](/ja/guides/dashboards/using-dashboards/#インサイトのワークスペース)と[アプリメニューへの公開](/ja/guides/dashboards/publish-to-app-menu/)を参照してください。
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="公開されたプロジェクトのテーブルとビューが、チャート、メトリックタイル、動的フィルターといったダッシュボードの構成要素に供給され、ワークスペースのメンバーが探索できる1つのインタラクティブなダッシュボードにまとめられます。" style="width:100%;max-width:680px;height:auto;">
