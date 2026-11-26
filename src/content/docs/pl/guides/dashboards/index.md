@@ -8,6 +8,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Buduj interaktywne pulpity na danych projektów PlaidCloud — wykresy, metryki, kolumny obliczeniowe, dynamiczne filtry i osadzona eksploracja danych.
 
+Twoje pulpity, aplikacje Panel i Dash oraz notebooki JupyterLite są wymienione w aplikacji **Wnioski**, a te, którymi zarządzasz, możesz opublikować w menu aplikacji. Zobacz [Korzystanie z pulpitów](/pl/guides/dashboards/using-dashboards/#obszar-roboczy-wnioski) i [Publikowanie w menu aplikacji](/pl/guides/dashboards/publish-to-app-menu/).
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Opublikowane tabele i widoki projektu zasilają elementy składowe pulpitu — wykresy, kafelki metryk i dynamiczne filtry — które składają się w jeden interaktywny pulpit do eksploracji przez członków obszaru roboczego." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>

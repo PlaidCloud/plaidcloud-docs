@@ -8,6 +8,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Cree paneles de control interactivos sobre los datos de proyectos de PlaidCloud: gráficos, métricas, columnas calculadas, filtros dinámicos y exploración de datos incrustada.
 
+Sus paneles de control, las aplicaciones de Panel y Dash, y los notebooks de JupyterLite aparecen en la aplicación **Análisis**, y puede publicar los que administra en el menú de aplicaciones. Consulte [Uso de los paneles de control](/es/guides/dashboards/using-dashboards/#el-espacio-de-trabajo-de-análisis) y [Publicar en el menú de aplicaciones](/es/guides/dashboards/publish-to-app-menu/).
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Las tablas y vistas publicadas del proyecto alimentan los bloques de construcción del panel de control (gráficos, mosaicos de métricas y filtros dinámicos) que se ensamblan en un panel de control interactivo para que los miembros del espacio de trabajo lo exploren." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>

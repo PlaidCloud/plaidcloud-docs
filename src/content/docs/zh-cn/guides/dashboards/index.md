@@ -8,6 +8,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 基于 PlaidCloud 项目数据构建交互式仪表板，包括图表、指标、计算列、动态筛选器和嵌入式数据探索。
 
+您的仪表板、Panel 和 Dash 应用以及 JupyterLite 笔记本都列在**洞察**应用中，您可以将其中您管理的项目发布到应用菜单。请参阅[使用仪表板](/zh-cn/guides/dashboards/using-dashboards/#洞察工作区)和[发布到应用菜单](/zh-cn/guides/dashboards/publish-to-app-menu/)。
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="已发布的项目表和视图为仪表板的构建块（图表、指标磁贴和动态筛选器）提供数据，这些构建块组合成一个交互式仪表板，供工作区成员探索。" style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>

@@ -8,6 +8,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 PlaidCloud 프로젝트 데이터를 기반으로 대화형 대시보드를 빌드합니다. 차트, 지표, 계산된 열, 동적 필터, 임베디드 데이터 탐색을 사용할 수 있습니다.
 
+대시보드, Panel 및 Dash 앱, JupyterLite 노트북은 **인사이트** 앱에 나열되며, 이 중 관리하는 항목을 앱 메뉴에 게시할 수 있습니다. [대시보드 사용](/ko/guides/dashboards/using-dashboards/#인사이트-워크스페이스)과 [앱 메뉴에 게시](/ko/guides/dashboards/publish-to-app-menu/)를 참조하십시오.
+
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="게시된 프로젝트 테이블과 뷰가 차트, 지표 타일, 동적 필터라는 대시보드 구성 요소에 데이터를 공급하고, 이 구성 요소들이 워크스페이스 멤버가 탐색할 하나의 대화형 대시보드로 조립됩니다." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="db-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
