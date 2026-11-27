@@ -40,6 +40,12 @@ Su rol también decide si puede cambiar un paso. Si puede abrir un flujo de trab
 
 Una ventana de paso marca los cambios sin guardar con un **•** en su título. Al cerrar la ventana con **Esc**, la **X**, **Cancelar** o el botón de su pestaña, se pregunta **¿Descartar los cambios sin guardar?** para que una edición no se pierda por accidente. Elija **Descartar** para cerrar sin guardar, o vuelva atrás para seguir editando.
 
+## Un paso cambió desde que lo abrió
+
+**Guardar** en un formulario de paso nunca sobrescribe un cambio guardado después de que usted abriera el formulario, ya lo haya hecho Weave u otra persona. No se guarda nada: el formulario sigue abierto con sus cambios, y una advertencia titulada **Error al actualizar** dice *Este paso cambió desde que lo abrió. Recargue para ver la última versión; sus cambios sin guardar se perderán.* Elija **Recargar** para mostrar el paso tal como está ahora y vuelva a hacer sus cambios. Agregar o quitar una de las etiquetas del paso no cuenta como un cambio. Si otros guardados siguen llegando al paso mientras se escribe el suyo, un mensaje **Error al actualizar** dice *Este paso siguió cambiando mientras se guardaba. Inténtelo de nuevo.* y no se guarda nada; vuelva a guardar cuando se detengan.
+
+Mediante la REST API, `GET /rest/v1/analyze/projects/{project_id}/transform/{step_id}` devuelve el paso con su `_etag`. Envíelo de vuelta como `if_match` en un `PUT` a la misma ruta, y un guardado sobre un cambio más reciente se rechaza con `412` y no se escribe nada. Sin él, prevalece el último guardado. Un `PUT` que otros guardados siguen adelantando se rechaza con `503` y el mismo *Este paso siguió cambiando mientras se guardaba. Inténtelo de nuevo.*, y no se escribe nada. Cuando un `PUT` incluye `labels` y solo ellas no se pudieron escribir, responde `503` con *El paso se guardó, pero sus etiquetas no: siguieron cambiando mientras se escribían. Vuelva a establecer las etiquetas.* Los asistentes de IA conectados mediante MCP obtienen la misma comprobación al pasar el `_etag` de `step_describe` como `if_match` a `step_upsert`.
+
 ## Pasos siguientes
 
 - [Explorador de flujos de trabajo](/es/guides/workflows/workflow-explorer/): qué hacer dentro de un flujo de trabajo abierto

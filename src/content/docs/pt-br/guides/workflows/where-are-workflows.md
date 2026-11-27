@@ -40,6 +40,12 @@ Sua função também decide se você pode alterar uma etapa. Se você consegue a
 
 Uma janela de etapa marca as alterações não salvas com um **•** no título. Fechar a janela com **Esc**, o **X**, **Cancelar** ou o botão da guia pergunta **Descartar alterações não salvas?** para que uma edição não seja perdida por acidente. Escolha **Descartar** para fechar sem salvar, ou volte para continuar editando.
 
+## Uma etapa mudou desde que você a abriu
+
+**Salvar** em um formulário de etapa nunca sobrescreve uma alteração salva depois que você abriu o formulário, seja ela feita pelo Weave ou por outra pessoa. Nada é salvo: o formulário continua aberto com as suas edições, e um aviso intitulado **Falha na atualização** diz *Esta etapa mudou desde que você a abriu. Recarregue para ver a versão mais recente; as suas edições não salvas serão perdidas.* Escolha **Recarregar** para mostrar a etapa como ela está agora e, em seguida, refaça as suas edições. Adicionar ou remover um dos rótulos da etapa não conta como alteração. Se outros salvamentos continuarem chegando à etapa enquanto o seu é gravado, uma mensagem **Falha na atualização** diz *Esta etapa continuou mudando enquanto era salva. Tente novamente.* e nada é salvo; salve de novo quando eles pararem.
+
+Pela API REST, `GET /rest/v1/analyze/projects/{project_id}/transform/{step_id}` retorna a etapa com o `_etag` dela. Envie-o de volta como `if_match` em um `PUT` para o mesmo caminho, e um salvamento sobre uma alteração mais recente é recusado com `412`, sem que nada seja gravado. Sem ele, vale o último salvamento. Um `PUT` que outros salvamentos continuam ultrapassando é recusado com `503` e com a mesma mensagem *Esta etapa continuou mudando enquanto era salva. Tente novamente.*, e nada é gravado. Quando um `PUT` traz `labels` e somente eles não puderam ser gravados, a resposta é `503` com *A etapa foi salva, mas seus rótulos não: eles continuaram mudando enquanto eram gravados. Defina os rótulos novamente.* Os assistentes de IA conectados por MCP recebem a mesma verificação ao passar o `_etag` de `step_describe` como `if_match` para `step_upsert`.
+
 ## Próximos passos
 
 - [Workflow Explorer](/pt-br/guides/workflows/workflow-explorer/) — o que fazer dentro de um fluxo de trabalho aberto

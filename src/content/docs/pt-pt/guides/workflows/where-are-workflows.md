@@ -40,6 +40,12 @@ O seu perfil também decide se pode alterar um passo. Se conseguir abrir um flux
 
 Uma janela de passo marca as alterações não guardadas com um **•** no seu título. Fechar a janela com **Esc**, o **X**, **Cancelar** ou o botão do seu separador pergunta **Descartar as alterações não guardadas?** para que uma edição não se perca por acidente. Escolha **Descartar** para fechar sem guardar, ou volte atrás para continuar a editar.
 
+## Um passo foi alterado desde que o abriu
+
+**Guardar** num formulário de passo nunca sobrescreve uma alteração guardada depois de abrir o formulário, quer tenha sido feita pelo Weave quer por outra pessoa. Nada é guardado: o formulário continua aberto com as suas alterações, e um aviso com o título **Falha ao atualizar** indica *Este passo foi alterado desde que o abriu. Recarregue para ver a versão mais recente; as suas alterações não guardadas serão perdidas.* Escolha **Recarregar** para mostrar o passo tal como está agora e volte a fazer as suas alterações. Adicionar ou remover uma das etiquetas do passo não conta como alteração. Se outros guardares continuarem a chegar ao passo enquanto o seu é escrito, uma mensagem **Falha ao atualizar** indica *Este passo continuou a mudar enquanto era guardado. Tente novamente.* e nada é guardado; guarde novamente quando pararem.
+
+Através da REST API, `GET /rest/v1/analyze/projects/{project_id}/transform/{step_id}` devolve o passo com o respetivo `_etag`. Envie-o de volta como `if_match` num `PUT` para o mesmo caminho, e um guardar sobre uma alteração mais recente é recusado com `412` e nada é escrito. Sem ele, prevalece o último guardar. Um `PUT` que outros guardares continuem a ultrapassar é recusado com `503` e com o mesmo *Este passo continuou a mudar enquanto era guardado. Tente novamente.*, e nada é escrito. Quando um `PUT` inclui `labels` e só estas não puderam ser escritas, responde com `503` e *O passo foi guardado, mas as respetivas etiquetas não: continuaram a mudar enquanto eram gravadas. Defina as etiquetas novamente.* Os assistentes de IA ligados por MCP têm a mesma verificação ao passar o `_etag` de `step_describe` como `if_match` para `step_upsert`.
+
 ## Passos seguintes
 
 - [Workflow Explorer](/pt-pt/guides/workflows/workflow-explorer/) — o que fazer dentro de um fluxo de trabalho aberto
