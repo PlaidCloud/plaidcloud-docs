@@ -40,6 +40,12 @@ Votre rôle détermine aussi si vous pouvez modifier une étape. Si vous pouvez 
 
 Une fenêtre d'étape signale les modifications non enregistrées par un **•** dans son titre. Fermer la fenêtre avec **Échap**, le **X**, **Annuler** ou le bouton de son onglet affiche la question **Ignorer les modifications non enregistrées ?** afin qu'une modification ne soit pas perdue par accident. Choisissez **Ignorer** pour fermer sans enregistrer, ou revenez en arrière pour continuer à modifier.
 
+## Une étape a changé depuis son ouverture
+
+**Enregistrer** dans un formulaire d'étape n'écrase jamais une modification enregistrée après l'ouverture du formulaire, qu'elle ait été faite par Weave ou par quelqu'un d'autre. Rien n'est enregistré : le formulaire reste ouvert avec vos modifications, et un avertissement intitulé **Échec de la mise à jour** indique *Cette étape a été modifiée depuis que vous l'avez ouverte. Rechargez-la pour voir la dernière version ; vos modifications non enregistrées seront perdues.* Choisissez **Recharger** pour afficher l'étape telle qu'elle est maintenant, puis refaites vos modifications. Ajouter ou retirer l'un des libellés de l'étape ne compte pas comme une modification. Si d'autres enregistrements continuent d'arriver sur l'étape pendant que le vôtre est écrit, un message **Échec de la mise à jour** indique *Cette étape changeait sans cesse pendant son enregistrement. Réessayez.* et rien n'est enregistré ; enregistrez à nouveau lorsqu'ils ont cessé.
+
+Via l'API REST, `GET /rest/v1/analyze/projects/{project_id}/transform/{step_id}` renvoie l'étape avec son `_etag`. Renvoyez-le comme `if_match` dans un `PUT` vers le même chemin, et un enregistrement par-dessus une modification plus récente est refusé avec `412`, sans rien écrire. Sans lui, le dernier enregistrement l'emporte. Un `PUT` que d'autres enregistrements dépassent sans cesse est refusé avec `503` et le même message *Cette étape changeait sans cesse pendant son enregistrement. Réessayez.*, sans rien écrire. Lorsqu'un `PUT` contient `labels` et que seuls ceux-ci n'ont pas pu être écrits, il répond `503` avec *L'étape a été enregistrée, mais pas ses libellés : ils changeaient sans cesse pendant leur écriture. Définissez à nouveau les libellés.* Les assistants IA connectés via MCP bénéficient du même contrôle en passant l'`_etag` de `step_describe` comme `if_match` à `step_upsert`.
+
 ## Étapes suivantes
 
 - [Explorateur de workflow](/fr/guides/workflows/workflow-explorer/) : que faire dans un workflow ouvert

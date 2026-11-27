@@ -40,6 +40,12 @@ Twoja rola decyduje także o tym, czy możesz zmienić krok. Jeśli możesz otwo
 
 Okno kroku oznacza niezapisane zmiany znakiem **•** w tytule. Zamknięcie okna klawiszem **Esc**, przyciskiem **X**, **Anuluj** lub przyciskiem jego karty wyświetla pytanie **Odrzucić niezapisane zmiany?**, aby edycja nie została utracona przypadkiem. Wybierz **Odrzuć**, aby zamknąć bez zapisywania, albo wróć, aby kontynuować edycję.
 
+## Krok zmienił się od czasu jego otwarcia
+
+**Zapisz** w formularzu kroku nigdy nie nadpisuje zmiany zapisanej po otwarciu formularza, niezależnie od tego, czy wprowadził ją Weave, czy ktoś inny. Nic nie zostaje zapisane: formularz pozostaje otwarty z Twoimi zmianami, a ostrzeżenie zatytułowane **Aktualizacja nie powiodła się** informuje: *Ten krok zmienił się od czasu jego otwarcia. Załaduj go ponownie, aby zobaczyć najnowszą wersję; niezapisane zmiany zostaną utracone.* Wybierz **Odśwież**, aby pokazać krok w obecnym stanie, a następnie wprowadź zmiany ponownie. Dodanie lub usunięcie jednej z etykiet kroku nie jest uznawane za zmianę. Jeśli podczas zapisu kroku trafiają na niego kolejne zapisy, komunikat **Aktualizacja nie powiodła się** informuje: *Ten krok zmieniał się podczas zapisywania. Spróbuj ponownie.* i nic nie zostaje zapisane; zapisz ponownie, gdy ustaną.
+
+Przez REST API `GET /rest/v1/analyze/projects/{project_id}/transform/{step_id}` zwraca krok wraz z `_etag`. Odeślij go jako `if_match` w `PUT` pod tę samą ścieżkę, a zapis nadpisujący nowszą zmianę zostanie odrzucony z kodem `412` i nic nie zostanie zapisane. Bez niego wygrywa ostatni zapis. `PUT`, który wyprzedzają kolejne zapisy, jest odrzucany z kodem `503` i tym samym komunikatem *Ten krok zmieniał się podczas zapisywania. Spróbuj ponownie.*, a nic nie zostaje zapisane. Gdy `PUT` zawiera `labels` i nie udało się zapisać tylko ich, odpowiada kodem `503` i komunikatem *Krok został zapisany, ale jego etykiety nie: zmieniały się podczas zapisywania. Ustaw etykiety ponownie.* Asystenci AI połączeni przez MCP otrzymują to samo sprawdzenie, przekazując `_etag` z `step_describe` jako `if_match` do `step_upsert`.
+
 ## Następne kroki
 
 - [Eksplorator przepływów pracy](/pl/guides/workflows/workflow-explorer/) — co robić w otwartym przepływie pracy

@@ -39,6 +39,12 @@ Your role also decides whether you can change a step. If you can open a workflow
 
 A step window marks unsaved changes with a **•** in its title. Closing the window with **Esc**, the **X**, **Cancel**, or its tab button asks **Discard unsaved changes?** so an edit isn't lost by accident. Choose **Discard** to close without saving, or go back to keep editing.
 
+## A Step Changed Since You Opened It
+
+**Save** in a step form never writes over a change saved after you opened the form, whether Weave made it or someone else did. Nothing is saved: the form stays open with your edits, and a warning titled **Update failed** says *This step changed since you opened it. Reload to see the latest version; your unsaved edits will be lost.* Choose **Reload** to show the step as it is now, then make your edits again. Adding or removing one of the step's labels doesn't count as a change. If other saves keep landing on the step while yours is written, an **Update failed** message says *This step kept changing while it was being saved. Try again.* and nothing is saved; save again once they stop.
+
+Through the REST API, `GET /rest/v1/analyze/projects/{project_id}/transform/{step_id}` returns the step with its `_etag`. Send it back as `if_match` on `PUT` to the same path, and a save over a newer change is refused with `412` and nothing is written. Without it, the last save wins. A `PUT` that other saves keep overtaking is refused with `503` and the same *This step kept changing while it was being saved. Try again.*, and nothing is written. When a `PUT` carries `labels` and only they couldn't be written, it answers `503` with *The step was saved, but its labels were not: they kept changing as they were written. Set the labels again.* AI assistants connected over MCP get the same check by passing the `_etag` from `step_describe` as `if_match` to `step_upsert`.
+
 ## Next Steps
 
 - [Workflow explorer](/guides/workflows/workflow-explorer/) — what to do inside an open workflow
